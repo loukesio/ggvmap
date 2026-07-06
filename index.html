@@ -143,10 +143,16 @@
 <p>The outer boundary can be any convex polygon:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/clip_shapes.html">clip_square</a></span><span class="op">(</span><span class="op">)</span>             <span class="co"># unit square</span></span>
+<span><span class="fu"><a href="reference/clip_rectangle.html">clip_rectangle</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.6</span><span class="op">)</span>    <span class="co"># non-square rectangle</span></span>
 <span><span class="fu"><a href="reference/clip_shapes.html">clip_hexagon</a></span><span class="op">(</span><span class="op">)</span>            <span class="co"># regular hexagon</span></span>
 <span><span class="fu"><a href="reference/clip_shapes.html">clip_diamond</a></span><span class="op">(</span><span class="op">)</span>            <span class="co"># diamond (rotated square)</span></span>
+<span><span class="fu"><a href="reference/clip_shapes.html">clip_triangle</a></span><span class="op">(</span><span class="op">)</span>           <span class="co"># equilateral triangle</span></span>
+<span><span class="fu"><a href="reference/clip_shapes.html">clip_pentagon</a></span><span class="op">(</span><span class="op">)</span>           <span class="co"># regular pentagon</span></span>
+<span><span class="fu"><a href="reference/clip_shapes.html">clip_octagon</a></span><span class="op">(</span><span class="op">)</span>            <span class="co"># regular octagon</span></span>
 <span><span class="fu"><a href="reference/clip_shapes.html">clip_circle</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">64</span><span class="op">)</span>       <span class="co"># circle approximation (64-gon)</span></span>
-<span><span class="fu"><a href="reference/regular_polygon.html">regular_polygon</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>    <span class="co"># pentagon (or any n-gon)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/clip_ellipse.html">clip_ellipse</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.32</span><span class="op">)</span>   <span class="co"># ellipse</span></span>
+<span><span class="fu"><a href="reference/regular_polygon.html">regular_polygon</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>    <span class="co"># any regular n-gon</span></span></code></pre></div>
+<p>Any <strong>convex</strong> polygon works (the power-diagram clipping requires convexity, so star- or crescent-shaped boundaries are not supported).</p>
 </div>
 <div class="section level2">
 <h2 id="how-it-works">How it works<a class="anchor" aria-label="anchor" href="#how-it-works"></a>

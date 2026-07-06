@@ -115,11 +115,19 @@ The outer boundary can be any convex polygon:
 ``` r
 
 clip_square()             # unit square
+clip_rectangle(1, 0.6)    # non-square rectangle
 clip_hexagon()            # regular hexagon
 clip_diamond()            # diamond (rotated square)
+clip_triangle()           # equilateral triangle
+clip_pentagon()           # regular pentagon
+clip_octagon()            # regular octagon
 clip_circle(n = 64)       # circle approximation (64-gon)
-regular_polygon(n = 5)    # pentagon (or any n-gon)
+clip_ellipse(0.5, 0.32)   # ellipse
+regular_polygon(n = 5)    # any regular n-gon
 ```
+
+Any **convex** polygon works (the power-diagram clipping requires
+convexity, so star- or crescent-shaped boundaries are not supported).
 
 ## How it works
 
@@ -242,7 +250,14 @@ Outer ring, flags, images and value labels.
   [`clip_hexagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
   [`clip_circle()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
   [`clip_diamond()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
+  [`clip_triangle()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
+  [`clip_pentagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
+  [`clip_octagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
   : Generate common clipping shapes
+- [`clip_rectangle()`](https://loukesio.github.io/ggvmap/reference/clip_rectangle.md)
+  : Rectangular clipping boundary
+- [`clip_ellipse()`](https://loukesio.github.io/ggvmap/reference/clip_ellipse.md)
+  : Elliptical clipping boundary
 - [`regular_polygon()`](https://loukesio.github.io/ggvmap/reference/regular_polygon.md)
   : Generate a regular polygon with n sides inscribed in a circle
 
@@ -259,5 +274,7 @@ Outer ring, flags, images and value labels.
 
 - [Grouped layouts, rings and flag
   annotations](https://loukesio.github.io/ggvmap/articles/annotations.md):
+- [Interactive Voronoi
+  maps](https://loukesio.github.io/ggvmap/articles/interactive.md):
 - [Correctness: is the Voronoi construction
   right?](https://loukesio.github.io/ggvmap/articles/validation.md):

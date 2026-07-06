@@ -54,7 +54,14 @@ Outer ring, flags, images and value labels.
   [`clip_hexagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
   [`clip_circle()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
   [`clip_diamond()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
+  [`clip_triangle()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
+  [`clip_pentagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
+  [`clip_octagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md)
   : Generate common clipping shapes
+- [`clip_rectangle()`](https://loukesio.github.io/ggvmap/reference/clip_rectangle.md)
+  : Rectangular clipping boundary
+- [`clip_ellipse()`](https://loukesio.github.io/ggvmap/reference/clip_ellipse.md)
+  : Elliptical clipping boundary
 - [`regular_polygon()`](https://loukesio.github.io/ggvmap/reference/regular_polygon.md)
   : Generate a regular polygon with n sides inscribed in a circle
 

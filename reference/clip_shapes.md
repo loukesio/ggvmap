@@ -14,6 +14,12 @@ clip_hexagon(cx = 0.5, cy = 0.5, r = 0.5)
 clip_circle(cx = 0.5, cy = 0.5, r = 0.5, n = 64)
 
 clip_diamond(cx = 0.5, cy = 0.5, r = 0.5)
+
+clip_triangle(cx = 0.5, cy = 0.5, r = 0.5)
+
+clip_pentagon(cx = 0.5, cy = 0.5, r = 0.5)
+
+clip_octagon(cx = 0.5, cy = 0.5, r = 0.5)
 ```
 
 ## Arguments
