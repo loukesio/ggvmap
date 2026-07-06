@@ -34,6 +34,7 @@ Suggests:
     geomtextpath,
     ggiraph
 Config/testthat/edition: 3
+Config/Needs/website: pkgdown, ggiraph, geomtextpath, ggimage, magick
 VignetteBuilder: knitr
 URL: https://github.com/loukesio/ggvmap
 BugReports: https://github.com/loukesio/ggvmap/issues

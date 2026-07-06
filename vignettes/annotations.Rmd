@@ -112,19 +112,23 @@ URLs (logos, icons, photos) instead of flags.
 Set `interactive = TRUE` to make the cells hoverable (highlight + tooltip) via
 [ggiraph](https://davidgohel.github.io/ggiraph/), then render the widget with
 `vm_girafe()`. It works in R Markdown / Quarto, Shiny and the RStudio viewer.
+**Hover the cells below** — this one is live:
 
-```{r interactive, eval = FALSE}
+```{r interactive, eval = requireNamespace("ggiraph", quietly = TRUE)}
 vm <- voronoi_map(
-  weights = c(30, 20, 50, 10, 40),
-  labels  = c("Tech", "Health", "Energy", "Finance", "Retail"),
+  weights = c(30, 20, 50, 10, 40, 15, 25),
+  labels  = c("Tech", "Health", "Energy", "Finance", "Retail", "Media", "Auto"),
   clip    = clip_circle(), seed = 42
 )
 
 autoplot(vm, interactive = TRUE) |>
-  vm_girafe()
-
-# custom tooltips
-autoplot(vm, interactive = TRUE,
-         tooltip = c("Technology", "Healthcare", "Energy", "Finance", "Retail")) |>
   vm_girafe(width_svg = 6, height_svg = 6)
+```
+
+Pass `tooltip =` for custom hover text (length-`n`, named by label, or length 1):
+
+```{r interactive2, eval = FALSE}
+autoplot(vm, interactive = TRUE,
+         tooltip = paste0(vm$sites$label, ": ", vm$sites$data_weight, "% share")) |>
+  vm_girafe()
 ```

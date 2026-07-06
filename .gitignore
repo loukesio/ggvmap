@@ -20,3 +20,6 @@ reference/
 
 # Session / tooling
 .claude/
+
+# pkgdown site is built by GitHub Actions and served from the gh-pages branch
+docs/
