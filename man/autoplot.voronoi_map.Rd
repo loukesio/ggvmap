@@ -14,8 +14,10 @@
   show_labels = TRUE,
   label_col = "white",
   label_size = 3,
-  palette = "Dark 3",
+  palette = "Okabe-Ito",
   legend = FALSE,
+  interactive = FALSE,
+  tooltip = NULL,
   ...
 )
 }
@@ -41,15 +43,24 @@ hierarchical maps.  \code{NA} disables them.  Default \code{"white"}.}
 
 \item{label_size}{Label size.  Default \code{3}.}
 
-\item{palette}{Character vector of colours, or a named palette from
-\code{\link[grDevices:palettes]{grDevices::hcl.colors()}}.  Default \code{"Dark 3"}.}
+\item{palette}{Character vector of colours, \code{"Okabe-Ito"} (the default,
+colourblind-safe; see \code{\link[=okabe_ito]{okabe_ito()}}), or a named palette from
+\code{\link[grDevices:palettes]{grDevices::hcl.colors()}}.}
 
 \item{legend}{Logical; show the fill legend?  Default \code{FALSE}.}
+
+\item{interactive}{Logical; make the cells interactive (hover highlight and
+tooltips) using \pkg{ggiraph}?  Render the result with \code{\link[=vm_girafe]{vm_girafe()}}.
+Default \code{FALSE}.}
+
+\item{tooltip}{Optional per-cell tooltip text (length-\code{n}, named by label, or
+length 1) used when \code{interactive = TRUE}.  Defaults to the label and value.}
 
 \item{...}{Ignored.}
 }
 \value{
-A ggplot object.
+A ggplot object (pass to \code{\link[=vm_girafe]{vm_girafe()}} to render an interactive
+widget when \code{interactive = TRUE}).
 }
 \description{
 Produces a ggplot2 visualisation with \code{geom_polygon()}.  For hierarchical

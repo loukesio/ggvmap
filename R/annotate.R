@@ -49,7 +49,7 @@
 #' @param curved Draw labels curved along the arc using \pkg{geomtextpath}?
 #'   `NULL` (default) curves them when that package is installed and otherwise
 #'   uses straight tangential text; `TRUE`/`FALSE` force the choice.
-#' @param palette Palette used when `colors` is `NULL`.  Default `"Dark 3"`.
+#' @param palette Palette used when `colors` is `NULL`.  Default `"Okabe-Ito"`.
 #' @param width Ring thickness as a fraction of the map radius.  Default `0.10`.
 #' @param gap Radial gap between the map and the ring, as a fraction of the
 #'   radius.  Default `0.02`.
@@ -74,7 +74,7 @@ vm_add_ring <- function(
   colors      = NULL,
   labels      = TRUE,
   curved      = NULL,
-  palette     = "Dark 3",
+  palette     = "Okabe-Ito",
   width       = 0.10,
   gap         = 0.02,
   pad         = 1,
@@ -315,10 +315,20 @@ vm_add_images <- function(p, vm = NULL, image, size = 0.05, by = "width",
 
 #' Add country flags at cell centroids
 #'
-#' Convenience wrapper around [vm_add_images()] that resolves country names or
-#' ISO codes to flag images from flagcdn.com (see [flag_url()]).  Requires the
-#' \pkg{ggimage} package, and internet access unless `cache = TRUE` has already
-#' fetched the flags.
+#' Resolves country names or ISO codes to national flags and places them at the
+#' cell centroids.  Requires the \pkg{ggimage} package and (unless
+#' `cache = TRUE`) internet access.
+#'
+#' Two rendering back-ends are available via `method`:
+#' \describe{
+#'   \item{`"geom_flag"`}{(default when available) uses
+#'     [ggimage::geom_flag()], which draws flags directly from ISO codes -- no
+#'     URLs to build. Simplest, and matches the flag set shipped with
+#'     \pkg{ggimage}.}
+#'   \item{`"url"`}{builds flagcdn.com URLs (see [flag_url()]) and draws them
+#'     with [ggimage::geom_image()] via [vm_add_images()]. Supports `width` and
+#'     offline `cache = TRUE` via [flag_cache()].}
+#' }
 #'
 #' @param p A ggplot from [autoplot.voronoi_map()] / [ggvmap()].
 #' @param vm Optional `voronoi_map`; taken from `p` when omitted.
@@ -326,20 +336,32 @@ vm_add_images <- function(p, vm = NULL, image, size = 0.05, by = "width",
 #'   label, or length 1.  Defaults to the cell labels.
 #' @param iso ISO alpha-2 codes, as an alternative to `country`.
 #' @param size Flag size as a fraction of the plot.  Default `0.045`.
-#' @param width Pixel width of the fetched flag PNG.  Default `160`.
-#' @param cache Pre-download flags for offline rendering via [flag_cache()]?
-#'   Default `FALSE` (stream from URLs).
-#' @param ... Passed to [vm_add_images()] (e.g. `nudge_y`, `asp`, `cells`).
+#' @param method Rendering back-end: `"geom_flag"` (default) or `"url"`.
+#' @param width Pixel width of the fetched flag PNG (`method = "url"` only).
+#'   Default `160`.
+#' @param cache Pre-download flags for offline rendering via [flag_cache()]
+#'   (`method = "url"` only)?  Default `FALSE`.
+#' @param nudge_x,nudge_y Offset from the centroid in data units.  Default `0`.
+#' @param cells Optional subset of cell labels to annotate.
+#' @param ... Passed to the underlying geom.
 #' @return The ggplot with a flag layer added.
 #' @examples
 #' \dontrun{
 #' vm <- voronoi_map(c(5, 3, 2), labels = c("China", "Norway", "Japan"),
 #'                   seed = 1)
-#' autoplot(vm) |> vm_add_flags()
+#' autoplot(vm) |> vm_add_flags()                    # geom_flag
+#' autoplot(vm) |> vm_add_flags(method = "url")      # flagcdn + geom_image
 #' }
 #' @export
 vm_add_flags <- function(p, vm = NULL, country = NULL, iso = NULL,
-                         size = 0.045, width = 160, cache = FALSE, ...) {
+                         size = 0.045, method = c("geom_flag", "url"),
+                         width = 160, cache = FALSE,
+                         nudge_x = 0, nudge_y = 0, cells = NULL, ...) {
+  method <- match.arg(method)
+  if (!requireNamespace("ggimage", quietly = TRUE)) {
+    stop("vm_add_flags() requires the 'ggimage' package. ",
+         "Install it with install.packages('ggimage').", call. = FALSE)
+  }
   vm <- .vm_of(p, vm)
   if (is.null(iso)) {
     if (is.null(country)) country <- vm$sites$label
@@ -353,8 +375,29 @@ vm_add_flags <- function(p, vm = NULL, country = NULL, iso = NULL,
             "See country_to_iso().", call. = FALSE)
     return(p)
   }
-  image <- if (isTRUE(cache)) flag_cache(iso, width = width) else flag_url(iso, width)
-  vm_add_images(p, vm = vm, image = image, size = size, ...)
+
+  if (method == "url") {
+    image <- if (isTRUE(cache)) flag_cache(iso, width = width) else flag_url(iso, width)
+    return(vm_add_images(p, vm = vm, image = image, size = size,
+                         nudge_x = nudge_x, nudge_y = nudge_y, cells = cells, ...))
+  }
+
+  # method == "geom_flag": ggimage draws flags straight from ISO codes
+  ctr <- vm_centroids(vm)
+  df  <- data.frame(x = ctr$cx + nudge_x, y = ctr$cy + nudge_y,
+                    iso = iso, label = ctr$label, stringsAsFactors = FALSE)
+  if (!is.null(cells)) df <- df[df$label %in% cells, , drop = FALSE]
+  df <- df[!is.na(df$iso), , drop = FALSE]
+  if (nrow(df) == 0L) {
+    warning("No flags to draw (all NA / filtered out).", call. = FALSE)
+    return(p)
+  }
+  layer <- ggimage::geom_flag(
+    data = df,
+    mapping = ggplot2::aes(x = .data$x, y = .data$y, image = .data$iso),
+    inherit.aes = FALSE, size = size, ...
+  )
+  .vm_plus(p, layer, vm)
 }
 
 #' Add value labels at (or near) cell centroids

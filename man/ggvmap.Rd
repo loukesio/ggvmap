@@ -14,13 +14,14 @@ ggvmap(
   min_weight_ratio = 0.01,
   seed = NULL,
   fill_by = NULL,
-  palette = "Dark 3",
+  palette = "Okabe-Ito",
   border_col = "white",
   border_size = 0.8,
   show_labels = TRUE,
   label_col = "white",
   label_size = 3,
-  legend = FALSE
+  legend = FALSE,
+  interactive = FALSE
 )
 }
 \arguments{
@@ -52,8 +53,9 @@ Default \code{0.01}.}
 \code{"data_weight"}, or \code{"none"}.  Defaults to \code{"group"} for hierarchical
 maps and \code{"label"} otherwise.}
 
-\item{palette}{Character vector of colours, or a named palette from
-\code{\link[grDevices:palettes]{grDevices::hcl.colors()}}.  Default \code{"Dark 3"}.}
+\item{palette}{Character vector of colours, \code{"Okabe-Ito"} (the default,
+colourblind-safe; see \code{\link[=okabe_ito]{okabe_ito()}}), or a named palette from
+\code{\link[grDevices:palettes]{grDevices::hcl.colors()}}.}
 
 \item{border_col}{Border colour.  Default \code{"white"}.}
 
@@ -66,6 +68,10 @@ maps and \code{"label"} otherwise.}
 \item{label_size}{Label size.  Default \code{3}.}
 
 \item{legend}{Logical; show the fill legend?  Default \code{FALSE}.}
+
+\item{interactive}{Logical; make the cells interactive (hover highlight and
+tooltips) using \pkg{ggiraph}?  Render the result with \code{\link[=vm_girafe]{vm_girafe()}}.
+Default \code{FALSE}.}
 }
 \value{
 A ggplot object (invisibly also stores the \code{voronoi_map} object

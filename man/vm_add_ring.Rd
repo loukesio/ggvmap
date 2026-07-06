@@ -11,7 +11,7 @@ vm_add_ring(
   colors = NULL,
   labels = TRUE,
   curved = NULL,
-  palette = "Dark 3",
+  palette = "Okabe-Ito",
   width = 0.1,
   gap = 0.02,
   pad = 1,
@@ -39,7 +39,7 @@ by group.  \code{TRUE} (default) uses the group names; \code{FALSE} draws no tex
 \code{NULL} (default) curves them when that package is installed and otherwise
 uses straight tangential text; \code{TRUE}/\code{FALSE} force the choice.}
 
-\item{palette}{Palette used when \code{colors} is \code{NULL}.  Default \code{"Dark 3"}.}
+\item{palette}{Palette used when \code{colors} is \code{NULL}.  Default \code{"Okabe-Ito"}.}
 
 \item{width}{Ring thickness as a fraction of the map radius.  Default \code{0.10}.}
 

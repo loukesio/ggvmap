@@ -10,8 +10,12 @@ vm_add_flags(
   country = NULL,
   iso = NULL,
   size = 0.045,
+  method = c("geom_flag", "url"),
   width = 160,
   cache = FALSE,
+  nudge_x = 0,
+  nudge_y = 0,
+  cells = NULL,
   ...
 )
 }
@@ -27,26 +31,45 @@ label, or length 1.  Defaults to the cell labels.}
 
 \item{size}{Flag size as a fraction of the plot.  Default \code{0.045}.}
 
-\item{width}{Pixel width of the fetched flag PNG.  Default \code{160}.}
+\item{method}{Rendering back-end: \code{"geom_flag"} (default) or \code{"url"}.}
 
-\item{cache}{Pre-download flags for offline rendering via \code{\link[=flag_cache]{flag_cache()}}?
-Default \code{FALSE} (stream from URLs).}
+\item{width}{Pixel width of the fetched flag PNG (\code{method = "url"} only).
+Default \code{160}.}
 
-\item{...}{Passed to \code{\link[=vm_add_images]{vm_add_images()}} (e.g. \code{nudge_y}, \code{asp}, \code{cells}).}
+\item{cache}{Pre-download flags for offline rendering via \code{\link[=flag_cache]{flag_cache()}}
+(\code{method = "url"} only)?  Default \code{FALSE}.}
+
+\item{nudge_x, nudge_y}{Offset from the centroid in data units.  Default \code{0}.}
+
+\item{cells}{Optional subset of cell labels to annotate.}
+
+\item{...}{Passed to the underlying geom.}
 }
 \value{
 The ggplot with a flag layer added.
 }
 \description{
-Convenience wrapper around \code{\link[=vm_add_images]{vm_add_images()}} that resolves country names or
-ISO codes to flag images from flagcdn.com (see \code{\link[=flag_url]{flag_url()}}).  Requires the
-\pkg{ggimage} package, and internet access unless \code{cache = TRUE} has already
-fetched the flags.
+Resolves country names or ISO codes to national flags and places them at the
+cell centroids.  Requires the \pkg{ggimage} package and (unless
+\code{cache = TRUE}) internet access.
+}
+\details{
+Two rendering back-ends are available via \code{method}:
+\describe{
+\item{\code{"geom_flag"}}{(default when available) uses
+\code{\link[ggimage:geom_flag]{ggimage::geom_flag()}}, which draws flags directly from ISO codes -- no
+URLs to build. Simplest, and matches the flag set shipped with
+\pkg{ggimage}.}
+\item{\code{"url"}}{builds flagcdn.com URLs (see \code{\link[=flag_url]{flag_url()}}) and draws them
+with \code{\link[ggimage:geom_image]{ggimage::geom_image()}} via \code{\link[=vm_add_images]{vm_add_images()}}. Supports \code{width} and
+offline \code{cache = TRUE} via \code{\link[=flag_cache]{flag_cache()}}.}
+}
 }
 \examples{
 \dontrun{
 vm <- voronoi_map(c(5, 3, 2), labels = c("China", "Norway", "Japan"),
                   seed = 1)
-autoplot(vm) |> vm_add_flags()
+autoplot(vm) |> vm_add_flags()                    # geom_flag
+autoplot(vm) |> vm_add_flags(method = "url")      # flagcdn + geom_image
 }
 }

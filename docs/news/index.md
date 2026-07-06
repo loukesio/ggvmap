@@ -59,6 +59,25 @@
 
 ### Improvements
 
+- **Okabe-Ito is the default palette.**
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html),
+  [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md)
+  and
+  [`vm_add_ring()`](https://loukesio.github.io/ggvmap/reference/vm_add_ring.md)
+  default to the colourblind-safe Okabe-Ito palette (new exported
+  [`okabe_ito()`](https://loukesio.github.io/ggvmap/reference/okabe_ito.md)).
+  Qualitative palettes are *recycled* (not interpolated) when there are
+  more cells than colours, so every cell keeps a true palette colour.
+- [`vm_add_flags()`](https://loukesio.github.io/ggvmap/reference/vm_add_flags.md)
+  gains a `method` argument: `"geom_flag"` (default) draws flags
+  straight from ISO codes via
+  [`ggimage::geom_flag()`](https://rdrr.io/pkg/ggimage/man/geom_flag.html),
+  while `"url"` keeps the flagcdn.com + `geom_image()` path with offline
+  `cache = TRUE`.
+- **Interactive plots.** `autoplot(interactive = TRUE)` (and
+  `ggvmap(interactive = TRUE)`) makes the cells hoverable with tooltips
+  via ; render the widget with the new
+  [`vm_girafe()`](https://loukesio.github.io/ggvmap/reference/vm_girafe.md).
 - [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
   is group-aware: hierarchical maps default to filling by group and
   drawing heavier group boundaries; new `fill_by` (`"group"`, `"label"`,

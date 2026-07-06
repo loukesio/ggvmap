@@ -205,6 +205,8 @@ Base-R and ggplot2 visualisation.
   : Autoplot method for voronoi_map objects
 - [`plot(`*`<voronoi_map>`*`)`](https://loukesio.github.io/ggvmap/reference/plot.voronoi_map.md)
   : Plot a Voronoi map
+- [`vm_girafe()`](https://loukesio.github.io/ggvmap/reference/vm_girafe.md)
+  : Render an interactive Voronoi map
 - [`vm_as_df()`](https://loukesio.github.io/ggvmap/reference/vm_as_df.md)
   : Convert a voronoi_map to a tidy data frame
 - [`vm_centroids()`](https://loukesio.github.io/ggvmap/reference/vm_centroids.md)
@@ -228,6 +230,11 @@ Outer ring, flags, images and value labels.
   : URL of a flag PNG on flagcdn.com
 - [`flag_cache()`](https://loukesio.github.io/ggvmap/reference/flag_cache.md)
   : Pre-download flags for offline use
+
+## Colours
+
+- [`okabe_ito()`](https://loukesio.github.io/ggvmap/reference/okabe_ito.md)
+  : The Okabe-Ito colourblind-safe qualitative palette
 
 ## Boundary shapes
 

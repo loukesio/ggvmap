@@ -32,7 +32,7 @@ plot.voronoi_map <- function(
 ) {
   n <- length(x$cells)
   if (is.null(fill)) {
-    fill <- grDevices::hcl.colors(n, palette = "Dark 3")
+    fill <- okabe_ito(n)
   }
   fill <- rep_len(fill, n)
 
@@ -126,12 +126,19 @@ vm_centroids <- function(vm) {
 #' @param show_labels Logical; add centroid labels?  Default `TRUE`.
 #' @param label_col Label colour.  Default `"white"`.
 #' @param label_size Label size.  Default `3`.
-#' @param palette Character vector of colours, or a named palette from
-#'   [grDevices::hcl.colors()].  Default `"Dark 3"`.
+#' @param palette Character vector of colours, `"Okabe-Ito"` (the default,
+#'   colourblind-safe; see [okabe_ito()]), or a named palette from
+#'   [grDevices::hcl.colors()].
 #' @param legend Logical; show the fill legend?  Default `FALSE`.
+#' @param interactive Logical; make the cells interactive (hover highlight and
+#'   tooltips) using \pkg{ggiraph}?  Render the result with [vm_girafe()].
+#'   Default `FALSE`.
+#' @param tooltip Optional per-cell tooltip text (length-`n`, named by label, or
+#'   length 1) used when `interactive = TRUE`.  Defaults to the label and value.
 #' @param ... Ignored.
 #'
-#' @return A ggplot object.
+#' @return A ggplot object (pass to [vm_girafe()] to render an interactive
+#'   widget when `interactive = TRUE`).
 #' @importFrom ggplot2 autoplot
 #' @export
 autoplot.voronoi_map <- function(
@@ -144,33 +151,62 @@ autoplot.voronoi_map <- function(
   show_labels       = TRUE,
   label_col         = "white",
   label_size        = 3,
-  palette           = "Dark 3",
+  palette           = "Okabe-Ito",
   legend            = FALSE,
+  interactive       = FALSE,
+  tooltip           = NULL,
   ...
 ) {
   hier <- isTRUE(object$hierarchical)
   if (is.null(fill_by)) fill_by <- if (hier) "group" else "label"
   fill_by <- match.arg(fill_by, c("group", "label", "data_weight", "none"))
 
+  if (interactive && !requireNamespace("ggiraph", quietly = TRUE)) {
+    stop("interactive = TRUE requires the 'ggiraph' package. ",
+         "Install it with install.packages('ggiraph').", call. = FALSE)
+  }
+
   df <- vm_as_df(object)
   centroids <- vm_centroids(object)
+
+  # geom_polygon() or its interactive counterpart, injecting tooltip/data_id.
+  poly_layer <- function(mapping, ...) {
+    if (interactive) {
+      mapping <- utils::modifyList(
+        mapping,
+        ggplot2::aes(tooltip = .data$tooltip, data_id = .data$data_id))
+      ggiraph::geom_polygon_interactive(mapping = mapping, ...)
+    } else {
+      ggplot2::geom_polygon(mapping = mapping, ...)
+    }
+  }
+  if (interactive) {
+    tip <- .align_to_cells(object, tooltip, "tooltip")
+    if (is.null(tip)) {
+      val <- format(centroids$data_weight, big.mark = ",", trim = TRUE)
+      tip <- if (hier) sprintf("%s (%s): %s", centroids$label, centroids$group, val)
+             else sprintf("%s: %s", centroids$label, val)
+    }
+    df$tooltip <- tip[df$cell]
+    df$data_id <- as.character(df$cell)
+  }
 
   p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$x, y = .data$y, group = .data$cell))
 
   if (fill_by == "none") {
-    p <- p + ggplot2::geom_polygon(fill = "grey80", colour = border_col,
-                                   linewidth = border_size)
+    p <- p + poly_layer(ggplot2::aes(), fill = "grey80", colour = border_col,
+                        linewidth = border_size)
   } else if (fill_by == "data_weight") {
-    p <- p + ggplot2::geom_polygon(ggplot2::aes(fill = .data$data_weight),
-                                   colour = border_col, linewidth = border_size) +
-      ggplot2::scale_fill_gradientn(colours = .vm_palette(64, palette))
+    p <- p + poly_layer(ggplot2::aes(fill = .data$data_weight),
+                        colour = border_col, linewidth = border_size) +
+      ggplot2::scale_fill_gradientn(colours = .vm_palette(64, palette, continuous = TRUE))
   } else {
     key  <- if (fill_by == "group") "group" else "label"
     levs <- unique(df[[key]])
     cols <- stats::setNames(.vm_palette(length(levs), palette), levs)
     p <- p +
-      ggplot2::geom_polygon(ggplot2::aes(fill = .data[[key]]),
-                            colour = border_col, linewidth = border_size) +
+      poly_layer(ggplot2::aes(fill = .data[[key]]),
+                 colour = border_col, linewidth = border_size) +
       ggplot2::scale_fill_manual(values = cols)
   }
 
@@ -208,14 +244,49 @@ autoplot.voronoi_map <- function(
   p
 }
 
-#' Resolve a palette specification to a vector of `n` colours
-#' @noRd
-.vm_palette <- function(n, palette) {
-  if (length(palette) > 1L) {
-    grDevices::colorRampPalette(palette)(n)
-  } else {
-    grDevices::hcl.colors(n, palette = palette)
+# --- Interactive rendering (ggiraph) ----------------------------------------
+
+#' Render an interactive Voronoi map
+#'
+#' Wraps a plot built with `interactive = TRUE` (see [autoplot.voronoi_map()] /
+#' [ggvmap()]) into a \pkg{ggiraph} `girafe` htmlwidget, so cells highlight on
+#' hover and show tooltips. Works in R Markdown / Quarto, Shiny and the RStudio
+#' viewer.
+#'
+#' @param p A ggplot built with `interactive = TRUE`.
+#' @param width_svg,height_svg Size of the SVG canvas in inches.  Default `7`.
+#' @param hover_css CSS applied to the hovered cell.  Default highlights its
+#'   outline.
+#' @param opts Optional list of extra \pkg{ggiraph} `opts_*()` objects to append.
+#' @param ... Passed to [ggiraph::girafe()].
+#' @return A `girafe` htmlwidget.
+#' @examples
+#' \dontrun{
+#' vm <- voronoi_map(c(5, 3, 8, 2, 6), labels = LETTERS[1:5], seed = 1)
+#' autoplot(vm, interactive = TRUE) |> vm_girafe()
+#' }
+#' @export
+vm_girafe <- function(p, width_svg = 7, height_svg = 7,
+                      hover_css = "stroke:#222222;stroke-width:1.4px;",
+                      opts = NULL, ...) {
+  if (!requireNamespace("ggiraph", quietly = TRUE)) {
+    stop("vm_girafe() requires the 'ggiraph' package. ",
+         "Install it with install.packages('ggiraph').", call. = FALSE)
   }
+  options <- c(
+    list(
+      ggiraph::opts_hover(css = hover_css),
+      ggiraph::opts_tooltip(
+        css = paste0("background:rgba(255,255,255,0.95);color:#222;",
+                     "padding:5px 8px;border-radius:4px;",
+                     "font-family:sans-serif;font-size:12px;",
+                     "box-shadow:0 1px 4px rgba(0,0,0,0.25);")),
+      ggiraph::opts_zoom(max = 4)
+    ),
+    opts
+  )
+  ggiraph::girafe(ggobj = p, width_svg = width_svg, height_svg = height_svg,
+                  options = options, ...)
 }
 
 #' @importFrom ggplot2 ggplot
@@ -251,13 +322,14 @@ ggvmap <- function(
   min_weight_ratio  = 0.01,
   seed              = NULL,
   fill_by           = NULL,
-  palette           = "Dark 3",
+  palette           = "Okabe-Ito",
   border_col        = "white",
   border_size       = 0.8,
   show_labels       = TRUE,
   label_col         = "white",
   label_size        = 3,
-  legend            = FALSE
+  legend            = FALSE,
+  interactive       = FALSE
 ) {
   vm <- voronoi_map(
     weights           = weights,
@@ -277,7 +349,8 @@ ggvmap <- function(
     show_labels = show_labels,
     label_col   = label_col,
     label_size  = label_size,
-    legend      = legend
+    legend      = legend,
+    interactive = interactive
   )
   attr(p, "vm") <- vm
   p

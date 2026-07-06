@@ -126,11 +126,14 @@ naturally.</p>
 <h2 id="flags-and-value-labels">Flags and value labels<a class="anchor" aria-label="anchor" href="#flags-and-value-labels"></a>
 </h2>
 <p><code><a href="../reference/vm_add_flags.html">vm_add_flags()</a></code> resolves country names (English or
-German) to national flags from <a href="https://flagcdn.com" class="external-link">flagcdn.com</a>, and
-<code><a href="../reference/vm_add_labels.html">vm_add_labels()</a></code> prints a value under each name — the
-merchant-fleet infographic style. (These examples need an internet
-connection and the <strong>ggimage</strong> package, so they are not
-evaluated here.)</p>
+German) to national flags — by default via
+<code><a href="https://rdrr.io/pkg/ggimage/man/geom_flag.html" class="external-link">ggimage::geom_flag()</a></code> (<code>method = "geom_flag"</code>),
+or from <a href="https://flagcdn.com" class="external-link">flagcdn.com</a> with
+<code>method = "url"</code> (which also supports an offline
+<code>cache = TRUE</code>). <code><a href="../reference/vm_add_labels.html">vm_add_labels()</a></code> prints a value
+under each name — the merchant-fleet infographic style. (These examples
+need an internet connection and the <strong>ggimage</strong> package, so
+they are not evaluated here.)</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">merchant_fleet</span><span class="op">)</span></span>
 <span></span>
@@ -141,7 +144,7 @@ evaluated here.)</p>
 <span>  seed    <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">vm</span>, palette <span class="op">=</span> <span class="st">"Set 2"</span>, label_size <span class="op">=</span> <span class="fl">3.2</span>, label_col <span class="op">=</span> <span class="st">"grey15"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">vm</span>, label_size <span class="op">=</span> <span class="fl">3.2</span>, label_col <span class="op">=</span> <span class="st">"grey15"</span><span class="op">)</span> <span class="op">|&gt;</span>   <span class="co"># Okabe-Ito by default</span></span>
 <span>  <span class="fu"><a href="../reference/vm_add_labels.html">vm_add_labels</a></span><span class="op">(</span></span>
 <span>    value <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">merchant_fleet</span><span class="op">$</span><span class="va">owned</span>, <span class="va">merchant_fleet</span><span class="op">$</span><span class="va">country</span><span class="op">)</span>,</span>
 <span>    size  <span class="op">=</span> <span class="fl">2.6</span>, nudge_y <span class="op">=</span> <span class="op">-</span><span class="fl">0.035</span></span>
@@ -153,6 +156,28 @@ evaluated here.)</p>
 <span><span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flag_cache.html">flag_cache</a></span><span class="op">(</span><span class="va">iso</span>, dir <span class="op">=</span> <span class="st">"flags"</span><span class="op">)</span>          <span class="co"># writes flags/&lt;iso&gt;.png</span></span></code></pre></div>
 <p><code><a href="../reference/vm_add_images.html">vm_add_images()</a></code> is the generic version — pass any vector
 of image paths or URLs (logos, icons, photos) instead of flags.</p>
+</div>
+<div class="section level2">
+<h2 id="interactive-maps">Interactive maps<a class="anchor" aria-label="anchor" href="#interactive-maps"></a>
+</h2>
+<p>Set <code>interactive = TRUE</code> to make the cells hoverable
+(highlight + tooltip) via <a href="https://davidgohel.github.io/ggiraph/" class="external-link">ggiraph</a>, then render
+the widget with <code><a href="../reference/vm_girafe.html">vm_girafe()</a></code>. It works in R Markdown /
+Quarto, Shiny and the RStudio viewer.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">vm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/voronoi_map.html">voronoi_map</a></span><span class="op">(</span></span>
+<span>  weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">20</span>, <span class="fl">50</span>, <span class="fl">10</span>, <span class="fl">40</span><span class="op">)</span>,</span>
+<span>  labels  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Tech"</span>, <span class="st">"Health"</span>, <span class="st">"Energy"</span>, <span class="st">"Finance"</span>, <span class="st">"Retail"</span><span class="op">)</span>,</span>
+<span>  clip    <span class="op">=</span> <span class="fu"><a href="../reference/clip_shapes.html">clip_circle</a></span><span class="op">(</span><span class="op">)</span>, seed <span class="op">=</span> <span class="fl">42</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">vm</span>, interactive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/vm_girafe.html">vm_girafe</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># custom tooltips</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">vm</span>, interactive <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>         tooltip <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Technology"</span>, <span class="st">"Healthcare"</span>, <span class="st">"Energy"</span>, <span class="st">"Finance"</span>, <span class="st">"Retail"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/vm_girafe.html">vm_girafe</a></span><span class="op">(</span>width_svg <span class="op">=</span> <span class="fl">6</span>, height_svg <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

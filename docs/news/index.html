@@ -62,6 +62,12 @@
 <div class="section level3">
 <h3 id="improvements-0-2-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-0"></a></h3>
 <ul><li>
+<strong>Okabe-Ito is the default palette.</strong> <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>, <code><a href="../reference/ggvmap.html">ggvmap()</a></code> and <code><a href="../reference/vm_add_ring.html">vm_add_ring()</a></code> default to the colourblind-safe Okabe-Ito palette (new exported <code><a href="../reference/okabe_ito.html">okabe_ito()</a></code>). Qualitative palettes are <em>recycled</em> (not interpolated) when there are more cells than colours, so every cell keeps a true palette colour.</li>
+<li>
+<code><a href="../reference/vm_add_flags.html">vm_add_flags()</a></code> gains a <code>method</code> argument: <code>"geom_flag"</code> (default) draws flags straight from ISO codes via <code><a href="https://rdrr.io/pkg/ggimage/man/geom_flag.html" class="external-link">ggimage::geom_flag()</a></code>, while <code>"url"</code> keeps the flagcdn.com + <code>geom_image()</code> path with offline <code>cache = TRUE</code>.</li>
+<li>
+<strong>Interactive plots.</strong> <code>autoplot(interactive = TRUE)</code> (and <code>ggvmap(interactive = TRUE)</code>) makes the cells hoverable with tooltips via ; render the widget with the new <code><a href="../reference/vm_girafe.html">vm_girafe()</a></code>.</li>
+<li>
 <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> is group-aware: hierarchical maps default to filling by group and drawing heavier group boundaries; new <code>fill_by</code> (<code>"group"</code>, <code>"label"</code>, <code>"data_weight"</code>, <code>"none"</code>) and <code>legend</code> arguments; multi-colour palettes are interpolated.</li>
 <li>Clip constructors carry <code>"center"</code> / <code>"radius"</code> / <code>"shape"</code> metadata used by radial seeding and the ring.</li>
 <li>Plots built by <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> / <code><a href="../reference/ggvmap.html">ggvmap()</a></code> carry the <code>voronoi_map</code> object as a <code>"vm"</code> attribute, enabling the <code>|&gt;</code> annotation pipeline.</li>

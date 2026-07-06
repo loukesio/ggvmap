@@ -31,7 +31,8 @@ Suggests:
     png,
     ggimage,
     magick,
-    geomtextpath
+    geomtextpath,
+    ggiraph
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://github.com/loukesio/ggvmap

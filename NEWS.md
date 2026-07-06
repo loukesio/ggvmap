@@ -43,6 +43,17 @@
 
 ## Improvements
 
+* **Okabe-Ito is the default palette.** `autoplot()`, `ggvmap()` and
+  `vm_add_ring()` default to the colourblind-safe Okabe-Ito palette (new
+  exported `okabe_ito()`). Qualitative palettes are *recycled* (not
+  interpolated) when there are more cells than colours, so every cell keeps a
+  true palette colour.
+* `vm_add_flags()` gains a `method` argument: `"geom_flag"` (default) draws
+  flags straight from ISO codes via `ggimage::geom_flag()`, while `"url"` keeps
+  the flagcdn.com + `geom_image()` path with offline `cache = TRUE`.
+* **Interactive plots.** `autoplot(interactive = TRUE)` (and
+  `ggvmap(interactive = TRUE)`) makes the cells hoverable with tooltips via
+  \pkg{ggiraph}; render the widget with the new `vm_girafe()`.
 * `autoplot()` is group-aware: hierarchical maps default to filling by group
   and drawing heavier group boundaries; new `fill_by` (`"group"`, `"label"`,
   `"data_weight"`, `"none"`) and `legend` arguments; multi-colour palettes are

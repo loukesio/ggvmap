@@ -66,8 +66,11 @@ from the plot and returns a new plot, so they chain naturally.
 ## Flags and value labels
 
 [`vm_add_flags()`](https://loukesio.github.io/ggvmap/reference/vm_add_flags.md)
-resolves country names (English or German) to national flags from
-[flagcdn.com](https://flagcdn.com), and
+resolves country names (English or German) to national flags — by
+default via
+[`ggimage::geom_flag()`](https://rdrr.io/pkg/ggimage/man/geom_flag.html)
+(`method = "geom_flag"`), or from [flagcdn.com](https://flagcdn.com)
+with `method = "url"` (which also supports an offline `cache = TRUE`).
 [`vm_add_labels()`](https://loukesio.github.io/ggvmap/reference/vm_add_labels.md)
 prints a value under each name — the merchant-fleet infographic style.
 (These examples need an internet connection and the **ggimage** package,
@@ -84,7 +87,7 @@ vm <- voronoi_map(
   seed    = 3
 )
 
-autoplot(vm, palette = "Set 2", label_size = 3.2, label_col = "grey15") |>
+autoplot(vm, label_size = 3.2, label_col = "grey15") |>   # Okabe-Ito by default
   vm_add_labels(
     value = stats::setNames(merchant_fleet$owned, merchant_fleet$country),
     size  = 2.6, nudge_y = -0.035
@@ -103,3 +106,28 @@ files <- flag_cache(iso, dir = "flags")          # writes flags/<iso>.png
 [`vm_add_images()`](https://loukesio.github.io/ggvmap/reference/vm_add_images.md)
 is the generic version — pass any vector of image paths or URLs (logos,
 icons, photos) instead of flags.
+
+## Interactive maps
+
+Set `interactive = TRUE` to make the cells hoverable (highlight +
+tooltip) via [ggiraph](https://davidgohel.github.io/ggiraph/), then
+render the widget with
+[`vm_girafe()`](https://loukesio.github.io/ggvmap/reference/vm_girafe.md).
+It works in R Markdown / Quarto, Shiny and the RStudio viewer.
+
+``` r
+
+vm <- voronoi_map(
+  weights = c(30, 20, 50, 10, 40),
+  labels  = c("Tech", "Health", "Energy", "Finance", "Retail"),
+  clip    = clip_circle(), seed = 42
+)
+
+autoplot(vm, interactive = TRUE) |>
+  vm_girafe()
+
+# custom tooltips
+autoplot(vm, interactive = TRUE,
+         tooltip = c("Technology", "Healthcare", "Energy", "Finance", "Retail")) |>
+  vm_girafe(width_svg = 6, height_svg = 6)
+```
