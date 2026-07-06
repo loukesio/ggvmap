@@ -1,0 +1,22 @@
+# R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+.DS_Store
+
+# Build artifacts
+*.tar.gz
+*.Rcheck/
+..Rcheck/
+
+# Reference images: photos of a copyrighted print publication — kept locally,
+# not published.
+reference/
+
+# pkgdown leftovers (the built site in docs/ IS committed for GitHub Pages)
+/pkgdown/
+
+# Session / tooling
+.claude/

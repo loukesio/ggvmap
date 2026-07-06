@@ -1,0 +1,42 @@
+url: https://loukesio.github.io/ggvmap/
+
+template:
+  bootstrap: 5
+
+reference:
+  - title: Compute
+    desc: Build a Voronoi map (optionally hierarchical).
+    contents:
+      - voronoi_map
+      - ggvmap
+  - title: Plot
+    desc: Base-R and ggplot2 visualisation.
+    contents:
+      - autoplot.voronoi_map
+      - plot.voronoi_map
+      - vm_as_df
+      - vm_centroids
+  - title: Annotations
+    desc: Outer ring, flags, images and value labels.
+    contents:
+      - vm_add_ring
+      - vm_add_flags
+      - vm_add_images
+      - vm_add_labels
+      - country_to_iso
+      - flag_url
+      - flag_cache
+  - title: Boundary shapes
+    contents:
+      - clip_shapes
+      - regular_polygon
+  - title: Data
+    contents:
+      - world_exports
+      - merchant_fleet
+
+articles:
+  - title: Guides
+    contents:
+      - annotations
+      - validation
