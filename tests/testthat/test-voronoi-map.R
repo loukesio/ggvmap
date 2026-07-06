@@ -73,11 +73,27 @@ test_that("voronoi_map converges for small examples", {
 })
 
 test_that("voronoi_map works with different shapes", {
-  for (shape_fn in list(clip_square, clip_hexagon, clip_diamond, clip_circle)) {
-    vm <- voronoi_map(c(1, 2, 3), clip = shape_fn(), seed = 1)
+  fns <- list(clip_square, clip_hexagon, clip_diamond, clip_circle,
+              clip_triangle, clip_pentagon, clip_octagon,
+              clip_rectangle, clip_ellipse)
+  for (shape_fn in fns) {
+    clip <- shape_fn()
+    vm <- voronoi_map(c(1, 2, 3, 4), clip = clip, seed = 1)
     expect_s3_class(vm, "voronoi_map")
-    expect_length(vm$cells, 3)
+    expect_length(vm$cells, 4)
+    # cells tile the clip exactly
+    total <- sum(abs(vapply(vm$cells, polygon_area, numeric(1))))
+    expect_equal(total, abs(polygon_area(clip)), tolerance = 1e-6)
   }
+})
+
+test_that("new clip shapes are convex and have the expected areas", {
+  # rectangle area = width * height
+  expect_equal(abs(polygon_area(clip_rectangle(width = 1, height = 0.6))), 0.6,
+               tolerance = 1e-10)
+  # ellipse area approaches pi * a * b
+  el <- clip_ellipse(a = 0.5, b = 0.3, n = 512)
+  expect_equal(abs(polygon_area(el)), pi * 0.5 * 0.3, tolerance = 1e-3)
 })
 
 test_that("vm_as_df returns correct structure", {

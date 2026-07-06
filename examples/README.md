@@ -5,12 +5,16 @@ Rendered with `ggvmap`. Reproduce any of them with the package loaded
 
 ### Boundary shapes
 
-The same 7 weights on four convex boundaries.
+The same 7 weights on any convex boundary — `clip_square()`, `clip_hexagon()`,
+`clip_circle()`, `clip_diamond()`, `clip_triangle()`, `clip_pentagon()`,
+`clip_octagon()`, `clip_rectangle()`, `clip_ellipse()`, or any
+`regular_polygon(n)`.
 
-| | |
-|---|---|
-| ![Square](01_shape_square.png) | ![Hexagon](01_shape_hexagon.png) |
-| ![Circle](01_shape_circle.png) | ![Diamond](01_shape_diamond.png) |
+| | | |
+|---|---|---|
+| ![Square](01_shape_square.png) | ![Hexagon](01_shape_hexagon.png) | ![Circle](01_shape_circle.png) |
+| ![Diamond](01_shape_diamond.png) | ![Triangle](01_shape_triangle.png) | ![Pentagon](01_shape_pentagon.png) |
+| ![Octagon](01_shape_octagon.png) | ![Rectangle](01_shape_rectangle.png) | ![Ellipse](01_shape_ellipse.png) |
 
 ### Fill by value
 

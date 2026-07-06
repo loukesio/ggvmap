@@ -110,11 +110,19 @@ The outer boundary can be any convex polygon:
 
 ```r
 clip_square()             # unit square
+clip_rectangle(1, 0.6)    # non-square rectangle
 clip_hexagon()            # regular hexagon
 clip_diamond()            # diamond (rotated square)
+clip_triangle()           # equilateral triangle
+clip_pentagon()           # regular pentagon
+clip_octagon()            # regular octagon
 clip_circle(n = 64)       # circle approximation (64-gon)
-regular_polygon(n = 5)    # pentagon (or any n-gon)
+clip_ellipse(0.5, 0.32)   # ellipse
+regular_polygon(n = 5)    # any regular n-gon
 ```
+
+Any **convex** polygon works (the power-diagram clipping requires convexity, so
+star- or crescent-shaped boundaries are not supported).
 
 ## How it works
 

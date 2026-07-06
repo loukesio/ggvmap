@@ -1,0 +1,87 @@
+---
+title: "Interactive Voronoi maps"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Interactive Voronoi maps}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>",
+  message = FALSE, warning = FALSE,
+  fig.width = 6, fig.height = 6
+)
+run <- requireNamespace("ggiraph", quietly = TRUE)
+```
+
+```{r setup}
+library(ggvmap)
+```
+
+Set `interactive = TRUE` on `autoplot()` or `ggvmap()` to turn any Voronoi map
+into an interactive graphic powered by [ggiraph](https://davidgohel.github.io/ggiraph/):
+cells **highlight on hover** and show a **tooltip**. Render the result with
+`vm_girafe()`. Everything works in R Markdown / Quarto, Shiny and the RStudio
+viewer.
+
+## A basic interactive map
+
+Hover the cells — the tooltip shows the label and value.
+
+```{r basic, eval = run}
+vm <- voronoi_map(
+  weights = c(30, 20, 50, 10, 40, 15, 25),
+  labels  = c("Tech", "Health", "Energy", "Finance", "Retail", "Media", "Auto"),
+  clip    = clip_circle(), seed = 42
+)
+
+autoplot(vm, interactive = TRUE) |>
+  vm_girafe(width_svg = 6, height_svg = 6)
+```
+
+## Custom tooltips
+
+Pass `tooltip =` (length-`n`, named by label, or length 1) for your own hover
+text — HTML is supported.
+
+```{r tooltips, eval = run}
+tips <- paste0("<b>", vm$sites$label, "</b><br>", vm$sites$data_weight, "% share")
+
+autoplot(vm, interactive = TRUE, tooltip = tips) |>
+  vm_girafe(width_svg = 6, height_svg = 6)
+```
+
+## Hierarchical map, interactive
+
+Grouped layouts are interactive too; the default tooltip includes the group.
+
+```{r hier, eval = run}
+data(world_exports)
+
+vmh <- voronoi_map(
+  weights = world_exports$exports,
+  labels  = world_exports$country,
+  group   = as.character(world_exports$income_group),
+  clip    = clip_circle(), seed = 1, max_iter = 80
+)
+
+autoplot(vmh, interactive = TRUE, label_size = 2) |>
+  vm_girafe(width_svg = 6.5, height_svg = 6.5)
+```
+
+## Notes
+
+* `vm_girafe()` accepts `width_svg` / `height_svg` (inches), a `hover_css`
+  string, and extra `ggiraph::opts_*()` via `opts =`.
+* The static annotation layers (`vm_add_ring()`, `vm_add_flags()`,
+  `vm_add_labels()`) render inside the interactive canvas as well — combine them
+  before calling `vm_girafe()`.
+* Saved with `htmlwidgets::saveWidget()`, an interactive map is a single
+  self-contained `.html` file you can share.
+
+```{r save, eval = FALSE}
+g <- autoplot(vm, interactive = TRUE) |> vm_girafe()
+htmlwidgets::saveWidget(g, "voronoi.html", selfcontained = TRUE)
+```

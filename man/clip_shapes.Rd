@@ -6,6 +6,9 @@
 \alias{clip_hexagon}
 \alias{clip_circle}
 \alias{clip_diamond}
+\alias{clip_triangle}
+\alias{clip_pentagon}
+\alias{clip_octagon}
 \title{Generate common clipping shapes}
 \usage{
 clip_square(cx = 0.5, cy = 0.5, r = 0.5)
@@ -15,6 +18,12 @@ clip_hexagon(cx = 0.5, cy = 0.5, r = 0.5)
 clip_circle(cx = 0.5, cy = 0.5, r = 0.5, n = 64)
 
 clip_diamond(cx = 0.5, cy = 0.5, r = 0.5)
+
+clip_triangle(cx = 0.5, cy = 0.5, r = 0.5)
+
+clip_pentagon(cx = 0.5, cy = 0.5, r = 0.5)
+
+clip_octagon(cx = 0.5, cy = 0.5, r = 0.5)
 }
 \arguments{
 \item{cx, cy}{Centre coordinates.  Default \code{0.5}.}

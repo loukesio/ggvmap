@@ -179,3 +179,58 @@ clip_circle <- function(cx = 0.5, cy = 0.5, r = 0.5, n = 64) {
 clip_diamond <- function(cx = 0.5, cy = 0.5, r = 0.5) {
   regular_polygon(4, cx, cy, r)
 }
+
+#' @rdname clip_shapes
+#' @export
+clip_triangle <- function(cx = 0.5, cy = 0.5, r = 0.5) {
+  regular_polygon(3, cx, cy, r)
+}
+
+#' @rdname clip_shapes
+#' @export
+clip_pentagon <- function(cx = 0.5, cy = 0.5, r = 0.5) {
+  regular_polygon(5, cx, cy, r)
+}
+
+#' @rdname clip_shapes
+#' @export
+clip_octagon <- function(cx = 0.5, cy = 0.5, r = 0.5) {
+  regular_polygon(8, cx, cy, r)
+}
+
+#' Rectangular clipping boundary
+#'
+#' A (possibly non-square) axis-aligned rectangle.  Convex, so it tiles
+#' correctly.
+#'
+#' @param cx,cy Centre coordinates.  Default `0.5`.
+#' @param width,height Full width and height.  Defaults `1` and `0.6`.
+#' @return A 2-column matrix suitable for the `clip` argument of [voronoi_map()].
+#' @examples
+#' plot(voronoi_map(c(3, 2, 5, 4), clip = clip_rectangle(), seed = 1))
+#' @export
+clip_rectangle <- function(cx = 0.5, cy = 0.5, width = 1, height = 0.6) {
+  hw <- width / 2; hh <- height / 2
+  m <- cbind(
+    c(cx - hw, cx + hw, cx + hw, cx - hw),
+    c(cy - hh, cy - hh, cy + hh, cy + hh)
+  )
+  .set_clip_meta(m, center = c(cx, cy), radius = max(hw, hh), shape = "rectangle")
+}
+
+#' Elliptical clipping boundary
+#'
+#' A convex ellipse approximated by an `n`-gon.
+#'
+#' @param cx,cy Centre coordinates.  Default `0.5`.
+#' @param a,b Semi-axis lengths (x and y radii).  Defaults `0.5` and `0.32`.
+#' @param n Number of vertices used to approximate the ellipse.  Default `72`.
+#' @return A 2-column matrix suitable for the `clip` argument of [voronoi_map()].
+#' @examples
+#' plot(voronoi_map(c(3, 2, 5, 4, 6), clip = clip_ellipse(), seed = 1))
+#' @export
+clip_ellipse <- function(cx = 0.5, cy = 0.5, a = 0.5, b = 0.32, n = 72) {
+  angles <- seq(0, 2 * pi, length.out = n + 1)[-(n + 1)] - pi / 2
+  m <- cbind(cx + a * cos(angles), cy + b * sin(angles))
+  .set_clip_meta(m, center = c(cx, cy), radius = max(a, b), shape = "ellipse")
+}
