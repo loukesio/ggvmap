@@ -20,7 +20,8 @@ vm_add_labels(
   cells = NULL,
   inside = TRUE,
   min_area = 0,
-  autoscale = FALSE
+  autoscale = FALSE,
+  family = NULL
 )
 }
 \arguments{
@@ -40,7 +41,9 @@ e.g. \code{scales::comma}.  Default: \code{\link[=format]{format()}} with \code{
 
 \item{size}{Text size.  Default \code{2.8}.}
 
-\item{col}{Text colour.  Default \code{"grey20"}.}
+\item{col}{Text colour: a single colour (default \code{"grey20"}), a length-\code{n}
+vector in cell order, or a vector named by cell label (cells not named
+keep the default).}
 
 \item{fontface}{Font face: a single value (default \code{"plain"}) applied to
 all labels, or a vector named by cell label (e.g.
@@ -62,6 +65,9 @@ threshold get no value label.  Default \code{0} (label every cell).}
 \item{autoscale}{Logical; shrink label text in small cells?  Each cell's
 text size becomes \code{size * pmin(1, sqrt(cell_area / median_area))},
 floored at 60\% of \code{size}.  Default \code{FALSE}.}
+
+\item{family}{Font family for the value labels, passed to the text layer.
+\code{NULL} (default) uses the ggplot2 default.}
 }
 \value{
 The ggplot with a value-label layer added.

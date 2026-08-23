@@ -93,3 +93,69 @@ test_that("palette = 'alger' resolves and contains no black", {
   vm <- voronoi_map(c(3, 2, 5), labels = c("a", "b", "c"), seed = 1)
   expect_s3_class(ggvmap(vm, palette = "alger"), "ggplot")
 })
+
+test_that("data(freshwater) loads with the documented shape", {
+  data(freshwater, envir = environment())
+  expect_equal(nrow(freshwater), 30)
+  expect_named(freshwater, c("country", "share", "region"))
+  expect_lt(abs(sum(freshwater$share) - 100), 0.5)
+  expect_setequal(unique(freshwater$region),
+                  c("LATAM", "Asia-Pacific", "North America",
+                    "Europe", "Africa", "Middle East"))
+})
+
+test_that("family reaches the text layers", {
+  vm <- voronoi_map(c(3, 2, 5), labels = c("a", "b", "c"), seed = 1)
+  p <- ggvmap(vm, family = "mono")
+  txt <- p$layers[[length(p$layers)]]
+  expect_equal(txt$aes_params$family, "mono")
+
+  p2 <- vm_add_labels(ggvmap(vm, show_labels = FALSE), family = "mono")
+  txt2 <- p2$layers[[length(p2$layers)]]
+  expect_equal(txt2$aes_params$family, "mono")
+
+  # NULL (default) leaves the ggplot2 default untouched
+  p3 <- ggvmap(vm)
+  expect_null(p3$layers[[length(p3$layers)]]$aes_params$family)
+})
+
+test_that("vm_add_ring style = 'arc' draws paths, not ring polygons", {
+  vm <- voronoi_map(c(5, 3, 8, 4, 6, 2),
+                    group = c("A", "A", "B", "B", "C", "C"),
+                    clip = clip_circle(), seed = 1)
+  p <- ggvmap(vm, show_labels = FALSE)
+  n0 <- length(p$layers)
+
+  arc <- vm_add_ring(p, style = "arc", curved = FALSE)
+  new_layers <- arc$layers[(n0 + 1):length(arc$layers)]
+  geoms <- vapply(new_layers, function(l) class(l$geom)[1], character(1))
+  expect_true(any(geoms == "GeomPath"))
+  expect_false(any(geoms == "GeomPolygon"))
+
+  band <- vm_add_ring(p, style = "band")
+  bgeoms <- vapply(band$layers[(n0 + 1):length(band$layers)],
+                   function(l) class(l$geom)[1], character(1))
+  expect_true(any(bgeoms == "GeomPolygon"))
+})
+
+test_that("arc values = TRUE appends percentage shares", {
+  vm <- voronoi_map(c(5, 3, 8, 4, 6, 2),
+                    group = c("A", "A", "B", "B", "C", "C"),
+                    clip = clip_circle(), seed = 1)
+  p <- vm_add_ring(ggvmap(vm, show_labels = FALSE),
+                   style = "arc", values = TRUE, curved = FALSE)
+  lab_layers <- Filter(function(l) "label" %in% names(l$data), p$layers)
+  labs <- unlist(lapply(lab_layers, function(l) l$data$label))
+  expect_true(all(grepl("%$", labs)))
+})
+
+test_that("per-cell label colours via named vectors", {
+  vm <- voronoi_map(c(3, 2, 5), labels = c("a", "b", "c"), seed = 1)
+  p <- ggvmap(vm, label_col = c(b = "red"))
+  txt <- p$layers[[length(p$layers)]]
+  expect_equal(unname(txt$aes_params$colour), c("white", "red", "white"))
+
+  p2 <- vm_add_labels(ggvmap(vm, show_labels = FALSE), col = c(a = "blue"))
+  txt2 <- p2$layers[[length(p2$layers)]]
+  expect_equal(unname(txt2$aes_params$colour), c("blue", "grey20", "grey20"))
+})

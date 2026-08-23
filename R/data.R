@@ -21,6 +21,30 @@
 #' ggvmap(vm, show_labels = FALSE, palette = "alger") |> vm_add_ring(palette = "alger")
 "world_exports"
 
+#' Global renewable freshwater resources 2022
+#'
+#' Share of the world's renewable internal freshwater resources for 25
+#' countries plus five "Rest of <region>" aggregates (30 rows, summing to
+#' ~100%).  This is the package's canonical demo dataset; see
+#' `examples/freshwater_tour.R` for a full tour.
+#'
+#' @format A data frame with 30 rows and 3 columns:
+#' \describe{
+#'   \item{country}{Country name or regional remainder (e.g. `"Rest of LATAM"`).}
+#'   \item{share}{Share of global renewable internal freshwater resources, in
+#'     percent (2022, rounded).}
+#'   \item{region}{Region: `"LATAM"`, `"Asia-Pacific"`, `"North America"`,
+#'     `"Europe"`, `"Africa"`, or `"Middle East"`.}
+#' }
+#' @source FAO Aquastat via World Bank, 2022 figures.
+#' @examples
+#' vm <- voronoi_map(freshwater$share,
+#'                   labels = freshwater$country,
+#'                   group  = freshwater$region,
+#'                   clip   = clip_circle(), seed = 5)
+#' ggvmap(vm, palette = "alger", autoscale = TRUE)
+"freshwater"
+
 #' Top merchant fleets 2021
 #'
 #' Merchant fleet sizes for 15 countries in 2021: ships on the national

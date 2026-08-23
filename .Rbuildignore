@@ -19,3 +19,5 @@
 ^\.claude$
 ^HANDOFF_ggvmap\.md$
 ^ggvmap_improvements\.patch$
+^HANDOFF_MASTER\.md$
+^paper$

@@ -12,13 +12,19 @@ vm_add_ring(
   labels = TRUE,
   curved = NULL,
   palette = "Okabe-Ito",
+  style = c("band", "arc"),
   width = 0.1,
   gap = 0.02,
   pad = 1,
-  label_col = "white",
+  label_col = NULL,
   label_size = 3.2,
   border_col = "white",
-  border_size = 0.4
+  border_size = 0.4,
+  family = NULL,
+  linewidth = 0.5,
+  linetype = "solid",
+  offset = 0.06,
+  values = FALSE
 )
 }
 \arguments{
@@ -41,7 +47,12 @@ uses straight tangential text; \code{TRUE}/\code{FALSE} force the choice.}
 
 \item{palette}{Palette used when \code{colors} is \code{NULL}.  Default \code{"Okabe-Ito"}.}
 
-\item{width}{Ring thickness as a fraction of the map radius.  Default \code{0.10}.}
+\item{style}{Ring style: \code{"band"} (default) draws the filled arc segments;
+\code{"arc"} draws a thin line per group with the group label sitting in a gap
+broken into the arc at the segment midpoint (the classic infographic
+look, e.g. "NORTH AMERICA 13\%" with a middle-dot separator).}
+
+\item{width}{Band thickness as a fraction of the map radius (\code{style = "band"} only).  Default \code{0.10}.}
 
 \item{gap}{Radial gap between the map and the ring, as a fraction of the
 radius.  Default \code{0.02}.}
@@ -49,13 +60,30 @@ radius.  Default \code{0.02}.}
 \item{pad}{Angular padding trimmed from each segment end, in degrees.
 Default \code{1}.}
 
-\item{label_col}{Ring label colour.  Default \code{"white"}.}
+\item{label_col}{Ring label colour.  \code{NULL} (default) means \code{"white"} for
+\code{style = "band"} and each arc's own colour for \code{style = "arc"}.}
 
 \item{label_size}{Ring label size.  Default \code{3.2}.}
 
-\item{border_col}{Segment border colour.  Default \code{"white"}.}
+\item{border_col}{Segment border colour (\code{style = "band"}).  Default \code{"white"}.}
 
-\item{border_size}{Segment border width.  Default \code{0.4}.}
+\item{border_size}{Segment border width (\code{style = "band"}).  Default \code{0.4}.}
+
+\item{family}{Font family for the ring labels.  \code{NULL} (default) uses the
+ggplot2 default.}
+
+\item{linewidth}{Arc line width (\code{style = "arc"}).  Default \code{0.5}.}
+
+\item{linetype}{Arc line type (\code{style = "arc"}), e.g. \code{"dashed"}.
+Default \code{"solid"}.}
+
+\item{offset}{Distance of the arc and its label from the map edge, as a
+fraction of the radius (\code{style = "arc"}; \code{width} is ignored).
+Default \code{0.06}.}
+
+\item{values}{Append each group's share to its label (\code{style = "arc"}),
+e.g. "LATAM 32\%" with a middle-dot separator?  Computed from the group
+weights.  Default \code{FALSE}.}
 }
 \value{
 The ggplot with ring layers added.
@@ -72,4 +100,6 @@ vm <- voronoi_map(c(5, 3, 8, 4, 6, 2),
                   group = c("A", "A", "B", "B", "C", "C"),
                   clip = clip_circle(), seed = 1)
 ggvmap(vm, palette = "alger") |> vm_add_ring(palette = "alger")
+ggvmap(vm, palette = "alger") |>
+  vm_add_ring(style = "arc", palette = "alger", values = TRUE)
 }

@@ -134,6 +134,17 @@ vm_centroids <- function(vm) {
   rep_len(fontface, length(labs))
 }
 
+#' Resolve a label colour spec to one colour per cell
+#'
+#' Accepts a scalar, a length-`n` vector (cell order), or a vector named by
+#' cell label; cells not named fall back to `default`.
+#' @noRd
+.resolve_label_col <- function(vm, col, default) {
+  out <- .align_to_cells(vm, col, "label_col")
+  out[is.na(out)] <- default
+  out
+}
+
 #' Per-cell text sizes, optionally shrunk for small cells
 #'
 #' With `autoscale = TRUE` each cell's size is
@@ -172,7 +183,9 @@ vm_centroids <- function(vm) {
 #' @param show_labels Logical; add centroid labels?  Default `TRUE`.
 #' @param label_cells Optional character vector of cell labels to annotate;
 #'   others get no name label.  Default `NULL` (all cells).
-#' @param label_col Label colour.  Default `"white"`.
+#' @param label_col Label colour: a single colour (default `"white"`), a
+#'   length-`n` vector in cell order, or a vector named by cell label (cells
+#'   not named keep the default) -- useful for light text on dark cells.
 #' @param label_size Label size.  Default `3`.
 #' @param fontface Font face for the name labels: a single value (e.g.
 #'   `"bold"`, the default) applied to all labels, or a vector named by cell
@@ -183,6 +196,8 @@ vm_centroids <- function(vm) {
 #' @param autoscale Logical; shrink label text in small cells?  Each cell's
 #'   text size becomes `label_size * pmin(1, sqrt(cell_area / median_area))`,
 #'   floored at 60% of `label_size`.  Default `FALSE`.
+#' @param family Font family for the name labels, passed to the text layer.
+#'   `NULL` (default) uses the ggplot2 default.
 #' @param palette Character vector of colours, `"Okabe-Ito"` (the default,
 #'   colourblind-safe; see [okabe_ito()]), a built-in named palette such as
 #'   `"alger"`, or a named palette from [grDevices::hcl.colors()].
@@ -223,6 +238,7 @@ ggvmap <- function(
   fontface          = "bold",
   min_area          = 0,
   autoscale         = FALSE,
+  family            = NULL,
   palette           = "Okabe-Ito",
   legend            = FALSE,
   interactive       = FALSE,
@@ -352,17 +368,19 @@ ggvmap <- function(
     lab_df$size      <- .label_sizes(object, label_size, autoscale)
     lab_df$fontface  <- .resolve_fontface(object, fontface)
     lab_df$area_frac <- .area_fractions(object)
+    lab_df$col       <- .resolve_label_col(object, label_col, "white")
     if (!is.null(label_cells)) lab_df <- lab_df[lab_df$label %in% label_cells, , drop = FALSE]
     if (min_area > 0) lab_df <- lab_df[lab_df$area_frac >= min_area, , drop = FALSE]
     if (nrow(lab_df)) {
-      p <- p + ggplot2::geom_text(
-        data    = lab_df,
-        mapping = ggplot2::aes(x = .data$cx, y = .data$cy, label = .data$label),
-        inherit.aes = FALSE,
-        colour  = label_col,
-        size    = lab_df$size,
-        fontface = lab_df$fontface
-      )
+      p <- p + do.call(ggplot2::geom_text, .add_family(
+        list(
+          data    = lab_df,
+          mapping = ggplot2::aes(x = .data$cx, y = .data$cy, label = .data$label),
+          inherit.aes = FALSE,
+          colour  = lab_df$col,
+          size    = lab_df$size,
+          fontface = lab_df$fontface
+        ), family))
     }
   }
   attr(p, "vm") <- object

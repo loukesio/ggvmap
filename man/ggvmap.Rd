@@ -18,6 +18,7 @@ ggvmap(
   fontface = "bold",
   min_area = 0,
   autoscale = FALSE,
+  family = NULL,
   palette = "Okabe-Ito",
   legend = FALSE,
   interactive = FALSE,
@@ -54,7 +55,9 @@ own colour (e.g. \code{c("LATAM" = "#333333")} outlines one region only).}
 \item{label_cells}{Optional character vector of cell labels to annotate;
 others get no name label.  Default \code{NULL} (all cells).}
 
-\item{label_col}{Label colour.  Default \code{"white"}.}
+\item{label_col}{Label colour: a single colour (default \code{"white"}), a
+length-\code{n} vector in cell order, or a vector named by cell label (cells
+not named keep the default) -- useful for light text on dark cells.}
 
 \item{label_size}{Label size.  Default \code{3}.}
 
@@ -69,6 +72,9 @@ threshold get no name label.  Default \code{0} (label every cell).}
 \item{autoscale}{Logical; shrink label text in small cells?  Each cell's
 text size becomes \code{label_size * pmin(1, sqrt(cell_area / median_area))},
 floored at 60\% of \code{label_size}.  Default \code{FALSE}.}
+
+\item{family}{Font family for the name labels, passed to the text layer.
+\code{NULL} (default) uses the ggplot2 default.}
 
 \item{palette}{Character vector of colours, \code{"Okabe-Ito"} (the default,
 colourblind-safe; see \code{\link[=okabe_ito]{okabe_ito()}}), a built-in named palette such as

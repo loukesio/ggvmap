@@ -50,15 +50,32 @@
 #'   `NULL` (default) curves them when that package is installed and otherwise
 #'   uses straight tangential text; `TRUE`/`FALSE` force the choice.
 #' @param palette Palette used when `colors` is `NULL`.  Default `"Okabe-Ito"`.
-#' @param width Ring thickness as a fraction of the map radius.  Default `0.10`.
+#' @param style Ring style: `"band"` (default) draws the filled arc segments;
+#'   `"arc"` draws a thin line per group with the group label sitting in a gap
+#'   broken into the arc at the segment midpoint (the classic infographic
+#'   look, e.g. "NORTH AMERICA 13%" with a middle-dot separator).
+#' @param width Band thickness as a fraction of the map radius (`style =
+#'   "band"` only).  Default `0.10`.
 #' @param gap Radial gap between the map and the ring, as a fraction of the
 #'   radius.  Default `0.02`.
 #' @param pad Angular padding trimmed from each segment end, in degrees.
 #'   Default `1`.
-#' @param label_col Ring label colour.  Default `"white"`.
+#' @param label_col Ring label colour.  `NULL` (default) means `"white"` for
+#'   `style = "band"` and each arc's own colour for `style = "arc"`.
 #' @param label_size Ring label size.  Default `3.2`.
-#' @param border_col Segment border colour.  Default `"white"`.
-#' @param border_size Segment border width.  Default `0.4`.
+#' @param border_col Segment border colour (`style = "band"`).  Default `"white"`.
+#' @param border_size Segment border width (`style = "band"`).  Default `0.4`.
+#' @param family Font family for the ring labels.  `NULL` (default) uses the
+#'   ggplot2 default.
+#' @param linewidth Arc line width (`style = "arc"`).  Default `0.5`.
+#' @param linetype Arc line type (`style = "arc"`), e.g. `"dashed"`.
+#'   Default `"solid"`.
+#' @param offset Distance of the arc and its label from the map edge, as a
+#'   fraction of the radius (`style = "arc"`; `width` is ignored).
+#'   Default `0.06`.
+#' @param values Append each group's share to its label (`style = "arc"`),
+#'   e.g. "LATAM 32%" with a middle-dot separator?  Computed from the group
+#'   weights.  Default `FALSE`.
 #'
 #' @return The ggplot with ring layers added.
 #' @examples
@@ -66,6 +83,8 @@
 #'                   group = c("A", "A", "B", "B", "C", "C"),
 #'                   clip = clip_circle(), seed = 1)
 #' ggvmap(vm, palette = "alger") |> vm_add_ring(palette = "alger")
+#' ggvmap(vm, palette = "alger") |>
+#'   vm_add_ring(style = "arc", palette = "alger", values = TRUE)
 #' @export
 vm_add_ring <- function(
   p,
@@ -75,14 +94,21 @@ vm_add_ring <- function(
   labels      = TRUE,
   curved      = NULL,
   palette     = "Okabe-Ito",
+  style       = c("band", "arc"),
   width       = 0.10,
   gap         = 0.02,
   pad         = 1,
-  label_col   = "white",
+  label_col   = NULL,
   label_size  = 3.2,
   border_col  = "white",
-  border_size = 0.4
+  border_size = 0.4,
+  family      = NULL,
+  linewidth   = 0.5,
+  linetype    = "solid",
+  offset      = 0.06,
+  values      = FALSE
 ) {
+  style <- match.arg(style)
   vm   <- .vm_of(p, vm)
   meta <- .clip_meta(vm$clip)
   if (!meta$circular) {
@@ -96,6 +122,13 @@ vm_add_ring <- function(
   ri <- r * (1 + gap)
   ro <- r * (1 + gap + width)
   pad_rad <- pad * pi / 180
+
+  if (style == "arc") {
+    return(.vm_ring_arc(p, vm, seg, meta, colors, labels, curved, palette,
+                        gap, pad_rad, label_col, label_size, family,
+                        linewidth, linetype, offset, values))
+  }
+  if (is.null(label_col)) label_col <- "white"
 
   # Match autoplot's group -> colour assignment (level order = cell order) so
   # the ring segments share the colours of the cells they wrap.
@@ -148,15 +181,14 @@ vm_add_ring <- function(
         data.frame(seg = k, x = cx + rm * cos(ang), y = cy + rm * sin(ang),
                    label = lab_txt[k])
       }))
-      layers <- c(layers, list(
-        geomtextpath::geom_textpath(
+      layers <- c(layers, list(do.call(geomtextpath::geom_textpath, .add_family(
+        list(
           data = path_df,
           mapping = ggplot2::aes(x = .data$x, y = .data$y,
                                  label = .data$label, group = .data$seg),
           inherit.aes = FALSE, colour = label_col, size = label_size,
           fontface = "bold", text_only = TRUE, upright = TRUE
-        )
-      ))
+        ), family))))
     } else {
       mid <- ((seg$start + seg$end) / 2) %% (2 * pi)  # position angle [0, 2*pi)
       # Tangent to the ring; flip any that would read upside down.
@@ -167,15 +199,14 @@ vm_add_ring <- function(
         x = cx + rm * cos(mid), y = cy + rm * sin(mid),
         label = lab_txt, angle = ang_txt
       )
-      layers <- c(layers, list(
-        ggplot2::geom_text(
+      layers <- c(layers, list(do.call(ggplot2::geom_text, .add_family(
+        list(
           data = lab_df,
           mapping = ggplot2::aes(x = .data$x, y = .data$y,
                                  label = .data$label, angle = .data$angle),
           inherit.aes = FALSE, colour = label_col, size = label_size,
           fontface = "bold"
-        )
-      ))
+        ), family))))
     }
   }
 
@@ -185,6 +216,136 @@ vm_add_ring <- function(
     ggplot2::expand_limits(x = c(cx - lim, cx + lim), y = c(cy - lim, cy + lim))
   ))
 
+  .vm_plus(p, layers, vm)
+}
+
+#' Append `family` to a geom argument list only when it is set
+#' @noRd
+.add_family <- function(args, family) {
+  if (!is.null(family)) args$family <- family
+  args
+}
+
+#' The "arc" ring style: a thin line per group, broken at the segment
+#' midpoint by a gap holding the group label
+#' @noRd
+.vm_ring_arc <- function(p, vm, seg, meta, colors, labels, curved, palette,
+                         gap, pad_rad, label_col, label_size, family,
+                         linewidth, linetype, offset, values) {
+  cx <- meta$center[1]; cy <- meta$center[2]; r <- meta$radius
+  ra <- r * (1 + gap + offset)
+
+  glevels <- if (isTRUE(vm$hierarchical)) vm$groups$sites$label else unique(vm$sites$label)
+  cols <- .resolve_group_colors(colors, glevels, palette)
+
+  # Group shares for `values = TRUE`
+  gw <- if (isTRUE(vm$hierarchical)) {
+    stats::setNames(vm$groups$sites$data_weight, vm$groups$sites$label)
+  } else {
+    stats::setNames(vm$sites$data_weight, vm$sites$label)
+  }
+  shares <- 100 * gw / sum(gw)
+
+  # Display labels
+  lab_txt <- if (is.character(labels)) labels[seg$group] else seg$group
+  lab_txt[is.na(lab_txt)] <- seg$group[is.na(lab_txt)]
+  if (isTRUE(values)) {
+    lab_txt <- paste0(lab_txt, " \u00b7 ", round(shares[seg$group]), "%")
+  }
+  draw_labels <- !isFALSE(labels)
+
+  has_gtp <- requireNamespace("geomtextpath", quietly = TRUE)
+  use_curved <- if (is.null(curved)) has_gtp else isTRUE(curved)
+  if (use_curved && !has_gtp) {
+    warning("curved ring labels need the 'geomtextpath' package; ",
+            "falling back to straight labels. install.packages('geomtextpath')",
+            call. = FALSE)
+    use_curved <- FALSE
+  }
+
+  arc_path <- function(a0, a1, id) {
+    if (a1 <= a0) return(NULL)
+    npt <- max(2L, ceiling((a1 - a0) / (2 * pi) * 256))
+    ang <- seq(a0, a1, length.out = npt)
+    data.frame(id = id, x = cx + ra * cos(ang), y = cy + ra * sin(ang))
+  }
+
+  layers <- list()
+  lab_rows <- list()
+  for (k in seq_len(nrow(seg))) {
+    a0 <- seg$start[k] + pad_rad
+    a1 <- seg$end[k]   - pad_rad
+    if (a1 <= a0) { a0 <- seg$start[k]; a1 <- seg$end[k] }
+    mid <- (a0 + a1) / 2
+    col_k <- unname(cols[seg$group[k]])
+
+    if (draw_labels) {
+      # Gap for the label: ~0.018 rad per character, clamped to 80% of the
+      # segment; the label sits in it, on the arc's own radius.
+      gap_ang <- min(0.018 * nchar(lab_txt[k]), 0.8 * (a1 - a0))
+      pieces <- rbind(arc_path(a0, mid - gap_ang / 2, paste0(k, "a")),
+                      arc_path(mid + gap_ang / 2, a1, paste0(k, "b")))
+      lab_rows[[k]] <- data.frame(seg = k, group = seg$group[k], mid = mid,
+                                  a0 = mid - gap_ang / 2, a1 = mid + gap_ang / 2,
+                                  label = lab_txt[k], col = col_k,
+                                  stringsAsFactors = FALSE)
+    } else {
+      pieces <- arc_path(a0, a1, paste0(k, "a"))
+    }
+    if (!is.null(pieces) && nrow(pieces)) {
+      layers <- c(layers, list(ggplot2::geom_path(
+        data = pieces,
+        mapping = ggplot2::aes(x = .data$x, y = .data$y, group = .data$id),
+        inherit.aes = FALSE, colour = col_k,
+        linewidth = linewidth, linetype = linetype
+      )))
+    }
+  }
+
+  if (draw_labels) {
+    lab <- do.call(rbind, lab_rows)
+    lab$col_final <- if (is.null(label_col)) lab$col else rep_len(label_col, nrow(lab))
+    if (use_curved) {
+      path_df <- do.call(rbind, lapply(seq_len(nrow(lab)), function(k) {
+        ang <- seq(lab$a0[k], lab$a1[k], length.out = 64)
+        data.frame(seg = lab$seg[k], x = cx + ra * cos(ang), y = cy + ra * sin(ang),
+                   label = lab$label[k], col_final = lab$col_final[k])
+      }))
+      layers <- c(layers, list(do.call(geomtextpath::geom_textpath, .add_family(
+        list(
+          data = path_df,
+          mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                 label = .data$label, group = .data$seg,
+                                 colour = .data$col_final),
+          inherit.aes = FALSE, size = label_size,
+          fontface = "bold", text_only = TRUE, upright = TRUE,
+          show.legend = FALSE
+        ), family)), ggplot2::scale_colour_identity()))
+    } else {
+      mid <- lab$mid %% (2 * pi)
+      ang_txt <- (mid * 180 / pi - 90) %% 360
+      flip <- ang_txt > 90 & ang_txt < 270
+      ang_txt[flip] <- (ang_txt[flip] + 180) %% 360
+      lab_df <- data.frame(
+        x = cx + ra * cos(mid), y = cy + ra * sin(mid),
+        label = lab$label, angle = ang_txt, col_final = lab$col_final
+      )
+      layers <- c(layers, list(do.call(ggplot2::geom_text, .add_family(
+        list(
+          data = lab_df,
+          mapping = ggplot2::aes(x = .data$x, y = .data$y,
+                                 label = .data$label, angle = .data$angle,
+                                 colour = .data$col_final),
+          inherit.aes = FALSE, size = label_size, fontface = "bold",
+          show.legend = FALSE
+        ), family)), ggplot2::scale_colour_identity()))
+    }
+  }
+
+  lim <- ra * 1.10
+  layers <- c(layers, list(
+    ggplot2::expand_limits(x = c(cx - lim, cx + lim), y = c(cy - lim, cy + lim))
+  ))
   .vm_plus(p, layers, vm)
 }
 
@@ -414,7 +575,9 @@ vm_add_flags <- function(p, vm = NULL, country = NULL, iso = NULL,
 #'   e.g. `scales::comma`.  Default: [format()] with `big.mark = ","`.
 #' @param prefix,suffix Strings wrapped around the formatted value.
 #' @param size Text size.  Default `2.8`.
-#' @param col Text colour.  Default `"grey20"`.
+#' @param col Text colour: a single colour (default `"grey20"`), a length-`n`
+#'   vector in cell order, or a vector named by cell label (cells not named
+#'   keep the default).
 #' @param fontface Font face: a single value (default `"plain"`) applied to
 #'   all labels, or a vector named by cell label (e.g.
 #'   `c(Brazil = "bold")`) styling only those cells while the rest stay
@@ -430,13 +593,16 @@ vm_add_flags <- function(p, vm = NULL, country = NULL, iso = NULL,
 #' @param autoscale Logical; shrink label text in small cells?  Each cell's
 #'   text size becomes `size * pmin(1, sqrt(cell_area / median_area))`,
 #'   floored at 60% of `size`.  Default `FALSE`.
+#' @param family Font family for the value labels, passed to the text layer.
+#'   `NULL` (default) uses the ggplot2 default.
 #' @return The ggplot with a value-label layer added.
 #' @export
 vm_add_labels <- function(p, vm = NULL, value = NULL, secondary = NULL,
                           fmt = NULL, prefix = "", suffix = "",
                           size = 2.8, col = "grey20", fontface = "plain",
                           nudge_x = 0, nudge_y = NULL, cells = NULL,
-                          inside = TRUE, min_area = 0, autoscale = FALSE) {
+                          inside = TRUE, min_area = 0, autoscale = FALSE,
+                          family = NULL) {
   vm  <- .vm_of(p, vm)
   if (is.null(value)) value <- vm$sites$data_weight
   value <- .align_to_cells(vm, value, "value")
@@ -482,15 +648,17 @@ vm_add_labels <- function(p, vm = NULL, value = NULL, secondary = NULL,
                    size = .label_sizes(vm, size, autoscale),
                    fontface = .resolve_fontface(vm, fontface),
                    area_frac = .area_fractions(vm),
+                   col = .resolve_label_col(vm, col, "grey20"),
                    stringsAsFactors = FALSE)
   if (!is.null(cells)) df <- df[df$cell_label %in% cells, , drop = FALSE]
   if (min_area > 0) df <- df[df$area_frac >= min_area, , drop = FALSE]
   if (nrow(df) == 0L) return(p)
 
-  layer <- ggplot2::geom_text(
-    data = df,
-    mapping = ggplot2::aes(x = .data$x, y = .data$y, label = .data$label),
-    inherit.aes = FALSE, colour = col, size = df$size, fontface = df$fontface
-  )
+  layer <- do.call(ggplot2::geom_text, .add_family(
+    list(
+      data = df,
+      mapping = ggplot2::aes(x = .data$x, y = .data$y, label = .data$label),
+      inherit.aes = FALSE, colour = df$col, size = df$size, fontface = df$fontface
+    ), family))
   .vm_plus(p, layer, vm)
 }
