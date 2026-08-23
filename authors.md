@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/loukesio/ggvmap/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/loukesio/ggvmap/blob/v0.2.0/DESCRIPTION)
 
 Theodosiou L (2026). *ggvmap: Voronoi Map Treemaps for ggplot2*. R
 package version 0.2.0, <https://github.com/loukesio/ggvmap>.
