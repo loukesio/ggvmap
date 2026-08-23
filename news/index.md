@@ -1,5 +1,52 @@
 # Changelog
 
+## ggvmap (development version)
+
+### New features
+
+- **`data(freshwater)`** — share of global renewable internal freshwater
+  resources by country (2022, FAO Aquastat via World Bank): 30 rows of
+  `country`, `share`, `region`. Now the canonical demo dataset; see
+  `examples/freshwater_tour.R`.
+
+- **`family` argument** on
+  [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md) /
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html),
+  [`vm_add_labels()`](https://loukesio.github.io/ggvmap/reference/vm_add_labels.md)
+  and
+  [`vm_add_ring()`](https://loukesio.github.io/ggvmap/reference/vm_add_ring.md)
+  — sets the font family of the text layers directly (no more
+  `update_geom_defaults()` workaround). Default `NULL` keeps the ggplot2
+  default.
+
+- **Arc ring style.** `vm_add_ring(style = "arc")` draws a thin line per
+  group instead of the filled band, with the group label sitting in a
+  gap broken into the arc at the segment midpoint — the classic
+  infographic look. New arc-specific arguments: `linewidth`, `linetype`,
+  `offset` (distance from the map edge; `width` is ignored), and
+  `values = TRUE` to append each group’s share (e.g. “LATAM 32%” with a
+  middle-dot separator). `label_col = NULL` (the new default) means
+  white labels on the band and arc-coloured labels on the arc;
+  `style = "band"` output is unchanged.
+
+- **Per-cell label colours.** `label_col` (in
+  [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md))
+  and `col` (in
+  [`vm_add_labels()`](https://loukesio.github.io/ggvmap/reference/vm_add_labels.md))
+  now also accept a length-`n` vector or a vector named by cell label;
+  unnamed cells keep the default. Handy for light text on dark cells.
+
+- **Softer hover highlight.** The
+  [`vm_girafe()`](https://loukesio.github.io/ggvmap/reference/vm_girafe.md)
+  default `hover_css` now fades the hovered cell and thickens its white
+  outline instead of drawing a dark border; pass your own `hover_css` to
+  restore the old effect.
+
+- [`vm_add_ring()`](https://loukesio.github.io/ggvmap/reference/vm_add_ring.md)
+  gains `label_fontface` (default `"bold"`, the previous hard-coded
+  value), completing font control of the ring labels alongside `family`,
+  `label_size` and `label_col`.
+
 ## ggvmap 0.3.0
 
 ### API change

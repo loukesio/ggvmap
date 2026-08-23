@@ -17,13 +17,20 @@ vm_add_ring(
   labels = TRUE,
   curved = NULL,
   palette = "Okabe-Ito",
+  style = c("band", "arc"),
   width = 0.1,
   gap = 0.02,
   pad = 1,
-  label_col = "white",
+  label_col = NULL,
   label_size = 3.2,
+  label_fontface = "bold",
   border_col = "white",
-  border_size = 0.4
+  border_size = 0.4,
+  family = NULL,
+  linewidth = 0.5,
+  linetype = "solid",
+  offset = 0.06,
+  values = FALSE
 )
 ```
 
@@ -47,8 +54,13 @@ vm_add_ring(
 
 - colors:
 
-  Fill colours for the segments: a vector (recycled/interpolated) or a
-  named vector keyed by group. Defaults to the `palette`.
+  Colours for the ring segments (band fills or arc lines): `NULL`
+  (default) uses the `palette`, so each group matches its cells; a
+  single colour (e.g. `"#333333"`) colours every segment the same; a
+  named vector keyed by group (e.g. `c(LATAM = "#333333")` with the
+  other groups named too) sets each group individually; an unnamed
+  vector is interpolated across the groups. With `style = "arc"`, the
+  labels follow the arc colours unless `label_col` is set.
 
 - labels:
 
@@ -65,9 +77,17 @@ vm_add_ring(
 
   Palette used when `colors` is `NULL`. Default `"Okabe-Ito"`.
 
+- style:
+
+  Ring style: `"band"` (default) draws the filled arc segments; `"arc"`
+  draws a thin line per group with the group label sitting in a gap
+  broken into the arc at the segment midpoint (the classic infographic
+  look, e.g. "NORTH AMERICA 13%" with a middle-dot separator).
+
 - width:
 
-  Ring thickness as a fraction of the map radius. Default `0.10`.
+  Band thickness as a fraction of the map radius (`style = "band"`
+  only). Default `0.10`.
 
 - gap:
 
@@ -81,19 +101,48 @@ vm_add_ring(
 
 - label_col:
 
-  Ring label colour. Default `"white"`.
+  Ring label colour. `NULL` (default) means `"white"` for
+  `style = "band"` and each arc's own colour for `style = "arc"`.
 
 - label_size:
 
   Ring label size. Default `3.2`.
 
+- label_fontface:
+
+  Ring label font face. Default `"bold"`.
+
 - border_col:
 
-  Segment border colour. Default `"white"`.
+  Segment border colour (`style = "band"`). Default `"white"`.
 
 - border_size:
 
-  Segment border width. Default `0.4`.
+  Segment border width (`style = "band"`). Default `0.4`.
+
+- family:
+
+  Font family for the ring labels. `NULL` (default) uses the ggplot2
+  default.
+
+- linewidth:
+
+  Arc line width (`style = "arc"`). Default `0.5`.
+
+- linetype:
+
+  Arc line type (`style = "arc"`), e.g. `"dashed"`. Default `"solid"`.
+
+- offset:
+
+  Distance of the arc and its label from the map edge, as a fraction of
+  the radius (`style = "arc"`; `width` is ignored). Default `0.06`.
+
+- values:
+
+  Append each group's share to its label (`style = "arc"`), e.g. "LATAM
+  32%" with a middle-dot separator? Computed from the group weights.
+  Default `FALSE`.
 
 ## Value
 
@@ -106,4 +155,7 @@ vm <- voronoi_map(c(5, 3, 8, 4, 6, 2),
                   group = c("A", "A", "B", "B", "C", "C"),
                   clip = clip_circle(), seed = 1)
 ggvmap(vm, palette = "alger") |> vm_add_ring(palette = "alger")
+
+ggvmap(vm, palette = "alger") |>
+  vm_add_ring(style = "arc", palette = "alger", values = TRUE)
 ```

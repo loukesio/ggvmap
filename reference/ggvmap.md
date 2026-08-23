@@ -21,6 +21,7 @@ ggvmap(
   fontface = "bold",
   min_area = 0,
   autoscale = FALSE,
+  family = NULL,
   palette = "Okabe-Ito",
   legend = FALSE,
   interactive = FALSE,
@@ -77,7 +78,9 @@ ggvmap(
 
 - label_col:
 
-  Label colour. Default `"white"`.
+  Label colour: a single colour (default `"white"`), a length-`n` vector
+  in cell order, or a vector named by cell label (cells not named keep
+  the default) – useful for light text on dark cells.
 
 - label_size:
 
@@ -100,6 +103,11 @@ ggvmap(
   Logical; shrink label text in small cells? Each cell's text size
   becomes `label_size * pmin(1, sqrt(cell_area / median_area))`, floored
   at 60% of `label_size`. Default `FALSE`.
+
+- family:
+
+  Font family for the name labels, passed to the text layer. `NULL`
+  (default) uses the ggplot2 default.
 
 - palette:
 

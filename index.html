@@ -58,37 +58,195 @@
 <blockquote>
 <p>Voronoi Map Treemaps for ggplot2</p>
 </blockquote>
-<p><strong>ggvmap</strong> partitions a convex polygon into cells whose areas are proportional to data weights — a <em>Voronoi treemap</em>. It implements the Nocaj &amp; Brandes (2012) iterative power-diagram algorithm in <strong>pure R</strong> (no compiled code, no CGAL, no JavaScript) with first-class <strong>ggplot2</strong> integration.</p>
-<p>It supports <strong>hierarchical (grouped) layouts</strong>, a decorative <strong>outer annotation ring</strong>, and <strong>flag / image / value annotations</strong> — enough to reproduce publication-style Voronoi-treemap infographics.</p>
+<p><strong>ggvmap</strong> partitions a convex polygon into cells whose areas are proportional to data weights — a <em>Voronoi treemap</em>. It implements the Nocaj &amp; Brandes (2012) iterative power-diagram algorithm in <strong>pure R</strong> (no compiled code, no CGAL, no JavaScript) with first-class <strong>ggplot2</strong> integration: hierarchical (grouped) layouts, annotation rings, flags, value labels, and interactive hover maps.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
+<p>ggvmap is pure R with a single hard dependency (ggplot2) — no compilation, no system libraries. Install the latest version from GitHub:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># From GitHub</span></span>
+<code class="sourceCode R"><span><span class="co"># with remotes (lightweight)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"loukesio/ggvmap"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># ...or with devtools</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"loukesio/ggvmap"</span><span class="op">)</span></span></code></pre></div>
+<p>To install a specific release, append its tag:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"loukesio/ggvmap@v0.3.0"</span><span class="op">)</span></span></code></pre></div>
+<p>Some features use optional packages — install the ones you need:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"ggimage"</span>,       <span class="co"># vm_add_flags(), vm_add_images()</span></span>
+<span>  <span class="st">"ggiraph"</span>,       <span class="co"># interactive = TRUE + vm_girafe()</span></span>
+<span>  <span class="st">"geomtextpath"</span>,  <span class="co"># curved ring labels</span></span>
+<span>  <span class="st">"ggtext"</span>,        <span class="co"># markdown titles</span></span>
+<span>  <span class="st">"showtext"</span>       <span class="co"># custom fonts</span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Then load it like any package:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/loukesio/ggvmap" class="external-link">ggvmap</a></span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="the-one-glance-demo">The one-glance demo<a class="anchor" aria-label="anchor" href="#the-one-glance-demo"></a>
+</h2>
+<p>Everything below is drawn from one bundled dataset — <code>data(freshwater)</code>, each country’s share of global renewable freshwater (FAO Aquastat via World Bank, 2022):</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/loukesio/ggvmap" class="external-link">ggvmap</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">freshwater</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">vm</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/voronoi_map.html">voronoi_map</a></span><span class="op">(</span><span class="va">freshwater</span><span class="op">$</span><span class="va">share</span>, labels <span class="op">=</span> <span class="va">freshwater</span><span class="op">$</span><span class="va">country</span>,</span>
+<span>                  group <span class="op">=</span> <span class="va">freshwater</span><span class="op">$</span><span class="va">region</span>, clip <span class="op">=</span> <span class="fu"><a href="reference/clip_shapes.html">clip_circle</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>                  seed <span class="op">=</span> <span class="fl">5</span>, max_iter <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, palette <span class="op">=</span> <span class="st">"alger"</span>, autoscale <span class="op">=</span> <span class="cn">TRUE</span>, min_area <span class="op">=</span> <span class="fl">0.004</span>,</span>
+<span>       label_col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Brazil <span class="op">=</span> <span class="st">"grey95"</span><span class="op">)</span>, fontface <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Brazil <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/vm_add_labels.html">vm_add_labels</a></span><span class="op">(</span>fmt <span class="op">=</span> \<span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">v</span>, <span class="st">"%"</span><span class="op">)</span>, autoscale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/vm_add_ring.html">vm_add_ring</a></span><span class="op">(</span>style <span class="op">=</span> <span class="st">"arc"</span>, palette <span class="op">=</span> <span class="st">"alger"</span>, values <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-hero.png" alt="" width="75%" style="display: block; margin: auto;"></p>
+<p>The full script is <a href="examples/freshwater_tour.R"><code>examples/freshwater_tour.R</code></a>.</p>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<p><code><a href="reference/ggvmap.html">ggvmap()</a></code> computes <em>and</em> plots in one call — give it weights, or a precomputed <code>voronoi_map</code> object:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/loukesio/ggvmap" class="external-link">ggvmap</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">freshwater</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># One-liner: compute + plot</span></span>
-<span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">20</span>, <span class="fl">50</span>, <span class="fl">10</span>, <span class="fl">40</span><span class="op">)</span>,</span>
-<span>  labels  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Tech"</span>, <span class="st">"Health"</span>, <span class="st">"Energy"</span>, <span class="st">"Finance"</span>, <span class="st">"Retail"</span><span class="op">)</span>,</span>
-<span>  palette <span class="op">=</span> <span class="st">"alger"</span>,</span>
-<span>  seed    <span class="op">=</span> <span class="fl">42</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">top10</span> <span class="op">&lt;-</span> <span class="va">freshwater</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^Rest of|Middle East"</span>, <span class="va">freshwater</span><span class="op">$</span><span class="va">country</span><span class="op">)</span>, <span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">]</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">top10</span><span class="op">$</span><span class="va">share</span>, labels <span class="op">=</span> <span class="va">top10</span><span class="op">$</span><span class="va">country</span>, palette <span class="op">=</span> <span class="st">"alger"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-quickstart-1.png" alt="" width="60%"></p>
+</div>
+<div class="section level2">
+<h2 id="feature-tour">Feature tour<a class="anchor" aria-label="anchor" href="#feature-tour"></a>
+</h2>
+<div class="section level3">
+<h3 id="any-convex-boundary">Any convex boundary<a class="anchor" aria-label="anchor" href="#any-convex-boundary"></a>
+</h3>
+<p>The same data on <code><a href="reference/clip_shapes.html">clip_square()</a></code>, <code><a href="reference/clip_shapes.html">clip_hexagon()</a></code>, <code><a href="reference/clip_shapes.html">clip_circle()</a></code>, <code><a href="reference/clip_shapes.html">clip_diamond()</a></code>, <code><a href="reference/clip_shapes.html">clip_triangle()</a></code>, <code><a href="reference/clip_shapes.html">clip_pentagon()</a></code>, <code><a href="reference/clip_shapes.html">clip_octagon()</a></code>, <code><a href="reference/clip_rectangle.html">clip_rectangle()</a></code>, <code><a href="reference/clip_ellipse.html">clip_ellipse()</a></code> — or any <code>regular_polygon(n)</code>:</p>
+<p><img src="reference/figures/README-shapes-grid.png" alt="" width="85%" style="display: block; margin: auto;"></p>
+</div>
+<div class="section level3">
+<h3 id="small-cells-autoscale-and-min_area">Small cells: autoscale and min_area<a class="anchor" aria-label="anchor" href="#small-cells-autoscale-and-min_area"></a>
+</h3>
+<p>Real part-of-whole data has a long tail of sub-1% cells. <code>autoscale = TRUE</code> shrinks their labels (floored at 60% of <code>label_size</code>), and <code>min_area</code> hides labels below an area threshold:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">vm</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/voronoi_map.html">voronoi_map</a></span><span class="op">(</span><span class="va">freshwater</span><span class="op">$</span><span class="va">share</span>, labels <span class="op">=</span> <span class="va">freshwater</span><span class="op">$</span><span class="va">country</span>,</span>
+<span>                  group <span class="op">=</span> <span class="va">freshwater</span><span class="op">$</span><span class="va">region</span>, clip <span class="op">=</span> <span class="fu"><a href="reference/clip_shapes.html">clip_circle</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>                  seed <span class="op">=</span> <span class="fl">5</span>, max_iter <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, palette <span class="op">=</span> <span class="st">"alger"</span>, label_col <span class="op">=</span> <span class="st">"grey15"</span>,</span>
+<span>       autoscale <span class="op">=</span> <span class="cn">TRUE</span>, min_area <span class="op">=</span> <span class="fl">0.004</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-small-cells-1.png" alt="" width="60%"></p>
+</div>
+<div class="section level3">
+<h3 id="emphasis-single-cells-and-single-groups">Emphasis: single cells and single groups<a class="anchor" aria-label="anchor" href="#emphasis-single-cells-and-single-groups"></a>
+</h3>
+<p><code>fontface</code>, <code>label_col</code> and <code>group_border_col</code> accept vectors <em>named by cell or group</em>, and <code>label_cells</code> / <code>cells</code> restrict which cells get labels at all:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, palette <span class="op">=</span> <span class="st">"alger"</span>,</span>
+<span>       label_cells      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Brazil"</span>, <span class="st">"Russia"</span>, <span class="st">"Canada"</span><span class="op">)</span>,</span>
+<span>       label_col        <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Brazil <span class="op">=</span> <span class="st">"grey95"</span>, Russia <span class="op">=</span> <span class="st">"grey15"</span>,</span>
+<span>                            Canada <span class="op">=</span> <span class="st">"grey15"</span><span class="op">)</span>,</span>
+<span>       fontface         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Brazil <span class="op">=</span> <span class="st">"bold.italic"</span><span class="op">)</span>,</span>
+<span>       group_border_col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>LATAM <span class="op">=</span> <span class="st">"#333333"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/vm_add_labels.html">vm_add_labels</a></span><span class="op">(</span>fmt <span class="op">=</span> \<span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">v</span>, <span class="st">"%"</span><span class="op">)</span>,</span>
+<span>                cells <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Brazil"</span>, <span class="st">"Russia"</span>, <span class="st">"Canada"</span><span class="op">)</span>,</span>
+<span>                col   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Brazil <span class="op">=</span> <span class="st">"grey85"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-emphasis-1.png" alt="" width="60%"></p>
+</div>
+<div class="section level3">
+<h3 id="continuous-fill">Continuous fill<a class="anchor" aria-label="anchor" href="#continuous-fill"></a>
+</h3>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, fill_by <span class="op">=</span> <span class="st">"data_weight"</span>, palette <span class="op">=</span> <span class="st">"alger"</span>,</span>
+<span>       label_col <span class="op">=</span> <span class="st">"grey15"</span>, autoscale <span class="op">=</span> <span class="cn">TRUE</span>, min_area <span class="op">=</span> <span class="fl">0.006</span>,</span>
+<span>       legend <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-continuous-1.png" alt="" width="60%"></p>
+</div>
+<div class="section level3">
+<h3 id="ring-styles-band-and-arc">Ring styles: band and arc<a class="anchor" aria-label="anchor" href="#ring-styles-band-and-arc"></a>
+</h3>
+<p><code><a href="reference/vm_add_ring.html">vm_add_ring()</a></code> wraps a circular map in a group-aligned annotation ring: the filled <code>"band"</code> (default), or the thin <code>"arc"</code> with the group label — optionally with its share (<code>values = TRUE</code>) — sitting in a gap broken into the line:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, palette <span class="op">=</span> <span class="st">"alger"</span>, label_col <span class="op">=</span> <span class="st">"grey15"</span>,</span>
+<span>       autoscale <span class="op">=</span> <span class="cn">TRUE</span>, min_area <span class="op">=</span> <span class="fl">0.004</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/vm_add_ring.html">vm_add_ring</a></span><span class="op">(</span>style <span class="op">=</span> <span class="st">"band"</span>, palette <span class="op">=</span> <span class="st">"alger"</span>, width <span class="op">=</span> <span class="fl">0.11</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-ring-band-1.png" alt="" width="60%"></p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, palette <span class="op">=</span> <span class="st">"alger"</span>, label_col <span class="op">=</span> <span class="st">"grey15"</span>,</span>
+<span>       autoscale <span class="op">=</span> <span class="cn">TRUE</span>, min_area <span class="op">=</span> <span class="fl">0.004</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/vm_add_ring.html">vm_add_ring</a></span><span class="op">(</span>style <span class="op">=</span> <span class="st">"arc"</span>, palette <span class="op">=</span> <span class="st">"alger"</span>, values <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-ring-arc-1.png" alt="" width="60%"></p>
+<p>The arcs follow the group colours by default; <code>colors =</code> overrides them — one colour for all arcs (e.g. <code>colors = "#333333"</code> for a uniform dark ring), or a vector named by group for full control:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, palette <span class="op">=</span> <span class="st">"alger"</span>, label_col <span class="op">=</span> <span class="st">"grey15"</span>,</span>
+<span>       autoscale <span class="op">=</span> <span class="cn">TRUE</span>, min_area <span class="op">=</span> <span class="fl">0.004</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/vm_add_ring.html">vm_add_ring</a></span><span class="op">(</span>style <span class="op">=</span> <span class="st">"arc"</span>, colors <span class="op">=</span> <span class="st">"#333333"</span>, values <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-ring-arc-dark-1.png" alt="" width="48%"></p>
+</div>
+<div class="section level3">
+<h3 id="flags">Flags<a class="anchor" aria-label="anchor" href="#flags"></a>
+</h3>
+<p><code><a href="reference/vm_add_flags.html">vm_add_flags()</a></code> resolves country names (English or German) to national flags via the <strong>ggimage</strong> package:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">top10</span><span class="op">$</span><span class="va">share</span>, labels <span class="op">=</span> <span class="va">top10</span><span class="op">$</span><span class="va">country</span>, clip <span class="op">=</span> <span class="fu"><a href="reference/clip_shapes.html">clip_circle</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>       palette <span class="op">=</span> <span class="st">"alger"</span>, label_col <span class="op">=</span> <span class="st">"grey15"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/vm_add_labels.html">vm_add_labels</a></span><span class="op">(</span>fmt <span class="op">=</span> \<span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">v</span>, <span class="st">"%"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/vm_add_flags.html">vm_add_flags</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">0.05</span>, nudge_y <span class="op">=</span> <span class="fl">0.055</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-flags-1.png" alt="" width="60%"></p>
+</div>
+<div class="section level3">
+<h3 id="titles-and-fonts">Titles and fonts<a class="anchor" aria-label="anchor" href="#titles-and-fonts"></a>
+</h3>
+<p>A ggvmap plot is a ggplot, so titles work the usual way:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">top10</span><span class="op">$</span><span class="va">share</span>, labels <span class="op">=</span> <span class="va">top10</span><span class="op">$</span><span class="va">country</span>, palette <span class="op">=</span> <span class="st">"alger"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Countries with the most freshwater"</span>,</span>
+<span>                   subtitle <span class="op">=</span> <span class="st">"Share of global renewable freshwater, 2022"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span>, hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>                 plot.subtitle <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"grey40"</span>,</span>
+<span>                                                       hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-titles-1.png" alt="" width="60%"></p>
+<p>With <strong>ggtext</strong>, titles take markdown — handy for colour-coding words to the map instead of using a legend:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://wilkelab.org/ggtext/" class="external-link">ggtext</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">top10</span><span class="op">$</span><span class="va">share</span>, labels <span class="op">=</span> <span class="va">top10</span><span class="op">$</span><span class="va">country</span>, palette <span class="op">=</span> <span class="st">"alger"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
+<span>    <span class="st">"**&lt;span style='color:#1A5B5B;'&gt;Brazil&lt;/span&gt; holds more freshwater "</span>,</span>
+<span>    <span class="st">"than any other country**"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu">element_markdown</span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span>, size <span class="op">=</span> <span class="fl">13</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-ggtext-title-1.png" alt="" width="60%"></p>
+<p>Every text layer accepts a <code>family =</code>, so custom fonts (e.g. loaded with <strong>showtext</strong>) apply directly — no <code>update_geom_defaults()</code> workaround:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/yixuan/showtext" class="external-link">showtext</a></span><span class="op">)</span></span>
+<span><span class="fu">font_add_google</span><span class="op">(</span><span class="st">"Bitter"</span>, <span class="st">"bitter"</span><span class="op">)</span></span>
+<span><span class="fu">showtext_auto</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">top10</span><span class="op">$</span><span class="va">share</span>, labels <span class="op">=</span> <span class="va">top10</span><span class="op">$</span><span class="va">country</span>, palette <span class="op">=</span> <span class="st">"alger"</span>,</span>
+<span>       family <span class="op">=</span> <span class="st">"bitter"</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/vm_add_labels.html">vm_add_labels</a></span><span class="op">(</span>fmt <span class="op">=</span> \<span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">v</span>, <span class="st">"%"</span><span class="op">)</span>, family <span class="op">=</span> <span class="st">"bitter"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-fonts-1.png" alt="" width="60%"></p>
+</div>
+<div class="section level3">
+<h3 id="interactive-maps">Interactive maps<a class="anchor" aria-label="anchor" href="#interactive-maps"></a>
+</h3>
+<p><code>ggvmap(interactive = TRUE)</code> makes the cells hoverable (highlight + tooltip) via <strong>ggiraph</strong>; render the widget with <code><a href="reference/vm_girafe.html">vm_girafe()</a></code>:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, interactive <span class="op">=</span> <span class="cn">TRUE</span>, palette <span class="op">=</span> <span class="st">"alger"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/vm_girafe.html">vm_girafe</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-interactive.gif" alt="" width="60%" style="display: block; margin: auto;"></p>
+<p>Live version (hover it yourself) in the <a href="https://loukesio.github.io/ggvmap/articles/interactive.html">Interactive article</a>.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="step-by-step-usage">Step-by-step usage<a class="anchor" aria-label="anchor" href="#step-by-step-usage"></a>
 </h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Compute the map</span></span>
 <span><span class="va">vm</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/voronoi_map.html">voronoi_map</a></span><span class="op">(</span></span>
-<span>  weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">20</span>, <span class="fl">50</span>, <span class="fl">10</span>, <span class="fl">40</span><span class="op">)</span>,</span>
-<span>  labels  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Tech"</span>, <span class="st">"Health"</span>, <span class="st">"Energy"</span>, <span class="st">"Finance"</span>, <span class="st">"Retail"</span><span class="op">)</span>,</span>
+<span>  weights <span class="op">=</span> <span class="va">freshwater</span><span class="op">$</span><span class="va">share</span>,</span>
+<span>  labels  <span class="op">=</span> <span class="va">freshwater</span><span class="op">$</span><span class="va">country</span>,</span>
 <span>  clip    <span class="op">=</span> <span class="fu"><a href="reference/clip_shapes.html">clip_hexagon</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  seed    <span class="op">=</span> <span class="fl">42</span></span>
 <span><span class="op">)</span></span>
@@ -103,57 +261,6 @@
 <span><span class="co"># 4. Access the tidy data frame for custom ggplot2</span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vm_as_df.html">vm_as_df</a></span><span class="op">(</span><span class="va">vm</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="hierarchical-layouts--outer-ring">Hierarchical layouts + outer ring<a class="anchor" aria-label="anchor" href="#hierarchical-layouts--outer-ring"></a>
-</h2>
-<p>Group the cells and <code><a href="reference/voronoi_map.html">voronoi_map()</a></code> lays each group out in its own sector; <code><a href="reference/vm_add_ring.html">vm_add_ring()</a></code> wraps the map in a labelled colour ring (the world-exports infographic style).</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">world_exports</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">vm</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/voronoi_map.html">voronoi_map</a></span><span class="op">(</span></span>
-<span>  weights  <span class="op">=</span> <span class="va">world_exports</span><span class="op">$</span><span class="va">exports</span>,</span>
-<span>  labels   <span class="op">=</span> <span class="va">world_exports</span><span class="op">$</span><span class="va">country</span>,</span>
-<span>  group    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">world_exports</span><span class="op">$</span><span class="va">income_group</span><span class="op">)</span>,</span>
-<span>  clip     <span class="op">=</span> <span class="fu"><a href="reference/clip_shapes.html">clip_circle</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  seed     <span class="op">=</span> <span class="fl">1</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, label_size <span class="op">=</span> <span class="fl">2.3</span>, palette <span class="op">=</span> <span class="st">"alger"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/vm_add_ring.html">vm_add_ring</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.11</span>, palette <span class="op">=</span> <span class="st">"alger"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/showcase_ring.png"></p>
-</div>
-<div class="section level2">
-<h2 id="flag--value-annotations">Flag &amp; value annotations<a class="anchor" aria-label="anchor" href="#flag--value-annotations"></a>
-</h2>
-<p>Resolve country names (English or German) to national flags and stack values under each name (the merchant-fleet infographic style):</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">merchant_fleet</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">vm</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/voronoi_map.html">voronoi_map</a></span><span class="op">(</span><span class="va">merchant_fleet</span><span class="op">$</span><span class="va">owned</span>, labels <span class="op">=</span> <span class="va">merchant_fleet</span><span class="op">$</span><span class="va">country</span>, seed <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, palette <span class="op">=</span> <span class="st">"alger"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/vm_add_labels.html">vm_add_labels</a></span><span class="op">(</span>value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">merchant_fleet</span><span class="op">$</span><span class="va">owned</span>, <span class="va">merchant_fleet</span><span class="op">$</span><span class="va">country</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/vm_add_flags.html">vm_add_flags</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">0.05</span>, nudge_y <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/showcase_flags.png"></p>
-<p><code><a href="reference/vm_add_images.html">vm_add_images()</a></code> is the generic form — pass any vector of image paths or URLs. <code><a href="reference/flag_cache.html">flag_cache()</a></code> pre-downloads flags for offline rendering.</p>
-</div>
-<div class="section level2">
-<h2 id="clipping-shapes">Clipping shapes<a class="anchor" aria-label="anchor" href="#clipping-shapes"></a>
-</h2>
-<p>The outer boundary can be any convex polygon:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/clip_shapes.html">clip_square</a></span><span class="op">(</span><span class="op">)</span>             <span class="co"># unit square</span></span>
-<span><span class="fu"><a href="reference/clip_rectangle.html">clip_rectangle</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.6</span><span class="op">)</span>    <span class="co"># non-square rectangle</span></span>
-<span><span class="fu"><a href="reference/clip_shapes.html">clip_hexagon</a></span><span class="op">(</span><span class="op">)</span>            <span class="co"># regular hexagon</span></span>
-<span><span class="fu"><a href="reference/clip_shapes.html">clip_diamond</a></span><span class="op">(</span><span class="op">)</span>            <span class="co"># diamond (rotated square)</span></span>
-<span><span class="fu"><a href="reference/clip_shapes.html">clip_triangle</a></span><span class="op">(</span><span class="op">)</span>           <span class="co"># equilateral triangle</span></span>
-<span><span class="fu"><a href="reference/clip_shapes.html">clip_pentagon</a></span><span class="op">(</span><span class="op">)</span>           <span class="co"># regular pentagon</span></span>
-<span><span class="fu"><a href="reference/clip_shapes.html">clip_octagon</a></span><span class="op">(</span><span class="op">)</span>            <span class="co"># regular octagon</span></span>
-<span><span class="fu"><a href="reference/clip_shapes.html">clip_circle</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">64</span><span class="op">)</span>       <span class="co"># circle approximation (64-gon)</span></span>
-<span><span class="fu"><a href="reference/clip_ellipse.html">clip_ellipse</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.32</span><span class="op">)</span>   <span class="co"># ellipse</span></span>
-<span><span class="fu"><a href="reference/regular_polygon.html">regular_polygon</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>    <span class="co"># any regular n-gon</span></span></code></pre></div>
-<p>Any <strong>convex</strong> polygon works (the power-diagram clipping requires convexity, so star- or crescent-shaped boundaries are not supported).</p>
 </div>
 <div class="section level2">
 <h2 id="how-it-works">How it works<a class="anchor" aria-label="anchor" href="#how-it-works"></a>
@@ -193,7 +300,7 @@
 </tr>
 <tr>
 <td><code><a href="reference/ggvmap.html">ggvmap()</a></code></td>
-<td>The main ggplot2 visualisation (accepts a map or raw weights)</td>
+<td>The main ggplot2 visualisation (accepts a map or raw weights; <code>autoscale</code>, <code>min_area</code>, <code>fontface</code>, <code>family</code>, per-cell <code>label_col</code>)</td>
 </tr>
 <tr>
 <td><code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code></td>
@@ -205,7 +312,7 @@
 </tr>
 <tr>
 <td><code><a href="reference/vm_add_ring.html">vm_add_ring()</a></code></td>
-<td>Add the labelled outer annotation ring</td>
+<td>Outer annotation ring: <code>style = "band"</code> or <code>"arc"</code> (with <code>values</code>, <code>linetype</code>, <code>offset</code>)</td>
 </tr>
 <tr>
 <td><code><a href="reference/vm_add_flags.html">vm_add_flags()</a></code></td>
@@ -217,7 +324,11 @@
 </tr>
 <tr>
 <td><code><a href="reference/vm_add_labels.html">vm_add_labels()</a></code></td>
-<td>Add value labels</td>
+<td>Add value labels (<code>inside</code>, <code>autoscale</code>, <code>min_area</code>, per-cell <code>col</code>)</td>
+</tr>
+<tr>
+<td><code><a href="reference/vm_girafe.html">vm_girafe()</a></code></td>
+<td>Render an <code>interactive = TRUE</code> plot as a hoverable widget</td>
 </tr>
 <tr>
 <td>
@@ -244,6 +355,12 @@
 <h2 id="comparison-with-other-r-packages">Comparison with other R packages<a class="anchor" aria-label="anchor" href="#comparison-with-other-r-packages"></a>
 </h2>
 <table class="table">
+<colgroup>
+<col width="32%">
+<col width="19%">
+<col width="25%">
+<col width="23%">
+</colgroup>
 <thead><tr>
 <th>Feature</th>
 <th>ggvmap</th>
@@ -319,6 +436,12 @@
 </ul>
 </div>
 
+<div class="community">
+<h2 data-toc-skip>Community</h2>
+<ul class="list-unstyled">
+<li><a href="CONTRIBUTING.html">Contributing guide</a></li>
+</ul>
+</div>
 
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>

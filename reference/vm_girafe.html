@@ -35,7 +35,7 @@ viewer."><meta property="og:image" content="https://loukesio.github.io/ggvmap/lo
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Render an interactive Voronoi map</h1>
-      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/v0.3.0/R/plot.R" class="external-link"><code>R/plot.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/main/R/plot.R" class="external-link"><code>R/plot.R</code></a></small>
       <div class="d-none name"><code>vm_girafe.Rd</code></div>
     </div>
 
@@ -52,7 +52,7 @@ viewer.</p>
 <span>  <span class="va">p</span>,</span>
 <span>  width_svg <span class="op">=</span> <span class="fl">7</span>,</span>
 <span>  height_svg <span class="op">=</span> <span class="fl">7</span>,</span>
-<span>  hover_css <span class="op">=</span> <span class="st">"stroke:#222222;stroke-width:1.4px;"</span>,</span>
+<span>  hover_css <span class="op">=</span> <span class="st">"fill-opacity:0.75;stroke:#ffffff;stroke-width:2.2px;"</span>,</span>
 <span>  opts <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -71,8 +71,10 @@ viewer.</p>
 
 
 <dt id="arg-hover-css">hover_css<a class="anchor" aria-label="anchor" href="#arg-hover-css"></a></dt>
-<dd><p>CSS applied to the hovered cell.  Default highlights its
-outline.</p></dd>
+<dd><p>CSS applied to the hovered cell.  The default fades the
+cell slightly and thickens its white outline – no dark border.  Pass
+your own CSS to change the effect (e.g.
+<code>"stroke:#222222;stroke-width:1.4px;"</code> for a dark outline).</p></dd>
 
 
 <dt id="arg-opts">opts<a class="anchor" aria-label="anchor" href="#arg-opts"></a></dt>

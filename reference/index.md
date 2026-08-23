@@ -67,6 +67,8 @@ Outer ring, flags, images and value labels.
 
 ## Data
 
+- [`freshwater`](https://loukesio.github.io/ggvmap/reference/freshwater.md)
+  : Global renewable freshwater resources 2022
 - [`world_exports`](https://loukesio.github.io/ggvmap/reference/world_exports.md)
   : World goods exports 2021
 - [`merchant_fleet`](https://loukesio.github.io/ggvmap/reference/merchant_fleet.md)
