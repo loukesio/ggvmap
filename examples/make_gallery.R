@@ -1,4 +1,4 @@
-# Regenerate the example-gallery PNGs and the README showcase figures.
+# Regenerate the example-gallery PNGs (README figures live in data-raw/readme_figures.R).
 # Run from the package root with:  Rscript examples/make_gallery.R
 suppressPackageStartupMessages(devtools::load_all(".", quiet = TRUE))
 library(ggplot2)
@@ -56,7 +56,6 @@ vm <- voronoi_map(
 p <- ggvmap(vm, label_size = 2.3, label_col = "grey20", palette = "alger") |>
   vm_add_ring(width = 0.11, label_size = 3.4, palette = "alger")
 save_png(p, "examples/04_ring_custom.png", size = 6.5)
-save_png(p, "man/figures/showcase_ring.png", size = 6.5)
 
 # --- 05: flags + value labels (merchant fleets) -----------------------------
 data(merchant_fleet)
@@ -68,7 +67,6 @@ p <- ggvmap(vm, label_size = 3, label_col = "grey15", palette = "alger") |>
                 size = 2.6) |>
   vm_add_flags(size = 0.05, nudge_y = 0.05)
 save_png(p, "examples/05_flags_circle.png", size = 6)
-save_png(p, "man/figures/showcase_flags.png", size = 6)
 
 # --- 06: everything combined ------------------------------------------------
 vm <- voronoi_map(
@@ -84,24 +82,11 @@ p <- ggvmap(vm, label_size = 2.1, label_col = "grey20", palette = "alger",
 save_png(p, "examples/06_combined.png", size = 6.5)
 
 # --- 07: world freshwater — small-cell handling -----------------------------
-# Renewable internal freshwater resources (km^3/yr, illustrative FAO figures).
-# Includes several cells in the 0.7–0.9% range to exercise autoscale/min_area.
-freshwater <- data.frame(
-  country = c("Brazil", "Colombia", "Peru", "Venezuela",
-              "Russia", "India", "China", "Indonesia", "Myanmar", "Malaysia",
-              "Canada", "United States", "Mexico", "Nicaragua",
-              "DR Congo", "Nigeria", "Madagascar", "Cameroon",
-              "Norway", "France", "Italy", "Sweden"),
-  region  = c(rep("South America", 4), rep("Asia", 6),
-              rep("North America", 4), rep("Africa", 4), rep("Europe", 4)),
-  km3     = c(5661, 2145, 1616, 805,
-              4312, 1446, 2813, 2019, 1003, 580,
-              2850, 2818, 409, 156,
-              900, 221, 337, 273,
-              378, 200, 183, 171)
-)
+# The bundled data(freshwater) has several 0.7-0.9% cells, exercising
+# autoscale/min_area.  The full infographic lives in freshwater_tour.R.
+data(freshwater)
 vm <- voronoi_map(
-  weights = freshwater$km3,
+  weights = freshwater$share,
   labels  = freshwater$country,
   group   = freshwater$region,
   clip    = clip_circle(), seed = 5, max_iter = 80
@@ -112,7 +97,8 @@ p <- ggvmap(vm,
             label_col        = "grey15",
             autoscale        = TRUE,
             min_area         = 0.005,
-            group_border_col = c("South America" = "#333333"),
+            group_border_col = c(LATAM = "#333333"),
             fontface         = c(Brazil = "bold.italic")) |>
-  vm_add_labels(autoscale = TRUE, min_area = 0.005, size = 2.2)
+  vm_add_labels(autoscale = TRUE, min_area = 0.005, size = 2.2,
+                fmt = function(v) paste0(v, "%"))
 save_png(p, "examples/07_freshwater_small_cells.png", size = 6.5)

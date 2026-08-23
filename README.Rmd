@@ -1,18 +1,33 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd — edit README.Rmd only, then run
      devtools::build_readme(). Pre-rendered figures (hero, shapes grid,
      interactive GIF) come from data-raw/readme_figures.R and
      data-raw/readme_interactive_gif.R. -->
 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.path = "man/figures/README-",
+  fig.width = 7, fig.height = 7,
+  dpi = 130,
+  out.width = "60%",
+  message = FALSE, warning = FALSE
+)
+has_ggimage  <- requireNamespace("ggimage",  quietly = TRUE)
+has_ggtext   <- requireNamespace("ggtext",   quietly = TRUE)
+has_showtext <- requireNamespace("showtext", quietly = TRUE)
+```
+
 # ggvmap <img src="man/figures/logo.png" align="right" height="120" />
 
 <!-- badges: start -->
-
 [![R-CMD-check](https://github.com/loukesio/ggvmap/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/loukesio/ggvmap/actions/workflows/R-CMD-check.yaml)
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![License:
-MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 <!-- badges: end -->
 
 > Voronoi Map Treemaps for ggplot2
@@ -20,15 +35,15 @@ MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/
 **ggvmap** partitions a convex polygon into cells whose areas are
 proportional to data weights — a *Voronoi treemap*. It implements the
 Nocaj & Brandes (2012) iterative power-diagram algorithm in **pure R**
-(no compiled code, no CGAL, no JavaScript) with first-class **ggplot2**
-integration: hierarchical (grouped) layouts, annotation rings, flags,
-value labels, and interactive hover maps.
+(no compiled code, no CGAL, no JavaScript) with first-class
+**ggplot2** integration: hierarchical (grouped) layouts, annotation
+rings, flags, value labels, and interactive hover maps.
 
 Everything below is drawn from one bundled dataset — `data(freshwater)`,
-each country’s share of global renewable freshwater (FAO Aquastat via
+each country's share of global renewable freshwater (FAO Aquastat via
 World Bank, 2022):
 
-``` r
+```{r hero-code, eval = FALSE}
 library(ggvmap)
 data(freshwater)
 
@@ -42,14 +57,15 @@ ggvmap(vm, palette = "alger", autoscale = TRUE, min_area = 0.004,
   vm_add_ring(style = "arc", palette = "alger", values = TRUE)
 ```
 
-<img src="man/figures/README-hero.png" alt="" width="75%" style="display: block; margin: auto;" />
+```{r hero, echo = FALSE, out.width = "75%", fig.align = "center"}
+knitr::include_graphics("man/figures/README-hero.png")
+```
 
-The full script is
-[`examples/freshwater_tour.R`](examples/freshwater_tour.R).
+The full script is [`examples/freshwater_tour.R`](examples/freshwater_tour.R).
 
 ## Installation
 
-``` r
+```r
 # From GitHub
 devtools::install_github("loukesio/ggvmap")
 ```
@@ -59,7 +75,7 @@ devtools::install_github("loukesio/ggvmap")
 `ggvmap()` computes *and* plots in one call — give it weights, or a
 precomputed `voronoi_map` object:
 
-``` r
+```{r quickstart}
 library(ggvmap)
 data(freshwater)
 
@@ -68,26 +84,25 @@ top10 <- freshwater[!grepl("^Rest of|Middle East", freshwater$country), ][1:10, 
 ggvmap(top10$share, labels = top10$country, palette = "alger", seed = 42)
 ```
 
-<img src="man/figures/README-quickstart-1.png" alt="" width="60%" />
-
 ## Feature tour
 
 ### Any convex boundary
 
 The same data on `clip_square()`, `clip_hexagon()`, `clip_circle()`,
-`clip_diamond()`, `clip_triangle()`, `clip_pentagon()`,
-`clip_octagon()`, `clip_rectangle()`, `clip_ellipse()` — or any
-`regular_polygon(n)`:
+`clip_diamond()`, `clip_triangle()`, `clip_pentagon()`, `clip_octagon()`,
+`clip_rectangle()`, `clip_ellipse()` — or any `regular_polygon(n)`:
 
-<img src="man/figures/README-shapes-grid.png" alt="" width="85%" style="display: block; margin: auto;" />
+```{r shapes-grid, echo = FALSE, out.width = "85%", fig.align = "center"}
+knitr::include_graphics("man/figures/README-shapes-grid.png")
+```
 
 ### Small cells: autoscale and min_area
 
-Real part-of-whole data has a long tail of sub-1% cells.
-`autoscale = TRUE` shrinks their labels (floored at 60% of
-`label_size`), and `min_area` hides labels below an area threshold:
+Real part-of-whole data has a long tail of sub-1% cells. `autoscale = TRUE`
+shrinks their labels (floored at 60% of `label_size`), and `min_area`
+hides labels below an area threshold:
 
-``` r
+```{r small-cells}
 vm <- voronoi_map(freshwater$share, labels = freshwater$country,
                   group = freshwater$region, clip = clip_circle(),
                   seed = 5, max_iter = 80)
@@ -96,15 +111,13 @@ ggvmap(vm, palette = "alger", label_col = "grey15",
        autoscale = TRUE, min_area = 0.004)
 ```
 
-<img src="man/figures/README-small-cells-1.png" alt="" width="60%" />
-
 ### Emphasis: single cells and single groups
 
 `fontface`, `label_col` and `group_border_col` accept vectors *named by
 cell or group*, and `label_cells` / `cells` restrict which cells get
 labels at all:
 
-``` r
+```{r emphasis}
 ggvmap(vm, palette = "alger",
        label_cells      = c("Brazil", "Russia", "Canada"),
        label_col        = c(Brazil = "grey95", Russia = "grey15",
@@ -116,60 +129,50 @@ ggvmap(vm, palette = "alger",
                 col   = c(Brazil = "grey85"))
 ```
 
-<img src="man/figures/README-emphasis-1.png" alt="" width="60%" />
-
 ### Continuous fill
 
-``` r
+```{r continuous}
 ggvmap(vm, fill_by = "data_weight", palette = "alger",
        label_col = "grey15", autoscale = TRUE, min_area = 0.006,
        legend = TRUE)
 ```
 
-<img src="man/figures/README-continuous-1.png" alt="" width="60%" />
-
 ### Ring styles: band and arc
 
 `vm_add_ring()` wraps a circular map in a group-aligned annotation ring:
-the filled `"band"` (default), or the thin `"arc"` with the group label
-— optionally with its share (`values = TRUE`) — sitting in a gap broken
+the filled `"band"` (default), or the thin `"arc"` with the group label —
+optionally with its share (`values = TRUE`) — sitting in a gap broken
 into the line:
 
-``` r
+```{r ring-band}
 ggvmap(vm, palette = "alger", label_col = "grey15",
        autoscale = TRUE, min_area = 0.004) |>
   vm_add_ring(style = "band", palette = "alger", width = 0.11)
 ```
 
-<img src="man/figures/README-ring-band-1.png" alt="" width="60%" />
-
-``` r
+```{r ring-arc}
 ggvmap(vm, palette = "alger", label_col = "grey15",
        autoscale = TRUE, min_area = 0.004) |>
   vm_add_ring(style = "arc", palette = "alger", values = TRUE)
 ```
-
-<img src="man/figures/README-ring-arc-1.png" alt="" width="60%" />
 
 ### Flags
 
 `vm_add_flags()` resolves country names (English or German) to national
 flags via the **ggimage** package:
 
-``` r
+```{r flags, eval = has_ggimage}
 ggvmap(top10$share, labels = top10$country, clip = clip_circle(),
        palette = "alger", label_col = "grey15", seed = 42) |>
   vm_add_labels(fmt = \(v) paste0(v, "%")) |>
   vm_add_flags(size = 0.05, nudge_y = 0.055)
 ```
 
-<img src="man/figures/README-flags-1.png" alt="" width="60%" />
-
 ### Titles and fonts
 
 A ggvmap plot is a ggplot, so titles work the usual way:
 
-``` r
+```{r titles, fig.height = 7.6}
 ggvmap(top10$share, labels = top10$country, palette = "alger", seed = 42) +
   ggplot2::ggtitle("Countries with the most freshwater",
                    subtitle = "Share of global renewable freshwater, 2022") +
@@ -178,12 +181,10 @@ ggvmap(top10$share, labels = top10$country, palette = "alger", seed = 42) +
                                                        hjust = 0.5))
 ```
 
-<img src="man/figures/README-titles-1.png" alt="" width="60%" />
-
 With **ggtext**, titles take markdown — handy for colour-coding words to
 the map instead of using a legend:
 
-``` r
+```{r ggtext-title, eval = has_ggtext, fig.height = 7.6}
 library(ggtext)
 ggvmap(top10$share, labels = top10$country, palette = "alger", seed = 42) +
   ggplot2::labs(title = paste0(
@@ -192,12 +193,10 @@ ggvmap(top10$share, labels = top10$country, palette = "alger", seed = 42) +
   ggplot2::theme(plot.title = element_markdown(hjust = 0.5, size = 13))
 ```
 
-<img src="man/figures/README-ggtext-title-1.png" alt="" width="60%" />
-
-Every text layer accepts a `family =`, so custom fonts (e.g. loaded with
+Every text layer accepts a `family =`, so custom fonts (e.g. loaded with
 **showtext**) apply directly — no `update_geom_defaults()` workaround:
 
-``` r
+```{r fonts, eval = has_showtext, fig.height = 7.2}
 library(showtext)
 font_add_google("Bitter", "bitter")
 showtext_auto()
@@ -207,25 +206,25 @@ ggvmap(top10$share, labels = top10$country, palette = "alger",
   vm_add_labels(fmt = \(v) paste0(v, "%"), family = "bitter")
 ```
 
-<img src="man/figures/README-fonts-1.png" alt="" width="60%" />
-
 ### Interactive maps
 
 `ggvmap(interactive = TRUE)` makes the cells hoverable (highlight +
 tooltip) via **ggiraph**; render the widget with `vm_girafe()`:
 
-``` r
+```{r interactive-code, eval = FALSE}
 ggvmap(vm, interactive = TRUE, palette = "alger") |> vm_girafe()
 ```
 
-<img src="man/figures/README-interactive.gif" alt="" width="60%" style="display: block; margin: auto;" />
+```{r interactive-gif, echo = FALSE, out.width = "60%", fig.align = "center"}
+knitr::include_graphics("man/figures/README-interactive.gif")
+```
 
-Live version (hover it yourself) in the [Interactive
-article](https://loukesio.github.io/ggvmap/articles/interactive.html).
+Live version (hover it yourself) in the
+[Interactive article](https://loukesio.github.io/ggvmap/articles/interactive.html).
 
 ## Step-by-step usage
 
-``` r
+```{r step-by-step, eval = FALSE}
 # 1. Compute the map
 vm <- voronoi_map(
   weights = freshwater$share,
@@ -249,39 +248,37 @@ head(df)
 ## How it works
 
 The algorithm is like a **room full of balloons**: each balloon wants to
-claim space proportional to its importance. Every iteration, each
-balloon drifts toward the centre of its current territory (position
-adaptation) and inflates or deflates to grab the right amount of area
-(weight adaptation). After enough rounds, the room is perfectly
-partitioned.
+claim space proportional to its importance. Every iteration, each balloon
+drifts toward the centre of its current territory (position adaptation)
+and inflates or deflates to grab the right amount of area
+(weight adaptation). After enough rounds, the room is perfectly partitioned.
 
-Under the hood, it’s an iterative **power diagram** (weighted Voronoi
+Under the hood, it's an iterative **power diagram** (weighted Voronoi
 tessellation) following:
 
-> Nocaj, A. & Brandes, U. (2012). “Computing Voronoi Treemaps — Faster,
-> Simpler, and Resolution-independent.” *Computer Graphics Forum*,
-> 31(3), 855–864. <doi:10.1111/j.1467-8659.2012.03078.x>
+> Nocaj, A. & Brandes, U. (2012). "Computing Voronoi Treemaps — Faster,
+> Simpler, and Resolution-independent."
+> *Computer Graphics Forum*, 31(3), 855–864.
+> doi:10.1111/j.1467-8659.2012.03078.x
 
 ## Is it correct?
 
-Yes — and it’s verified. The tessellation is an *exact* power diagram
-(to floating-point precision): cells satisfy the defining
-minimum-power-distance property, tile the domain with no gaps or
-overlaps, are all convex, and the hierarchical layout is a valid nested
-power diagram. These invariants are enforced by
-`tests/testthat/test-correctness.R` and explained in the [Correctness
-article](https://loukesio.github.io/ggvmap/articles/validation.html).
+Yes — and it's verified. The tessellation is an *exact* power diagram (to
+floating-point precision): cells satisfy the defining minimum-power-distance
+property, tile the domain with no gaps or overlaps, are all convex, and the
+hierarchical layout is a valid nested power diagram. These invariants are
+enforced by `tests/testthat/test-correctness.R` and explained in the
+[Correctness article](https://loukesio.github.io/ggvmap/articles/validation.html).
 
 ## Example gallery
 
-More worked examples (with code) live in [`examples/`](examples/) —
-grouped layouts, custom rings, flags on different shapes, and a combined
-infographic.
+More worked examples (with code) live in [`examples/`](examples/) — grouped
+layouts, custom rings, flags on different shapes, and a combined infographic.
 
 ## API reference
 
 | Function | Purpose |
-|----|----|
+|---|---|
 | `voronoi_map()` | Core computation (add `group =` for a hierarchical layout) |
 | `ggvmap()` | The main ggplot2 visualisation (accepts a map or raw weights; `autoscale`, `min_area`, `fontface`, `family`, per-cell `label_col`) |
 | `autoplot()` | Alias for `ggvmap()` via the ggplot2 generic |
@@ -297,15 +294,15 @@ infographic.
 
 ## Comparison with other R packages
 
-| Feature                 | ggvmap        | voronoiTreemap     | WeightedTreemaps |
-|-------------------------|---------------|--------------------|------------------|
-| Backend                 | Pure R        | D3.js (htmlwidget) | C++ / CGAL       |
-| ggplot2 native          | ✅            | ❌                 | ❌               |
-| Dependencies            | ggplot2 only  | htmlwidgets, d3    | RcppCGAL         |
-| Hierarchical            | ✅ (grouped)  | ✅                 | ✅               |
-| Annotation ring / flags | ✅            | ❌                 | ❌               |
-| Custom shapes           | ✅ any convex | ✅                 | ✅               |
-| Install complexity      | Trivial       | Medium             | Hard (CGAL)      |
+| Feature | ggvmap | voronoiTreemap | WeightedTreemaps |
+|---|---|---|---|
+| Backend | Pure R | D3.js (htmlwidget) | C++ / CGAL |
+| ggplot2 native | ✅ | ❌ | ❌ |
+| Dependencies | ggplot2 only | htmlwidgets, d3 | RcppCGAL |
+| Hierarchical | ✅ (grouped) | ✅ | ✅ |
+| Annotation ring / flags | ✅ | ❌ | ❌ |
+| Custom shapes | ✅ any convex | ✅ | ✅ |
+| Install complexity | Trivial | Medium | Hard (CGAL) |
 
 ## License
 

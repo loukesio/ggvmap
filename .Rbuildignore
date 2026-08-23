@@ -21,3 +21,5 @@
 ^ggvmap_improvements\.patch$
 ^HANDOFF_MASTER\.md$
 ^paper$
+^README\.Rmd$
+^CONTRIBUTING\.md$
