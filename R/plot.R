@@ -413,8 +413,10 @@ autoplot.voronoi_map <- function(object, ...) {
 #'
 #' @param p A ggplot built with `interactive = TRUE`.
 #' @param width_svg,height_svg Size of the SVG canvas in inches.  Default `7`.
-#' @param hover_css CSS applied to the hovered cell.  Default highlights its
-#'   outline.
+#' @param hover_css CSS applied to the hovered cell.  The default fades the
+#'   cell slightly and thickens its white outline -- no dark border.  Pass
+#'   your own CSS to change the effect (e.g.
+#'   `"stroke:#222222;stroke-width:1.4px;"` for a dark outline).
 #' @param opts Optional list of extra \pkg{ggiraph} `opts_*()` objects to append.
 #' @param ... Passed to [ggiraph::girafe()].
 #' @return A `girafe` htmlwidget.
@@ -425,7 +427,7 @@ autoplot.voronoi_map <- function(object, ...) {
 #' }
 #' @export
 vm_girafe <- function(p, width_svg = 7, height_svg = 7,
-                      hover_css = "stroke:#222222;stroke-width:1.4px;",
+                      hover_css = "fill-opacity:0.75;stroke:#ffffff;stroke-width:2.2px;",
                       opts = NULL, ...) {
   if (!requireNamespace("ggiraph", quietly = TRUE)) {
     stop("vm_girafe() requires the 'ggiraph' package. ",

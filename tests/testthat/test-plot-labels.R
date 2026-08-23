@@ -159,3 +159,24 @@ test_that("per-cell label colours via named vectors", {
   txt2 <- p2$layers[[length(p2$layers)]]
   expect_equal(unname(txt2$aes_params$colour), c("blue", "grey20", "grey20"))
 })
+
+test_that("arc colours: single colour, named per group, or palette", {
+  vm <- voronoi_map(c(5, 3, 8, 4, 6, 2),
+                    group = c("A", "A", "B", "B", "C", "C"),
+                    clip = clip_circle(), seed = 1)
+  p <- ggvmap(vm, show_labels = FALSE)
+  arc_cols <- function(pl) {
+    paths <- Filter(function(l) class(l$geom)[1] == "GeomPath", pl$layers)
+    vapply(paths, function(l) l$aes_params$colour, character(1))
+  }
+  # one colour for every arc
+  p1 <- vm_add_ring(p, style = "arc", colors = "#333333", curved = FALSE)
+  expect_equal(unique(arc_cols(p1)), "#333333")
+  # named per-group colours
+  p2 <- vm_add_ring(p, style = "arc", curved = FALSE,
+                    colors = c(A = "#111111", B = "#222222", C = "#333333"))
+  expect_setequal(unique(arc_cols(p2)), c("#111111", "#222222", "#333333"))
+  # default: palette colours, one per group
+  p3 <- vm_add_ring(p, style = "arc", curved = FALSE)
+  expect_equal(length(unique(arc_cols(p3))), 3L)
+})

@@ -26,6 +26,14 @@
   cell label; unnamed cells keep the default. Handy for light text on dark
   cells.
 
+* **Softer hover highlight.** The `vm_girafe()` default `hover_css` now fades
+  the hovered cell and thickens its white outline instead of drawing a dark
+  border; pass your own `hover_css` to restore the old effect.
+
+* `vm_add_ring()` gains `label_fontface` (default `"bold"`, the previous
+  hard-coded value), completing font control of the ring labels alongside
+  `family`, `label_size` and `label_col`.
+
 # ggvmap 0.3.0
 
 ## API change

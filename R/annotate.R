@@ -42,8 +42,13 @@
 #' @param vm Optional `voronoi_map`; taken from `p` when omitted.
 #' @param groups Optional character vector selecting and ordering which groups
 #'   to draw.  Defaults to all groups.
-#' @param colors Fill colours for the segments: a vector (recycled/interpolated)
-#'   or a named vector keyed by group.  Defaults to the `palette`.
+#' @param colors Colours for the ring segments (band fills or arc lines):
+#'   `NULL` (default) uses the `palette`, so each group matches its cells; a
+#'   single colour (e.g. `"#333333"`) colours every segment the same; a named
+#'   vector keyed by group (e.g. `c(LATAM = "#333333")` with the other groups
+#'   named too) sets each group individually; an unnamed vector is
+#'   interpolated across the groups.  With `style = "arc"`, the labels follow
+#'   the arc colours unless `label_col` is set.
 #' @param labels Logical, or a named character vector of display labels keyed
 #'   by group.  `TRUE` (default) uses the group names; `FALSE` draws no text.
 #' @param curved Draw labels curved along the arc using \pkg{geomtextpath}?
@@ -63,6 +68,7 @@
 #' @param label_col Ring label colour.  `NULL` (default) means `"white"` for
 #'   `style = "band"` and each arc's own colour for `style = "arc"`.
 #' @param label_size Ring label size.  Default `3.2`.
+#' @param label_fontface Ring label font face.  Default `"bold"`.
 #' @param border_col Segment border colour (`style = "band"`).  Default `"white"`.
 #' @param border_size Segment border width (`style = "band"`).  Default `0.4`.
 #' @param family Font family for the ring labels.  `NULL` (default) uses the
@@ -100,6 +106,7 @@ vm_add_ring <- function(
   pad         = 1,
   label_col   = NULL,
   label_size  = 3.2,
+  label_fontface = "bold",
   border_col  = "white",
   border_size = 0.4,
   family      = NULL,
@@ -125,8 +132,8 @@ vm_add_ring <- function(
 
   if (style == "arc") {
     return(.vm_ring_arc(p, vm, seg, meta, colors, labels, curved, palette,
-                        gap, pad_rad, label_col, label_size, family,
-                        linewidth, linetype, offset, values))
+                        gap, pad_rad, label_col, label_size, label_fontface,
+                        family, linewidth, linetype, offset, values))
   }
   if (is.null(label_col)) label_col <- "white"
 
@@ -187,7 +194,7 @@ vm_add_ring <- function(
           mapping = ggplot2::aes(x = .data$x, y = .data$y,
                                  label = .data$label, group = .data$seg),
           inherit.aes = FALSE, colour = label_col, size = label_size,
-          fontface = "bold", text_only = TRUE, upright = TRUE
+          fontface = label_fontface, text_only = TRUE, upright = TRUE
         ), family))))
     } else {
       mid <- ((seg$start + seg$end) / 2) %% (2 * pi)  # position angle [0, 2*pi)
@@ -205,7 +212,7 @@ vm_add_ring <- function(
           mapping = ggplot2::aes(x = .data$x, y = .data$y,
                                  label = .data$label, angle = .data$angle),
           inherit.aes = FALSE, colour = label_col, size = label_size,
-          fontface = "bold"
+          fontface = label_fontface
         ), family))))
     }
   }
@@ -230,8 +237,8 @@ vm_add_ring <- function(
 #' midpoint by a gap holding the group label
 #' @noRd
 .vm_ring_arc <- function(p, vm, seg, meta, colors, labels, curved, palette,
-                         gap, pad_rad, label_col, label_size, family,
-                         linewidth, linetype, offset, values) {
+                         gap, pad_rad, label_col, label_size, label_fontface,
+                         family, linewidth, linetype, offset, values) {
   cx <- meta$center[1]; cy <- meta$center[2]; r <- meta$radius
   ra <- r * (1 + gap + offset)
 
@@ -318,7 +325,7 @@ vm_add_ring <- function(
                                  label = .data$label, group = .data$seg,
                                  colour = .data$col_final),
           inherit.aes = FALSE, size = label_size,
-          fontface = "bold", text_only = TRUE, upright = TRUE,
+          fontface = label_fontface, text_only = TRUE, upright = TRUE,
           show.legend = FALSE
         ), family)), ggplot2::scale_colour_identity()))
     } else {
@@ -336,7 +343,7 @@ vm_add_ring <- function(
           mapping = ggplot2::aes(x = .data$x, y = .data$y,
                                  label = .data$label, angle = .data$angle,
                                  colour = .data$col_final),
-          inherit.aes = FALSE, size = label_size, fontface = "bold",
+          inherit.aes = FALSE, size = label_size, fontface = label_fontface,
           show.legend = FALSE
         ), family)), ggplot2::scale_colour_identity()))
     }

@@ -38,6 +38,7 @@ reference:
       - regular_polygon
   - title: Data
     contents:
+      - freshwater
       - world_exports
       - merchant_fleet
 

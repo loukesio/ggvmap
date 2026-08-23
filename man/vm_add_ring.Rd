@@ -18,6 +18,7 @@ vm_add_ring(
   pad = 1,
   label_col = NULL,
   label_size = 3.2,
+  label_fontface = "bold",
   border_col = "white",
   border_size = 0.4,
   family = NULL,
@@ -35,8 +36,13 @@ vm_add_ring(
 \item{groups}{Optional character vector selecting and ordering which groups
 to draw.  Defaults to all groups.}
 
-\item{colors}{Fill colours for the segments: a vector (recycled/interpolated)
-or a named vector keyed by group.  Defaults to the \code{palette}.}
+\item{colors}{Colours for the ring segments (band fills or arc lines):
+\code{NULL} (default) uses the \code{palette}, so each group matches its cells; a
+single colour (e.g. \code{"#333333"}) colours every segment the same; a named
+vector keyed by group (e.g. \code{c(LATAM = "#333333")} with the other groups
+named too) sets each group individually; an unnamed vector is
+interpolated across the groups.  With \code{style = "arc"}, the labels follow
+the arc colours unless \code{label_col} is set.}
 
 \item{labels}{Logical, or a named character vector of display labels keyed
 by group.  \code{TRUE} (default) uses the group names; \code{FALSE} draws no text.}
@@ -64,6 +70,8 @@ Default \code{1}.}
 \code{style = "band"} and each arc's own colour for \code{style = "arc"}.}
 
 \item{label_size}{Ring label size.  Default \code{3.2}.}
+
+\item{label_fontface}{Ring label font face.  Default \code{"bold"}.}
 
 \item{border_col}{Segment border colour (\code{style = "band"}).  Default \code{"white"}.}
 

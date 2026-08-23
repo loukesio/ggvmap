@@ -39,6 +39,46 @@ Nocaj & Brandes (2012) iterative power-diagram algorithm in **pure R**
 **ggplot2** integration: hierarchical (grouped) layouts, annotation
 rings, flags, value labels, and interactive hover maps.
 
+## Installation
+
+ggvmap is pure R with a single hard dependency (ggplot2) — no compilation,
+no system libraries. Install the latest version from GitHub:
+
+```r
+# with remotes (lightweight)
+install.packages("remotes")
+remotes::install_github("loukesio/ggvmap")
+
+# ...or with devtools
+devtools::install_github("loukesio/ggvmap")
+```
+
+To install a specific release, append its tag:
+
+```r
+remotes::install_github("loukesio/ggvmap@v0.3.0")
+```
+
+Some features use optional packages — install the ones you need:
+
+```r
+install.packages(c(
+  "ggimage",       # vm_add_flags(), vm_add_images()
+  "ggiraph",       # interactive = TRUE + vm_girafe()
+  "geomtextpath",  # curved ring labels
+  "ggtext",        # markdown titles
+  "showtext"       # custom fonts
+))
+```
+
+Then load it like any package:
+
+```r
+library(ggvmap)
+```
+
+## The one-glance demo
+
 Everything below is drawn from one bundled dataset — `data(freshwater)`,
 each country's share of global renewable freshwater (FAO Aquastat via
 World Bank, 2022):
@@ -62,13 +102,6 @@ knitr::include_graphics("man/figures/README-hero.png")
 ```
 
 The full script is [`examples/freshwater_tour.R`](examples/freshwater_tour.R).
-
-## Installation
-
-```r
-# From GitHub
-devtools::install_github("loukesio/ggvmap")
-```
 
 ## Quick start
 
@@ -154,6 +187,16 @@ ggvmap(vm, palette = "alger", label_col = "grey15",
 ggvmap(vm, palette = "alger", label_col = "grey15",
        autoscale = TRUE, min_area = 0.004) |>
   vm_add_ring(style = "arc", palette = "alger", values = TRUE)
+```
+
+The arcs follow the group colours by default; `colors =` overrides them —
+one colour for all arcs (e.g. `colors = "#333333"` for a uniform dark
+ring), or a vector named by group for full control:
+
+```{r ring-arc-dark, out.width = "48%"}
+ggvmap(vm, palette = "alger", label_col = "grey15",
+       autoscale = TRUE, min_area = 0.004) |>
+  vm_add_ring(style = "arc", colors = "#333333", values = TRUE)
 ```
 
 ### Flags
