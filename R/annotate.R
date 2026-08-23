@@ -82,6 +82,10 @@
 #' @param values Append each group's share to its label (`style = "arc"`),
 #'   e.g. "LATAM 32%" with a middle-dot separator?  Computed from the group
 #'   weights.  Default `FALSE`.
+#' @param values_sep Separator between the group name and its share.
+#'   Default is a middle dot (`" \u00b7 "`).  On Windows `pdf()` devices the
+#'   dot can hit an encoding conversion failure -- pass an ASCII separator
+#'   such as `" - "` there.
 #'
 #' @return The ggplot with ring layers added.
 #' @examples
@@ -90,7 +94,8 @@
 #'                   clip = clip_circle(), seed = 1)
 #' ggvmap(vm, palette = "alger") |> vm_add_ring(palette = "alger")
 #' ggvmap(vm, palette = "alger") |>
-#'   vm_add_ring(style = "arc", palette = "alger", values = TRUE)
+#'   vm_add_ring(style = "arc", palette = "alger", values = TRUE,
+#'               values_sep = " - ")   # ASCII sep keeps pdf() happy everywhere
 #' @export
 vm_add_ring <- function(
   p,
@@ -113,7 +118,8 @@ vm_add_ring <- function(
   linewidth   = 0.5,
   linetype    = "solid",
   offset      = 0.06,
-  values      = FALSE
+  values      = FALSE,
+  values_sep  = " \u00b7 "
 ) {
   style <- match.arg(style)
   vm   <- .vm_of(p, vm)
@@ -133,7 +139,8 @@ vm_add_ring <- function(
   if (style == "arc") {
     return(.vm_ring_arc(p, vm, seg, meta, colors, labels, curved, palette,
                         gap, pad_rad, label_col, label_size, label_fontface,
-                        family, linewidth, linetype, offset, values))
+                        family, linewidth, linetype, offset, values,
+                        values_sep))
   }
   if (is.null(label_col)) label_col <- "white"
 
@@ -238,7 +245,8 @@ vm_add_ring <- function(
 #' @noRd
 .vm_ring_arc <- function(p, vm, seg, meta, colors, labels, curved, palette,
                          gap, pad_rad, label_col, label_size, label_fontface,
-                         family, linewidth, linetype, offset, values) {
+                         family, linewidth, linetype, offset, values,
+                         values_sep = " \u00b7 ") {
   cx <- meta$center[1]; cy <- meta$center[2]; r <- meta$radius
   ra <- r * (1 + gap + offset)
 
@@ -257,7 +265,7 @@ vm_add_ring <- function(
   lab_txt <- if (is.character(labels)) labels[seg$group] else seg$group
   lab_txt[is.na(lab_txt)] <- seg$group[is.na(lab_txt)]
   if (isTRUE(values)) {
-    lab_txt <- paste0(lab_txt, " \u00b7 ", round(shares[seg$group]), "%")
+    lab_txt <- paste0(lab_txt, values_sep, round(shares[seg$group]), "%")
   }
   draw_labels <- !isFALSE(labels)
 
@@ -602,6 +610,9 @@ vm_add_flags <- function(p, vm = NULL, country = NULL, iso = NULL,
 #'   floored at 60% of `size`.  Default `FALSE`.
 #' @param family Font family for the value labels, passed to the text layer.
 #'   `NULL` (default) uses the ggplot2 default.
+#' @param wrap Wrap value labels longer than this many characters onto
+#'   multiple lines (word-aware, via [strwrap()]).  Default `NULL`
+#'   (no wrapping).
 #' @return The ggplot with a value-label layer added.
 #' @export
 vm_add_labels <- function(p, vm = NULL, value = NULL, secondary = NULL,
@@ -609,7 +620,7 @@ vm_add_labels <- function(p, vm = NULL, value = NULL, secondary = NULL,
                           size = 2.8, col = "grey20", fontface = "plain",
                           nudge_x = 0, nudge_y = NULL, cells = NULL,
                           inside = TRUE, min_area = 0, autoscale = FALSE,
-                          family = NULL) {
+                          family = NULL, wrap = NULL) {
   vm  <- .vm_of(p, vm)
   if (is.null(value)) value <- vm$sites$data_weight
   value <- .align_to_cells(vm, value, "value")
@@ -619,6 +630,7 @@ vm_add_labels <- function(p, vm = NULL, value = NULL, secondary = NULL,
   }
   txt <- paste0(prefix, fmt(value), suffix)
   if (!is.null(sec)) txt <- paste0(txt, " (", fmt(sec), ")")
+  txt <- .wrap_labels(txt, wrap)
 
   meta <- .clip_meta(vm$clip)
   ctr  <- vm_centroids(vm)

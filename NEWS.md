@@ -34,6 +34,15 @@
   hard-coded value), completing font control of the ring labels alongside
   `family`, `label_size` and `label_col`.
 
+* **Label wrapping.** `ggvmap()` and `vm_add_labels()` gain `wrap`: labels
+  longer than that many characters break onto multiple lines (word-aware,
+  via `strwrap()`), so long names fit inside narrow cells.
+
+* `vm_add_ring()` gains `values_sep` (default: middle dot). On Windows
+  `pdf()` devices the dot can fail glyph-encoding conversion (seen on CI as
+  U+A78F in `mbcsToSbcs`); pass `values_sep = " - "` there. The shipped
+  example does so.
+
 # ggvmap 0.3.0
 
 ## API change

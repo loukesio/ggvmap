@@ -180,3 +180,29 @@ test_that("arc colours: single colour, named per group, or palette", {
   p3 <- vm_add_ring(p, style = "arc", curved = FALSE)
   expect_equal(length(unique(arc_cols(p3))), 3L)
 })
+
+test_that("wrap breaks long labels onto multiple lines", {
+  expect_equal(ggvmap:::.wrap_labels("Papua New Guinea", 10), "Papua New\nGuinea")
+  expect_equal(ggvmap:::.wrap_labels("Chile", 10), "Chile")
+  expect_equal(ggvmap:::.wrap_labels(c("a b c", "d"), NULL), c("a b c", "d"))
+
+  vm <- voronoi_map(c(3, 2, 5),
+                    labels = c("short", "a very long label", "x"), seed = 1)
+  p <- ggvmap(vm, wrap = 8)
+  labs <- p$layers[[length(p$layers)]]$data$label
+  expect_true(any(grepl("\n", labs)))
+  # label_cells still matches on the unwrapped name
+  p2 <- ggvmap(vm, wrap = 8, label_cells = "a very long label")
+  expect_equal(nrow(p2$layers[[length(p2$layers)]]$data), 1)
+})
+
+test_that("values_sep controls the arc label separator", {
+  vm <- voronoi_map(c(5, 3), group = c("A", "B"), clip = clip_circle(),
+                    seed = 1)
+  p <- vm_add_ring(ggvmap(vm, show_labels = FALSE),
+                   style = "arc", values = TRUE, values_sep = " - ",
+                   curved = FALSE)
+  labs <- unlist(lapply(Filter(function(l) "label" %in% names(l$data),
+                               p$layers), function(l) l$data$label))
+  expect_true(all(grepl(" - \\d+%$", labs)))
+})

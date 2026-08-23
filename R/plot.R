@@ -134,6 +134,14 @@ vm_centroids <- function(vm) {
   rep_len(fontface, length(labs))
 }
 
+#' Wrap labels at a character width (NULL = no wrapping)
+#' @noRd
+.wrap_labels <- function(x, wrap) {
+  if (is.null(wrap) || !is.finite(wrap)) return(x)
+  vapply(x, function(s) paste(strwrap(s, width = wrap), collapse = "\n"),
+         character(1), USE.NAMES = FALSE)
+}
+
 #' Resolve a label colour spec to one colour per cell
 #'
 #' Accepts a scalar, a length-`n` vector (cell order), or a vector named by
@@ -198,6 +206,9 @@ vm_centroids <- function(vm) {
 #'   floored at 60% of `label_size`.  Default `FALSE`.
 #' @param family Font family for the name labels, passed to the text layer.
 #'   `NULL` (default) uses the ggplot2 default.
+#' @param wrap Wrap name labels longer than this many characters onto
+#'   multiple lines (word-aware, via [strwrap()]) -- e.g. `wrap = 10` turns
+#'   "Papua New Guinea" into two lines.  Default `NULL` (no wrapping).
 #' @param palette Character vector of colours, `"Okabe-Ito"` (the default,
 #'   colourblind-safe; see [okabe_ito()]), a built-in named palette such as
 #'   `"alger"`, or a named palette from [grDevices::hcl.colors()].
@@ -239,6 +250,7 @@ ggvmap <- function(
   min_area          = 0,
   autoscale         = FALSE,
   family            = NULL,
+  wrap              = NULL,
   palette           = "Okabe-Ito",
   legend            = FALSE,
   interactive       = FALSE,
@@ -371,6 +383,7 @@ ggvmap <- function(
     lab_df$col       <- .resolve_label_col(object, label_col, "white")
     if (!is.null(label_cells)) lab_df <- lab_df[lab_df$label %in% label_cells, , drop = FALSE]
     if (min_area > 0) lab_df <- lab_df[lab_df$area_frac >= min_area, , drop = FALSE]
+    lab_df$label <- .wrap_labels(lab_df$label, wrap)
     if (nrow(lab_df)) {
       p <- p + do.call(ggplot2::geom_text, .add_family(
         list(

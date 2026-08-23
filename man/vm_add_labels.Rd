@@ -21,7 +21,8 @@ vm_add_labels(
   inside = TRUE,
   min_area = 0,
   autoscale = FALSE,
-  family = NULL
+  family = NULL,
+  wrap = NULL
 )
 }
 \arguments{
@@ -68,6 +69,10 @@ floored at 60\% of \code{size}.  Default \code{FALSE}.}
 
 \item{family}{Font family for the value labels, passed to the text layer.
 \code{NULL} (default) uses the ggplot2 default.}
+
+\item{wrap}{Wrap value labels longer than this many characters onto
+multiple lines (word-aware, via \code{\link[=strwrap]{strwrap()}}).  Default \code{NULL}
+(no wrapping).}
 }
 \value{
 The ggplot with a value-label layer added.

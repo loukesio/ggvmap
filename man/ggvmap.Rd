@@ -19,6 +19,7 @@ ggvmap(
   min_area = 0,
   autoscale = FALSE,
   family = NULL,
+  wrap = NULL,
   palette = "Okabe-Ito",
   legend = FALSE,
   interactive = FALSE,
@@ -75,6 +76,10 @@ floored at 60\% of \code{label_size}.  Default \code{FALSE}.}
 
 \item{family}{Font family for the name labels, passed to the text layer.
 \code{NULL} (default) uses the ggplot2 default.}
+
+\item{wrap}{Wrap name labels longer than this many characters onto
+multiple lines (word-aware, via \code{\link[=strwrap]{strwrap()}}) -- e.g. \code{wrap = 10} turns
+"Papua New Guinea" into two lines.  Default \code{NULL} (no wrapping).}
 
 \item{palette}{Character vector of colours, \code{"Okabe-Ito"} (the default,
 colourblind-safe; see \code{\link[=okabe_ito]{okabe_ito()}}), a built-in named palette such as

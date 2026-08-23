@@ -25,7 +25,8 @@ vm_add_ring(
   linewidth = 0.5,
   linetype = "solid",
   offset = 0.06,
-  values = FALSE
+  values = FALSE,
+  values_sep = " · "
 )
 }
 \arguments{
@@ -92,6 +93,11 @@ Default \code{0.06}.}
 \item{values}{Append each group's share to its label (\code{style = "arc"}),
 e.g. "LATAM 32\%" with a middle-dot separator?  Computed from the group
 weights.  Default \code{FALSE}.}
+
+\item{values_sep}{Separator between the group name and its share.
+Default is a middle dot (\code{" \\u00b7 "}).  On Windows \code{pdf()} devices the
+dot can hit an encoding conversion failure -- pass an ASCII separator
+such as \code{" - "} there.}
 }
 \value{
 The ggplot with ring layers added.
@@ -109,5 +115,6 @@ vm <- voronoi_map(c(5, 3, 8, 4, 6, 2),
                   clip = clip_circle(), seed = 1)
 ggvmap(vm, palette = "alger") |> vm_add_ring(palette = "alger")
 ggvmap(vm, palette = "alger") |>
-  vm_add_ring(style = "arc", palette = "alger", values = TRUE)
+  vm_add_ring(style = "arc", palette = "alger", values = TRUE,
+              values_sep = " - ")   # ASCII sep keeps pdf() happy everywhere
 }
