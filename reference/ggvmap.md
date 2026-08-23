@@ -22,6 +22,7 @@ ggvmap(
   min_area = 0,
   autoscale = FALSE,
   family = NULL,
+  wrap = NULL,
   palette = "Okabe-Ito",
   legend = FALSE,
   interactive = FALSE,
@@ -108,6 +109,13 @@ ggvmap(
 
   Font family for the name labels, passed to the text layer. `NULL`
   (default) uses the ggplot2 default.
+
+- wrap:
+
+  Wrap name labels longer than this many characters onto multiple lines
+  (word-aware, via [`strwrap()`](https://rdrr.io/r/base/strwrap.html)) –
+  e.g. `wrap = 10` turns "Papua New Guinea" into two lines. Default
+  `NULL` (no wrapping).
 
 - palette:
 

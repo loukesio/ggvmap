@@ -47,6 +47,21 @@
   value), completing font control of the ring labels alongside `family`,
   `label_size` and `label_col`.
 
+- **Label wrapping.**
+  [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md)
+  and
+  [`vm_add_labels()`](https://loukesio.github.io/ggvmap/reference/vm_add_labels.md)
+  gain `wrap`: labels longer than that many characters break onto
+  multiple lines (word-aware, via
+  [`strwrap()`](https://rdrr.io/r/base/strwrap.html)), so long names fit
+  inside narrow cells.
+
+- [`vm_add_ring()`](https://loukesio.github.io/ggvmap/reference/vm_add_ring.md)
+  gains `values_sep` (default: middle dot). On Windows
+  [`pdf()`](https://rdrr.io/r/grDevices/pdf.html) devices the dot can
+  fail glyph-encoding conversion (seen on CI as U+A78F in `mbcsToSbcs`);
+  pass `values_sep = " - "` there. The shipped example does so.
+
 ## ggvmap 0.3.0
 
 ### API change

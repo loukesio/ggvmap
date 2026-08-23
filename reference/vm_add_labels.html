@@ -59,7 +59,8 @@ the category name added by <code><a href="autoplot.voronoi_map.html">autoplot.vo
 <span>  inside <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  min_area <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  autoscale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  family <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  family <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  wrap <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -139,6 +140,12 @@ floored at 60% of <code>size</code>.  Default <code>FALSE</code>.</p></dd>
 <dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
 <dd><p>Font family for the value labels, passed to the text layer.
 <code>NULL</code> (default) uses the ggplot2 default.</p></dd>
+
+
+<dt id="arg-wrap">wrap<a class="anchor" aria-label="anchor" href="#arg-wrap"></a></dt>
+<dd><p>Wrap value labels longer than this many characters onto
+multiple lines (word-aware, via <code><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap()</a></code>).  Default <code>NULL</code>
+(no wrapping).</p></dd>
 
 </dl></div>
     <div class="section level2">

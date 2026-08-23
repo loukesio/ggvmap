@@ -24,7 +24,8 @@ vm_add_labels(
   inside = TRUE,
   min_area = 0,
   autoscale = FALSE,
-  family = NULL
+  family = NULL,
+  wrap = NULL
 )
 ```
 
@@ -106,6 +107,12 @@ vm_add_labels(
 
   Font family for the value labels, passed to the text layer. `NULL`
   (default) uses the ggplot2 default.
+
+- wrap:
+
+  Wrap value labels longer than this many characters onto multiple lines
+  (word-aware, via [`strwrap()`](https://rdrr.io/r/base/strwrap.html)).
+  Default `NULL` (no wrapping).
 
 ## Value
 

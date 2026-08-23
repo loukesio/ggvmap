@@ -30,7 +30,8 @@ vm_add_ring(
   linewidth = 0.5,
   linetype = "solid",
   offset = 0.06,
-  values = FALSE
+  values = FALSE,
+  values_sep = " · "
 )
 ```
 
@@ -144,6 +145,14 @@ vm_add_ring(
   32%" with a middle-dot separator? Computed from the group weights.
   Default `FALSE`.
 
+- values_sep:
+
+  Separator between the group name and its share. Default is a middle
+  dot (`" \u00b7 "`). On Windows
+  [`pdf()`](https://rdrr.io/r/grDevices/pdf.html) devices the dot can
+  hit an encoding conversion failure – pass an ASCII separator such as
+  `" - "` there.
+
 ## Value
 
 The ggplot with ring layers added.
@@ -157,5 +166,6 @@ vm <- voronoi_map(c(5, 3, 8, 4, 6, 2),
 ggvmap(vm, palette = "alger") |> vm_add_ring(palette = "alger")
 
 ggvmap(vm, palette = "alger") |>
-  vm_add_ring(style = "arc", palette = "alger", values = TRUE)
+  vm_add_ring(style = "arc", palette = "alger", values = TRUE,
+              values_sep = " - ")   # ASCII sep keeps pdf() happy everywhere
 ```

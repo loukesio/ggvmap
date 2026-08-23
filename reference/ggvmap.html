@@ -60,6 +60,7 @@ is the group and heavier borders separate the groups.</p>
 <span>  min_area <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  autoscale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  family <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  wrap <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  palette <span class="op">=</span> <span class="st">"Okabe-Ito"</span>,</span>
 <span>  legend <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  interactive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -147,6 +148,12 @@ floored at 60% of <code>label_size</code>.  Default <code>FALSE</code>.</p></dd>
 <dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
 <dd><p>Font family for the name labels, passed to the text layer.
 <code>NULL</code> (default) uses the ggplot2 default.</p></dd>
+
+
+<dt id="arg-wrap">wrap<a class="anchor" aria-label="anchor" href="#arg-wrap"></a></dt>
+<dd><p>Wrap name labels longer than this many characters onto
+multiple lines (word-aware, via <code><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap()</a></code>) – e.g. <code>wrap = 10</code> turns
+"Papua New Guinea" into two lines.  Default <code>NULL</code> (no wrapping).</p></dd>
 
 
 <dt id="arg-palette">palette<a class="anchor" aria-label="anchor" href="#arg-palette"></a></dt>
