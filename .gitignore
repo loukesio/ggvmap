@@ -23,3 +23,6 @@ reference/
 
 # pkgdown site is built by GitHub Actions and served from the gh-pages branch
 docs/
+
+# Session handoff notes (local only)
+HANDOFF*.md
