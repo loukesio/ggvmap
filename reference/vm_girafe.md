@@ -51,6 +51,6 @@ A `girafe` htmlwidget.
 ``` r
 if (FALSE) { # \dontrun{
 vm <- voronoi_map(c(5, 3, 8, 2, 6), labels = LETTERS[1:5], seed = 1)
-autoplot(vm, interactive = TRUE) |> vm_girafe()
+ggvmap(vm, interactive = TRUE) |> vm_girafe()
 } # }
 ```

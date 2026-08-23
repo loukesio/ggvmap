@@ -1,5 +1,67 @@
 # Changelog
 
+## ggvmap 0.3.0
+
+### API change
+
+- **[`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md)
+  is now the main plotting function.** It accepts either an existing
+  `voronoi_map` object or a numeric vector of weights (in which case the
+  map is computed first, as before).
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  still works and is now a thin wrapper around
+  [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md),
+  so existing code keeps running. Note that
+  [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md)’s
+  first argument is now called `x` (was `weights`); calls that spelled
+  out `ggvmap(weights = ...)` need updating.
+
+### New features
+
+- **Label font faces.**
+  [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md)
+  gains a `fontface` argument (default `"bold"`, the previous hard-coded
+  behaviour) and
+  [`vm_add_labels()`](https://loukesio.github.io/ggvmap/reference/vm_add_labels.md)’s
+  existing `fontface` is extended: both now also accept a vector *named
+  by cell label*, e.g. `c(Brazil = "bold", Russia = "bold.italic")`,
+  styling only those cells while the rest stay `"plain"`.
+
+- **Small-cell label handling.** Both
+  [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md)
+  and
+  [`vm_add_labels()`](https://loukesio.github.io/ggvmap/reference/vm_add_labels.md)
+  gain:
+
+  - `min_area` — cells whose area fraction is below this threshold get
+    no label at all (default `0`, off).
+  - `autoscale` — per-cell text size scaled by
+    `size * pmin(1, sqrt(cell_area / median_area))`, floored at 60% of
+    `size`, so labels shrink gracefully in tiny cells (default `FALSE`).
+  - Leader lines / outside callouts for tiny cells are noted as future
+    work; they need ggrepel-style logic that would break the
+    zero-dependency goal.
+
+- **Value labels stay inside their cells.**
+  [`vm_add_labels()`](https://loukesio.github.io/ggvmap/reference/vm_add_labels.md)
+  scales its default `nudge_y` to each cell’s own size and gains
+  `inside = TRUE`, which clamps the label anchor inside the cell
+  polygon.
+
+- **Per-cell label toggling.** `ggvmap(label_cells = c(...))` draws name
+  labels only for the given cells; `vm_add_labels(cells = ...)` filters
+  value labels the same way.
+
+- **Per-group border colours.** `group_border_col` now also accepts a
+  vector named by group, e.g. `c("LATAM" = "#333333")` outlines only
+  that region; a plain string still colours all group borders.
+
+- **New built-in palette `"alger"`** (`#1A5B5B`, `#ACC8BE`, `#F4AB5C`,
+  `#D1422F`; from the **ltc** package, with its leading black dropped) —
+  `ggvmap(vm, palette = "alger")`. Colours are interpolated when a map
+  needs more than four. Okabe-Ito remains the default. The README,
+  examples and vignettes now use alger.
+
 ## ggvmap 0.2.0
 
 ### New features

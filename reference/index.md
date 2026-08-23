@@ -7,7 +7,7 @@ Build a Voronoi map (optionally hierarchical).
 - [`voronoi_map()`](https://loukesio.github.io/ggvmap/reference/voronoi_map.md)
   : Compute a Voronoi map
 - [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md) :
-  Quick ggplot2 Voronoi map
+  Plot a Voronoi map with ggplot2
 
 ## Plot
 

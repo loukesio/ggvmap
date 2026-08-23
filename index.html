@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">ggvmap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,8 +75,9 @@
 <span></span>
 <span><span class="co"># One-liner: compute + plot</span></span>
 <span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span></span>
-<span>  weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">20</span>, <span class="fl">50</span>, <span class="fl">10</span>, <span class="fl">40</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">20</span>, <span class="fl">50</span>, <span class="fl">10</span>, <span class="fl">40</span><span class="op">)</span>,</span>
 <span>  labels  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Tech"</span>, <span class="st">"Health"</span>, <span class="st">"Energy"</span>, <span class="st">"Finance"</span>, <span class="st">"Retail"</span><span class="op">)</span>,</span>
+<span>  palette <span class="op">=</span> <span class="st">"alger"</span>,</span>
 <span>  seed    <span class="op">=</span> <span class="fl">42</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -94,7 +95,7 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">vm</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 2. Plot with ggplot2</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">vm</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, palette <span class="op">=</span> <span class="st">"alger"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 3. Or with base R</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">vm</span><span class="op">)</span></span>
@@ -118,8 +119,8 @@
 <span>  seed     <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">vm</span>, label_size <span class="op">=</span> <span class="fl">2.3</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="reference/vm_add_ring.html">vm_add_ring</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.11</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, label_size <span class="op">=</span> <span class="fl">2.3</span>, palette <span class="op">=</span> <span class="st">"alger"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/vm_add_ring.html">vm_add_ring</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.11</span>, palette <span class="op">=</span> <span class="st">"alger"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/showcase_ring.png"></p>
 </div>
 <div class="section level2">
@@ -131,7 +132,7 @@
 <span></span>
 <span><span class="va">vm</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/voronoi_map.html">voronoi_map</a></span><span class="op">(</span><span class="va">merchant_fleet</span><span class="op">$</span><span class="va">owned</span>, labels <span class="op">=</span> <span class="va">merchant_fleet</span><span class="op">$</span><span class="va">country</span>, seed <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">vm</span>, palette <span class="op">=</span> <span class="st">"Set 2"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span><span class="fu"><a href="reference/ggvmap.html">ggvmap</a></span><span class="op">(</span><span class="va">vm</span>, palette <span class="op">=</span> <span class="st">"alger"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/vm_add_labels.html">vm_add_labels</a></span><span class="op">(</span>value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">merchant_fleet</span><span class="op">$</span><span class="va">owned</span>, <span class="va">merchant_fleet</span><span class="op">$</span><span class="va">country</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="reference/vm_add_flags.html">vm_add_flags</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">0.05</span>, nudge_y <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/showcase_flags.png"></p>
@@ -191,16 +192,16 @@
 <td>Core computation (add <code>group =</code> for a hierarchical layout)</td>
 </tr>
 <tr>
+<td><code><a href="reference/ggvmap.html">ggvmap()</a></code></td>
+<td>The main ggplot2 visualisation (accepts a map or raw weights)</td>
+</tr>
+<tr>
 <td><code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code></td>
-<td>ggplot2 visualisation</td>
+<td>Alias for <code><a href="reference/ggvmap.html">ggvmap()</a></code> via the ggplot2 generic</td>
 </tr>
 <tr>
 <td><code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code></td>
 <td>Base R visualisation</td>
-</tr>
-<tr>
-<td><code><a href="reference/ggvmap.html">ggvmap()</a></code></td>
-<td>Compute + plot in one call</td>
 </tr>
 <tr>
 <td><code><a href="reference/vm_add_ring.html">vm_add_ring()</a></code></td>

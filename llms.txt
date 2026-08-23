@@ -28,8 +28,9 @@ library(ggvmap)
 
 # One-liner: compute + plot
 ggvmap(
-  weights = c(30, 20, 50, 10, 40),
+  c(30, 20, 50, 10, 40),
   labels  = c("Tech", "Health", "Energy", "Finance", "Retail"),
+  palette = "alger",
   seed    = 42
 )
 ```
@@ -48,7 +49,7 @@ vm <- voronoi_map(
 print(vm)
 
 # 2. Plot with ggplot2
-autoplot(vm)
+ggvmap(vm, palette = "alger")
 
 # 3. Or with base R
 plot(vm)
@@ -79,8 +80,8 @@ vm <- voronoi_map(
   seed     = 1
 )
 
-autoplot(vm, label_size = 2.3) |>
-  vm_add_ring(width = 0.11)
+ggvmap(vm, label_size = 2.3, palette = "alger") |>
+  vm_add_ring(width = 0.11, palette = "alger")
 ```
 
 ![](reference/figures/showcase_ring.png)
@@ -96,7 +97,7 @@ data(merchant_fleet)
 
 vm <- voronoi_map(merchant_fleet$owned, labels = merchant_fleet$country, seed = 3)
 
-autoplot(vm, palette = "Set 2") |>
+ggvmap(vm, palette = "alger") |>
   vm_add_labels(value = setNames(merchant_fleet$owned, merchant_fleet$country)) |>
   vm_add_flags(size = 0.05, nudge_y = 0.05)
 ```
@@ -167,9 +168,9 @@ infographic.
 | Function | Purpose |
 |----|----|
 | [`voronoi_map()`](https://loukesio.github.io/ggvmap/reference/voronoi_map.md) | Core computation (add `group =` for a hierarchical layout) |
-| [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html) | ggplot2 visualisation |
+| [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md) | The main ggplot2 visualisation (accepts a map or raw weights) |
+| [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html) | Alias for [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md) via the ggplot2 generic |
 | [`plot()`](https://rdrr.io/r/graphics/plot.default.html) | Base R visualisation |
-| [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md) | Compute + plot in one call |
 | [`vm_add_ring()`](https://loukesio.github.io/ggvmap/reference/vm_add_ring.md) | Add the labelled outer annotation ring |
 | [`vm_add_flags()`](https://loukesio.github.io/ggvmap/reference/vm_add_flags.md) | Add country flags at cell centroids |
 | [`vm_add_images()`](https://loukesio.github.io/ggvmap/reference/vm_add_images.md) | Add arbitrary images at cell centroids |
@@ -203,7 +204,7 @@ Build a Voronoi map (optionally hierarchical).
 - [`voronoi_map()`](https://loukesio.github.io/ggvmap/reference/voronoi_map.md)
   : Compute a Voronoi map
 - [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md) :
-  Quick ggplot2 Voronoi map
+  Plot a Voronoi map with ggplot2
 
 ## Plot
 

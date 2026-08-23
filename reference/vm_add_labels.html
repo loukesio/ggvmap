@@ -9,7 +9,7 @@ the category name added by autoplot.voronoi_map()."><meta property="og:image" co
 
     <a class="navbar-brand me-2" href="../index.html">ggvmap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,7 +31,7 @@ the category name added by autoplot.voronoi_map()."><meta property="og:image" co
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Add value labels at (or near) cell centroids</h1>
-      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/v0.2.0/R/annotate.R" class="external-link"><code>R/annotate.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/main/R/annotate.R" class="external-link"><code>R/annotate.R</code></a></small>
       <div class="d-none name"><code>vm_add_labels.Rd</code></div>
     </div>
 
@@ -55,7 +55,10 @@ the category name added by <code><a href="autoplot.voronoi_map.html">autoplot.vo
 <span>  fontface <span class="op">=</span> <span class="st">"plain"</span>,</span>
 <span>  nudge_x <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  nudge_y <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  cells <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  cells <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  inside <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  min_area <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  autoscale <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -98,16 +101,36 @@ e.g. <code><a href="https://scales.r-lib.org/reference/comma.html" class="extern
 
 
 <dt id="arg-fontface">fontface<a class="anchor" aria-label="anchor" href="#arg-fontface"></a></dt>
-<dd><p>Font face.  Default <code>"plain"</code>.</p></dd>
+<dd><p>Font face: a single value (default <code>"plain"</code>) applied to
+all labels, or a vector named by cell label (e.g.
+<code>c(Brazil = "bold")</code>) styling only those cells while the rest stay
+<code>"plain"</code>.</p></dd>
 
 
 <dt id="arg-nudge-x-nudge-y">nudge_x, nudge_y<a class="anchor" aria-label="anchor" href="#arg-nudge-x-nudge-y"></a></dt>
 <dd><p>Offset from the centroid.  <code>nudge_y</code> defaults to a
-small downward shift scaled to the map so the value sits below the name.</p></dd>
+small downward shift scaled to each cell so the value sits below the name
+without leaving small cells.</p></dd>
 
 
 <dt id="arg-cells">cells<a class="anchor" aria-label="anchor" href="#arg-cells"></a></dt>
 <dd><p>Optional subset of cell labels to annotate.</p></dd>
+
+
+<dt id="arg-inside">inside<a class="anchor" aria-label="anchor" href="#arg-inside"></a></dt>
+<dd><p>Logical; clamp the label anchor inside its cell when the
+nudge would push it out?  Default <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-min-area">min_area<a class="anchor" aria-label="anchor" href="#arg-min-area"></a></dt>
+<dd><p>Cells whose area fraction of the map is below this
+threshold get no value label.  Default <code>0</code> (label every cell).</p></dd>
+
+
+<dt id="arg-autoscale">autoscale<a class="anchor" aria-label="anchor" href="#arg-autoscale"></a></dt>
+<dd><p>Logical; shrink label text in small cells?  Each cell's
+text size becomes <code>size * pmin(1, sqrt(cell_area / median_area))</code>,
+floored at 60% of <code>size</code>.  Default <code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

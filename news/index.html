@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggvmap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,9 +29,33 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/loukesio/ggvmap/blob/v0.2.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/loukesio/ggvmap/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="ggvmap-030">ggvmap 0.3.0<a class="anchor" aria-label="anchor" href="#ggvmap-030"></a></h2>
+<div class="section level3">
+<h3 id="api-change-0-3-0">API change<a class="anchor" aria-label="anchor" href="#api-change-0-3-0"></a></h3>
+<ul><li>
+<strong><code><a href="../reference/ggvmap.html">ggvmap()</a></code> is now the main plotting function.</strong> It accepts either an existing <code>voronoi_map</code> object or a numeric vector of weights (in which case the map is computed first, as before). <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> still works and is now a thin wrapper around <code><a href="../reference/ggvmap.html">ggvmap()</a></code>, so existing code keeps running. Note that <code><a href="../reference/ggvmap.html">ggvmap()</a></code>’s first argument is now called <code>x</code> (was <code>weights</code>); calls that spelled out <code>ggvmap(weights = ...)</code> need updating.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-0-3-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-3-0"></a></h3>
+<ul><li><p><strong>Label font faces.</strong> <code><a href="../reference/ggvmap.html">ggvmap()</a></code> gains a <code>fontface</code> argument (default <code>"bold"</code>, the previous hard-coded behaviour) and <code><a href="../reference/vm_add_labels.html">vm_add_labels()</a></code>’s existing <code>fontface</code> is extended: both now also accept a vector <em>named by cell label</em>, e.g. <code>c(Brazil = "bold", Russia = "bold.italic")</code>, styling only those cells while the rest stay <code>"plain"</code>.</p></li>
+<li>
+<p><strong>Small-cell label handling.</strong> Both <code><a href="../reference/ggvmap.html">ggvmap()</a></code> and <code><a href="../reference/vm_add_labels.html">vm_add_labels()</a></code> gain:</p>
+<ul><li>
+<code>min_area</code> — cells whose area fraction is below this threshold get no label at all (default <code>0</code>, off).</li>
+<li>
+<code>autoscale</code> — per-cell text size scaled by <code>size * pmin(1, sqrt(cell_area / median_area))</code>, floored at 60% of <code>size</code>, so labels shrink gracefully in tiny cells (default <code>FALSE</code>).</li>
+<li>Leader lines / outside callouts for tiny cells are noted as future work; they need ggrepel-style logic that would break the zero-dependency goal.</li>
+</ul></li>
+<li><p><strong>Value labels stay inside their cells.</strong> <code><a href="../reference/vm_add_labels.html">vm_add_labels()</a></code> scales its default <code>nudge_y</code> to each cell’s own size and gains <code>inside = TRUE</code>, which clamps the label anchor inside the cell polygon.</p></li>
+<li><p><strong>Per-cell label toggling.</strong> <code>ggvmap(label_cells = c(...))</code> draws name labels only for the given cells; <code>vm_add_labels(cells = ...)</code> filters value labels the same way.</p></li>
+<li><p><strong>Per-group border colours.</strong> <code>group_border_col</code> now also accepts a vector named by group, e.g. <code>c("LATAM" = "#333333")</code> outlines only that region; a plain string still colours all group borders.</p></li>
+<li><p><strong>New built-in palette <code>"alger"</code></strong> (<code>#1A5B5B</code>, <code>#ACC8BE</code>, <code>#F4AB5C</code>, <code>#D1422F</code>; from the <strong>ltc</strong> package, with its leading black dropped) — <code>ggvmap(vm, palette = "alger")</code>. Colours are interpolated when a map needs more than four. Okabe-Ito remains the default. The README, examples and vignettes now use alger.</p></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="ggvmap-020">ggvmap 0.2.0<a class="anchor" aria-label="anchor" href="#ggvmap-020"></a></h2>
 <div class="section level3">

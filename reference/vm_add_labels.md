@@ -20,7 +20,10 @@ vm_add_labels(
   fontface = "plain",
   nudge_x = 0,
   nudge_y = NULL,
-  cells = NULL
+  cells = NULL,
+  inside = TRUE,
+  min_area = 0,
+  autoscale = FALSE
 )
 ```
 
@@ -66,16 +69,35 @@ vm_add_labels(
 
 - fontface:
 
-  Font face. Default `"plain"`.
+  Font face: a single value (default `"plain"`) applied to all labels,
+  or a vector named by cell label (e.g. `c(Brazil = "bold")`) styling
+  only those cells while the rest stay `"plain"`.
 
 - nudge_x, nudge_y:
 
   Offset from the centroid. `nudge_y` defaults to a small downward shift
-  scaled to the map so the value sits below the name.
+  scaled to each cell so the value sits below the name without leaving
+  small cells.
 
 - cells:
 
   Optional subset of cell labels to annotate.
+
+- inside:
+
+  Logical; clamp the label anchor inside its cell when the nudge would
+  push it out? Default `TRUE`.
+
+- min_area:
+
+  Cells whose area fraction of the map is below this threshold get no
+  value label. Default `0` (label every cell).
+
+- autoscale:
+
+  Logical; shrink label text in small cells? Each cell's text size
+  becomes `size * pmin(1, sqrt(cell_area / median_area))`, floored at
+  60% of `size`. Default `FALSE`.
 
 ## Value
 

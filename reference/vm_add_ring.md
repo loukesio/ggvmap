@@ -105,5 +105,5 @@ The ggplot with ring layers added.
 vm <- voronoi_map(c(5, 3, 8, 4, 6, 2),
                   group = c("A", "A", "B", "B", "C", "C"),
                   clip = clip_circle(), seed = 1)
-autoplot(vm) |> vm_add_ring()
+ggvmap(vm, palette = "alger") |> vm_add_ring(palette = "alger")
 ```

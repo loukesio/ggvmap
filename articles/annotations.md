@@ -26,10 +26,13 @@ vm <- voronoi_map(
   clip    = clip_circle(),
   seed    = 42
 )
-autoplot(vm)
+ggvmap(vm, palette = "alger")
 ```
 
 ![](annotations_files/figure-html/flat-1.png)
+
+(`palette = "alger"` is a built-in four-colour palette; the default is
+the colourblind-safe Okabe–Ito palette.)
 
 ## Hierarchical layouts and the outer ring
 
@@ -54,8 +57,8 @@ vm <- voronoi_map(
   max_iter = 80
 )
 
-autoplot(vm, label_size = 2.3, label_col = "grey20") |>
-  vm_add_ring(width = 0.11, label_size = 3.4)
+ggvmap(vm, label_size = 2.3, label_col = "grey20", palette = "alger") |>
+  vm_add_ring(width = 0.11, label_size = 3.4, palette = "alger")
 ```
 
 ![](annotations_files/figure-html/exports-1.png)
@@ -87,7 +90,7 @@ vm <- voronoi_map(
   seed    = 3
 )
 
-autoplot(vm, label_size = 3.2, label_col = "grey15") |>   # Okabe-Ito by default
+ggvmap(vm, label_size = 3.2, label_col = "grey15", palette = "alger") |>
   vm_add_labels(
     value = stats::setNames(merchant_fleet$owned, merchant_fleet$country),
     size  = 2.6, nudge_y = -0.035
@@ -124,7 +127,7 @@ vm <- voronoi_map(
   clip    = clip_circle(), seed = 42
 )
 
-autoplot(vm, interactive = TRUE) |>
+ggvmap(vm, interactive = TRUE) |>
   vm_girafe(width_svg = 6, height_svg = 6)
 ```
 
@@ -133,7 +136,7 @@ length 1):
 
 ``` r
 
-autoplot(vm, interactive = TRUE,
+ggvmap(vm, interactive = TRUE,
          tooltip = paste0(vm$sites$label, ": ", vm$sites$data_weight, "% share")) |>
   vm_girafe()
 ```

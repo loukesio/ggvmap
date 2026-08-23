@@ -6,7 +6,6 @@ library(ggvmap)
 ```
 
 Set `interactive = TRUE` on
-[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html) or
 [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md) to
 turn any Voronoi map into an interactive graphic powered by
 [ggiraph](https://davidgohel.github.io/ggiraph/): cells **highlight on
@@ -26,7 +25,7 @@ vm <- voronoi_map(
   clip    = clip_circle(), seed = 42
 )
 
-autoplot(vm, interactive = TRUE) |>
+ggvmap(vm, interactive = TRUE, palette = "alger") |>
   vm_girafe(width_svg = 6, height_svg = 6)
 ```
 
@@ -39,7 +38,7 @@ hover text — HTML is supported.
 
 tips <- paste0("<b>", vm$sites$label, "</b><br>", vm$sites$data_weight, "% share")
 
-autoplot(vm, interactive = TRUE, tooltip = tips) |>
+ggvmap(vm, interactive = TRUE, tooltip = tips, palette = "alger") |>
   vm_girafe(width_svg = 6, height_svg = 6)
 ```
 
@@ -59,7 +58,7 @@ vmh <- voronoi_map(
   clip    = clip_circle(), seed = 1, max_iter = 80
 )
 
-autoplot(vmh, interactive = TRUE, label_size = 2) |>
+ggvmap(vmh, interactive = TRUE, label_size = 2, palette = "alger") |>
   vm_girafe(width_svg = 6.5, height_svg = 6.5)
 ```
 
@@ -82,6 +81,6 @@ autoplot(vmh, interactive = TRUE, label_size = 2) |>
 
 ``` r
 
-g <- autoplot(vm, interactive = TRUE) |> vm_girafe()
+g <- ggvmap(vm, interactive = TRUE) |> vm_girafe()
 htmlwidgets::saveWidget(g, "voronoi.html", selfcontained = TRUE)
 ```
