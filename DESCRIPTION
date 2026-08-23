@@ -1,6 +1,6 @@
 Package: ggvmap
 Title: Voronoi Map Treemaps for ggplot2
-Version: 0.2.0
+Version: 0.3.0
 Authors@R:
     person("Loukas", "Theodosiou", email = "loukesio@gmail.com",
            role = c("aut", "cre"))

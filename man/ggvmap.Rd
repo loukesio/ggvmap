@@ -2,89 +2,112 @@
 % Please edit documentation in R/plot.R
 \name{ggvmap}
 \alias{ggvmap}
-\title{Quick ggplot2 Voronoi map}
+\title{Plot a Voronoi map with ggplot2}
 \usage{
 ggvmap(
-  weights,
+  x,
+  fill_by = NULL,
+  border_col = "white",
+  border_size = 0.8,
+  group_border_col = "white",
+  group_border_size = 1.8,
+  show_labels = TRUE,
+  label_cells = NULL,
+  label_col = "white",
+  label_size = 3,
+  fontface = "bold",
+  min_area = 0,
+  autoscale = FALSE,
+  palette = "Okabe-Ito",
+  legend = FALSE,
+  interactive = FALSE,
+  tooltip = NULL,
   labels = NULL,
   group = NULL,
   clip = clip_square(),
   convergence_ratio = 0.01,
   max_iter = 50,
   min_weight_ratio = 0.01,
-  seed = NULL,
-  fill_by = NULL,
-  palette = "Okabe-Ito",
-  border_col = "white",
-  border_size = 0.8,
-  show_labels = TRUE,
-  label_col = "white",
-  label_size = 3,
-  legend = FALSE,
-  interactive = FALSE
+  seed = NULL
 )
 }
 \arguments{
-\item{weights}{Numeric vector of positive weights (one per cell).}
-
-\item{labels}{Optional character vector of cell labels.}
-
-\item{group}{Optional grouping vector (one value per cell).  When
-supplied a hierarchical layout is produced.}
-
-\item{clip}{Clipping polygon as a 2-column matrix (x, y),
-counterclockwise and open.
-Defaults to the unit square.}
-
-\item{convergence_ratio}{Stop when the total area error divided by the
-polygon area falls below this ratio.
-Default \code{0.01} (1\%).}
-
-\item{max_iter}{Maximum number of iterations.  Default \code{200}.}
-
-\item{min_weight_ratio}{Minimum allowed data weight as a fraction of
-the maximum weight.  Prevents near-empty cells.
-Default \code{0.01}.}
-
-\item{seed}{Integer seed for reproducible initial positions.
-\code{NULL} (default) uses a random layout.}
+\item{x}{A \code{voronoi_map} object, or a numeric vector of weights.}
 
 \item{fill_by}{Cell aesthetic to map fill to: one of \code{"label"}, \code{"group"},
 \code{"data_weight"}, or \code{"none"}.  Defaults to \code{"group"} for hierarchical
 maps and \code{"label"} otherwise.}
 
-\item{palette}{Character vector of colours, \code{"Okabe-Ito"} (the default,
-colourblind-safe; see \code{\link[=okabe_ito]{okabe_ito()}}), or a named palette from
-\code{\link[grDevices:palettes]{grDevices::hcl.colors()}}.}
-
 \item{border_col}{Border colour.  Default \code{"white"}.}
 
 \item{border_size}{Border line width.  Default \code{0.8}.}
 
+\item{group_border_col}{Colour of the heavier group boundaries drawn for
+hierarchical maps.  \code{NA} disables them.  Default \code{"white"}.  May also be
+a vector named by group: only the named groups get a border, each in its
+own colour (e.g. \code{c("LATAM" = "#333333")} outlines one region only).}
+
+\item{group_border_size}{Line width of group boundaries.  Default \code{1.8}.}
+
 \item{show_labels}{Logical; add centroid labels?  Default \code{TRUE}.}
+
+\item{label_cells}{Optional character vector of cell labels to annotate;
+others get no name label.  Default \code{NULL} (all cells).}
 
 \item{label_col}{Label colour.  Default \code{"white"}.}
 
 \item{label_size}{Label size.  Default \code{3}.}
+
+\item{fontface}{Font face for the name labels: a single value (e.g.
+\code{"bold"}, the default) applied to all labels, or a vector named by cell
+label (e.g. \code{c(Brazil = "bold", Russia = "bold.italic")}) styling only
+those cells while the rest stay \code{"plain"}.}
+
+\item{min_area}{Cells whose area fraction of the map is below this
+threshold get no name label.  Default \code{0} (label every cell).}
+
+\item{autoscale}{Logical; shrink label text in small cells?  Each cell's
+text size becomes \code{label_size * pmin(1, sqrt(cell_area / median_area))},
+floored at 60\% of \code{label_size}.  Default \code{FALSE}.}
+
+\item{palette}{Character vector of colours, \code{"Okabe-Ito"} (the default,
+colourblind-safe; see \code{\link[=okabe_ito]{okabe_ito()}}), a built-in named palette such as
+\code{"alger"}, or a named palette from \code{\link[grDevices:palettes]{grDevices::hcl.colors()}}.}
 
 \item{legend}{Logical; show the fill legend?  Default \code{FALSE}.}
 
 \item{interactive}{Logical; make the cells interactive (hover highlight and
 tooltips) using \pkg{ggiraph}?  Render the result with \code{\link[=vm_girafe]{vm_girafe()}}.
 Default \code{FALSE}.}
+
+\item{tooltip}{Optional per-cell tooltip text (length-\code{n}, named by label, or
+length 1) used when \code{interactive = TRUE}.  Defaults to the label and value.}
+
+\item{labels, group, clip, convergence_ratio, max_iter, min_weight_ratio, seed}{Layout arguments passed to \code{\link[=voronoi_map]{voronoi_map()}} when \code{x} is a vector of
+weights; ignored when \code{x} is already a \code{voronoi_map}.}
 }
 \value{
-A ggplot object (invisibly also stores the \code{voronoi_map} object
-as attribute \code{"vm"}).
+A ggplot object (pass to \code{\link[=vm_girafe]{vm_girafe()}} to render an interactive
+widget when \code{interactive = TRUE}).  The underlying \code{voronoi_map} is
+attached as attribute \code{"vm"} so annotation helpers can be chained.
 }
 \description{
-Compute \emph{and} plot a Voronoi map in a single call.
+The main plotting function of \pkg{ggvmap}.  Produces a ggplot2
+visualisation with \code{geom_polygon()}; for hierarchical maps the default fill
+is the group and heavier borders separate the groups.
+}
+\details{
+\code{x} may be an existing \code{\link[=voronoi_map]{voronoi_map()}} object, or a numeric vector of
+weights -- in which case the map is computed first (see the layout
+arguments below), so \code{ggvmap(weights, labels = ...)} computes \emph{and} plots
+in one call.
 }
 \examples{
-ggvmap(
-  weights = c(3, 2, 5, 1, 4),
-  labels  = c("A", "B", "C", "D", "E"),
-  seed    = 42
-)
+# Compute and plot in one call
+ggvmap(c(3, 2, 5, 1, 4), labels = c("A", "B", "C", "D", "E"), seed = 42)
+
+# Or plot an existing map
+vm <- voronoi_map(c(5, 3, 8, 2, 6), labels = LETTERS[1:5], seed = 1)
+ggvmap(vm, palette = "alger")
 
 }

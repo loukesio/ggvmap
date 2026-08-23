@@ -32,8 +32,9 @@ library(ggvmap)
 
 # One-liner: compute + plot
 ggvmap(
-  weights = c(30, 20, 50, 10, 40),
+  c(30, 20, 50, 10, 40),
   labels  = c("Tech", "Health", "Energy", "Finance", "Retail"),
+  palette = "alger",
   seed    = 42
 )
 ```
@@ -51,7 +52,7 @@ vm <- voronoi_map(
 print(vm)
 
 # 2. Plot with ggplot2
-autoplot(vm)
+ggvmap(vm, palette = "alger")
 
 # 3. Or with base R
 plot(vm)
@@ -78,8 +79,8 @@ vm <- voronoi_map(
   seed     = 1
 )
 
-autoplot(vm, label_size = 2.3) |>
-  vm_add_ring(width = 0.11)
+ggvmap(vm, label_size = 2.3, palette = "alger") |>
+  vm_add_ring(width = 0.11, palette = "alger")
 ```
 
 ![](man/figures/showcase_ring.png)
@@ -94,7 +95,7 @@ data(merchant_fleet)
 
 vm <- voronoi_map(merchant_fleet$owned, labels = merchant_fleet$country, seed = 3)
 
-autoplot(vm, palette = "Set 2") |>
+ggvmap(vm, palette = "alger") |>
   vm_add_labels(value = setNames(merchant_fleet$owned, merchant_fleet$country)) |>
   vm_add_flags(size = 0.05, nudge_y = 0.05)
 ```
@@ -159,9 +160,9 @@ layouts, custom rings, flags on different shapes, and a combined infographic.
 | Function | Purpose |
 |---|---|
 | `voronoi_map()` | Core computation (add `group =` for a hierarchical layout) |
-| `autoplot()` | ggplot2 visualisation |
+| `ggvmap()` | The main ggplot2 visualisation (accepts a map or raw weights) |
+| `autoplot()` | Alias for `ggvmap()` via the ggplot2 generic |
 | `plot()` | Base R visualisation |
-| `ggvmap()` | Compute + plot in one call |
 | `vm_add_ring()` | Add the labelled outer annotation ring |
 | `vm_add_flags()` | Add country flags at cell centroids |
 | `vm_add_images()` | Add arbitrary images at cell centroids |

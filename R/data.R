@@ -18,7 +18,7 @@
 #'                   labels = world_exports$country,
 #'                   group  = as.character(world_exports$income_group),
 #'                   clip   = clip_circle(), seed = 1)
-#' autoplot(vm, show_labels = FALSE) |> vm_add_ring()
+#' ggvmap(vm, show_labels = FALSE, palette = "alger") |> vm_add_ring(palette = "alger")
 "world_exports"
 
 #' Top merchant fleets 2021
@@ -38,7 +38,7 @@
 #'                   labels = merchant_fleet$country,
 #'                   seed = 3)
 #' \dontrun{
-#' autoplot(vm) |>
+#' ggvmap(vm, palette = "alger") |>
 #'   vm_add_flags() |>
 #'   vm_add_labels(value = stats::setNames(merchant_fleet$owned,
 #'                                         merchant_fleet$country))

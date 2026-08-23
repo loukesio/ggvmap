@@ -109,54 +109,146 @@ vm_centroids <- function(vm) {
   )
 }
 
-#' Autoplot method for voronoi_map objects
+# --- Per-cell label helpers -------------------------------------------------
+
+#' Area of every cell as a fraction of the total map area
+#' @noRd
+.area_fractions <- function(vm) {
+  area <- abs(vapply(vm$cells, polygon_area, numeric(1)))
+  area / sum(area)
+}
+
+#' Resolve `fontface` to one face per cell
 #'
-#' Produces a ggplot2 visualisation with `geom_polygon()`.  For hierarchical
-#' maps the default fill is the group and heavier borders separate the groups.
+#' A named vector styles only the named cells (rest `"plain"`); a single
+#' value (or length-`n` vector) applies as-is, following `.align_to_cells()`.
+#' @noRd
+.resolve_fontface <- function(vm, fontface) {
+  labs <- vm$sites$label
+  if (!is.null(names(fontface))) {
+    out <- stats::setNames(rep("plain", length(labs)), labs)
+    keep <- intersect(names(fontface), labs)
+    out[keep] <- fontface[keep]
+    return(unname(out))
+  }
+  rep_len(fontface, length(labs))
+}
+
+#' Per-cell text sizes, optionally shrunk for small cells
 #'
-#' @param object A `voronoi_map` object.
+#' With `autoscale = TRUE` each cell's size is
+#' `size * pmin(1, sqrt(cell_area / median_area))`, floored at 60% of `size`
+#' so text in tiny cells stays legible.
+#' @noRd
+.label_sizes <- function(vm, size, autoscale) {
+  n <- length(vm$cells)
+  if (!isTRUE(autoscale)) return(rep_len(size, n))
+  area <- abs(vapply(vm$cells, polygon_area, numeric(1)))
+  pmax(0.6 * size, size * pmin(1, sqrt(area / stats::median(area))))
+}
+
+#' Plot a Voronoi map with ggplot2
+#'
+#' The main plotting function of \pkg{ggvmap}.  Produces a ggplot2
+#' visualisation with `geom_polygon()`; for hierarchical maps the default fill
+#' is the group and heavier borders separate the groups.
+#'
+#' `x` may be an existing [voronoi_map()] object, or a numeric vector of
+#' weights -- in which case the map is computed first (see the layout
+#' arguments below), so `ggvmap(weights, labels = ...)` computes *and* plots
+#' in one call.
+#'
+#' @param x A `voronoi_map` object, or a numeric vector of weights.
 #' @param fill_by Cell aesthetic to map fill to: one of `"label"`, `"group"`,
 #'   `"data_weight"`, or `"none"`.  Defaults to `"group"` for hierarchical
 #'   maps and `"label"` otherwise.
 #' @param border_col Border colour.  Default `"white"`.
 #' @param border_size Border line width.  Default `0.8`.
 #' @param group_border_col Colour of the heavier group boundaries drawn for
-#'   hierarchical maps.  `NA` disables them.  Default `"white"`.
+#'   hierarchical maps.  `NA` disables them.  Default `"white"`.  May also be
+#'   a vector named by group: only the named groups get a border, each in its
+#'   own colour (e.g. `c("LATAM" = "#333333")` outlines one region only).
 #' @param group_border_size Line width of group boundaries.  Default `1.8`.
 #' @param show_labels Logical; add centroid labels?  Default `TRUE`.
+#' @param label_cells Optional character vector of cell labels to annotate;
+#'   others get no name label.  Default `NULL` (all cells).
 #' @param label_col Label colour.  Default `"white"`.
 #' @param label_size Label size.  Default `3`.
+#' @param fontface Font face for the name labels: a single value (e.g.
+#'   `"bold"`, the default) applied to all labels, or a vector named by cell
+#'   label (e.g. `c(Brazil = "bold", Russia = "bold.italic")`) styling only
+#'   those cells while the rest stay `"plain"`.
+#' @param min_area Cells whose area fraction of the map is below this
+#'   threshold get no name label.  Default `0` (label every cell).
+#' @param autoscale Logical; shrink label text in small cells?  Each cell's
+#'   text size becomes `label_size * pmin(1, sqrt(cell_area / median_area))`,
+#'   floored at 60% of `label_size`.  Default `FALSE`.
 #' @param palette Character vector of colours, `"Okabe-Ito"` (the default,
-#'   colourblind-safe; see [okabe_ito()]), or a named palette from
-#'   [grDevices::hcl.colors()].
+#'   colourblind-safe; see [okabe_ito()]), a built-in named palette such as
+#'   `"alger"`, or a named palette from [grDevices::hcl.colors()].
 #' @param legend Logical; show the fill legend?  Default `FALSE`.
 #' @param interactive Logical; make the cells interactive (hover highlight and
 #'   tooltips) using \pkg{ggiraph}?  Render the result with [vm_girafe()].
 #'   Default `FALSE`.
 #' @param tooltip Optional per-cell tooltip text (length-`n`, named by label, or
 #'   length 1) used when `interactive = TRUE`.  Defaults to the label and value.
-#' @param ... Ignored.
+#' @param labels,group,clip,convergence_ratio,max_iter,min_weight_ratio,seed
+#'   Layout arguments passed to [voronoi_map()] when `x` is a vector of
+#'   weights; ignored when `x` is already a `voronoi_map`.
 #'
 #' @return A ggplot object (pass to [vm_girafe()] to render an interactive
-#'   widget when `interactive = TRUE`).
-#' @importFrom ggplot2 autoplot
+#'   widget when `interactive = TRUE`).  The underlying `voronoi_map` is
+#'   attached as attribute `"vm"` so annotation helpers can be chained.
+#'
+#' @examples
+#' # Compute and plot in one call
+#' ggvmap(c(3, 2, 5, 1, 4), labels = c("A", "B", "C", "D", "E"), seed = 42)
+#'
+#' # Or plot an existing map
+#' vm <- voronoi_map(c(5, 3, 8, 2, 6), labels = LETTERS[1:5], seed = 1)
+#' ggvmap(vm, palette = "alger")
+#'
 #' @export
-autoplot.voronoi_map <- function(
-  object,
+ggvmap <- function(
+  x,
   fill_by           = NULL,
   border_col        = "white",
   border_size       = 0.8,
   group_border_col  = "white",
   group_border_size = 1.8,
   show_labels       = TRUE,
+  label_cells       = NULL,
   label_col         = "white",
   label_size        = 3,
+  fontface          = "bold",
+  min_area          = 0,
+  autoscale         = FALSE,
   palette           = "Okabe-Ito",
   legend            = FALSE,
   interactive       = FALSE,
   tooltip           = NULL,
-  ...
+  labels            = NULL,
+  group             = NULL,
+  clip              = clip_square(),
+  convergence_ratio = 0.01,
+  max_iter          = 50,
+  min_weight_ratio  = 0.01,
+  seed              = NULL
 ) {
+  object <- if (inherits(x, "voronoi_map")) {
+    x
+  } else {
+    voronoi_map(
+      weights           = x,
+      labels            = labels,
+      group             = group,
+      clip              = clip,
+      convergence_ratio = convergence_ratio,
+      max_iter          = max_iter,
+      min_weight_ratio  = min_weight_ratio,
+      seed              = seed
+    )
+  }
   hier <- isTRUE(object$hierarchical)
   if (is.null(fill_by)) fill_by <- if (hier) "group" else "label"
   fill_by <- match.arg(fill_by, c("group", "label", "data_weight", "none"))
@@ -211,17 +303,42 @@ autoplot.voronoi_map <- function(
   }
 
   # Heavier group outlines for hierarchical maps
-  if (hier && !is.na(group_border_col)) {
+  if (hier && !all(is.na(group_border_col))) {
+    gnames <- object$groups$sites$label
     gdf <- do.call(rbind, lapply(seq_along(object$groups$cells), function(i) {
       cell <- object$groups$cells[[i]]
-      data.frame(gid = i, x = cell[, 1], y = cell[, 2])
+      data.frame(gid = i, gname = gnames[i], x = cell[, 1], y = cell[, 2])
     }))
-    p <- p + ggplot2::geom_polygon(
-      data = gdf,
-      mapping = ggplot2::aes(x = .data$x, y = .data$y, group = .data$gid),
-      inherit.aes = FALSE, fill = NA,
-      colour = group_border_col, linewidth = group_border_size
-    )
+    # group_border_col can be: a single colour (all group borders), or a
+    # vector named by group (colour only those groups / different colours).
+    if (length(group_border_col) > 1L || !is.null(names(group_border_col))) {
+      gcols <- if (is.null(names(group_border_col))) {
+        stats::setNames(rep_len(group_border_col, length(gnames)), gnames)
+      } else {
+        out <- stats::setNames(rep(NA_character_, length(gnames)), gnames)
+        keep <- intersect(names(group_border_col), gnames)
+        out[keep] <- group_border_col[keep]
+        out
+      }
+      gdf$gcol <- gcols[gdf$gname]
+      gdf <- gdf[!is.na(gdf$gcol), , drop = FALSE]
+      if (nrow(gdf)) {
+        p <- p + ggplot2::geom_polygon(
+          data = gdf,
+          mapping = ggplot2::aes(x = .data$x, y = .data$y, group = .data$gid,
+                                 colour = .data$gcol),
+          inherit.aes = FALSE, fill = NA,
+          linewidth = group_border_size, show.legend = FALSE
+        ) + ggplot2::scale_colour_identity()
+      }
+    } else {
+      p <- p + ggplot2::geom_polygon(
+        data = gdf,
+        mapping = ggplot2::aes(x = .data$x, y = .data$y, group = .data$gid),
+        inherit.aes = FALSE, fill = NA,
+        colour = group_border_col, linewidth = group_border_size
+      )
+    }
   }
 
   p <- p +
@@ -231,17 +348,40 @@ autoplot.voronoi_map <- function(
   if (!legend) p <- p + ggplot2::theme(legend.position = "none")
 
   if (show_labels) {
-    p <- p + ggplot2::geom_text(
-      data    = centroids,
-      mapping = ggplot2::aes(x = .data$cx, y = .data$cy, label = .data$label),
-      inherit.aes = FALSE,
-      colour  = label_col,
-      size    = label_size,
-      fontface = "bold"
-    )
+    lab_df <- centroids
+    lab_df$size      <- .label_sizes(object, label_size, autoscale)
+    lab_df$fontface  <- .resolve_fontface(object, fontface)
+    lab_df$area_frac <- .area_fractions(object)
+    if (!is.null(label_cells)) lab_df <- lab_df[lab_df$label %in% label_cells, , drop = FALSE]
+    if (min_area > 0) lab_df <- lab_df[lab_df$area_frac >= min_area, , drop = FALSE]
+    if (nrow(lab_df)) {
+      p <- p + ggplot2::geom_text(
+        data    = lab_df,
+        mapping = ggplot2::aes(x = .data$cx, y = .data$cy, label = .data$label),
+        inherit.aes = FALSE,
+        colour  = label_col,
+        size    = lab_df$size,
+        fontface = lab_df$fontface
+      )
+    }
   }
   attr(p, "vm") <- object
   p
+}
+
+#' Autoplot method for voronoi_map objects
+#'
+#' A thin wrapper around [ggvmap()], kept so the standard ggplot2
+#' `autoplot()` generic keeps working: `autoplot(vm, ...)` is identical to
+#' `ggvmap(vm, ...)`.
+#'
+#' @param object A `voronoi_map` object.
+#' @param ... Passed to [ggvmap()].
+#' @return A ggplot object.
+#' @importFrom ggplot2 autoplot
+#' @export
+autoplot.voronoi_map <- function(object, ...) {
+  ggvmap(object, ...)
 }
 
 # --- Interactive rendering (ggiraph) ----------------------------------------
@@ -263,7 +403,7 @@ autoplot.voronoi_map <- function(
 #' @examples
 #' \dontrun{
 #' vm <- voronoi_map(c(5, 3, 8, 2, 6), labels = LETTERS[1:5], seed = 1)
-#' autoplot(vm, interactive = TRUE) |> vm_girafe()
+#' ggvmap(vm, interactive = TRUE) |> vm_girafe()
 #' }
 #' @export
 vm_girafe <- function(p, width_svg = 7, height_svg = 7,
@@ -292,66 +432,3 @@ vm_girafe <- function(p, width_svg = 7, height_svg = 7,
 #' @importFrom ggplot2 ggplot
 #' @export
 ggplot2::autoplot
-
-# --- Convenience: ggvmap() shortcut -----------------------------------------
-
-#' Quick ggplot2 Voronoi map
-#'
-#' Compute *and* plot a Voronoi map in a single call.
-#'
-#' @inheritParams voronoi_map
-#' @inheritParams autoplot.voronoi_map
-#' @return A ggplot object (invisibly also stores the `voronoi_map` object
-#'   as attribute `"vm"`).
-#'
-#' @examples
-#' ggvmap(
-#'   weights = c(3, 2, 5, 1, 4),
-#'   labels  = c("A", "B", "C", "D", "E"),
-#'   seed    = 42
-#' )
-#'
-#' @export
-ggvmap <- function(
-  weights,
-  labels            = NULL,
-  group             = NULL,
-  clip              = clip_square(),
-  convergence_ratio = 0.01,
-  max_iter          = 50,
-  min_weight_ratio  = 0.01,
-  seed              = NULL,
-  fill_by           = NULL,
-  palette           = "Okabe-Ito",
-  border_col        = "white",
-  border_size       = 0.8,
-  show_labels       = TRUE,
-  label_col         = "white",
-  label_size        = 3,
-  legend            = FALSE,
-  interactive       = FALSE
-) {
-  vm <- voronoi_map(
-    weights           = weights,
-    labels            = labels,
-    group             = group,
-    clip              = clip,
-    convergence_ratio = convergence_ratio,
-    max_iter          = max_iter,
-    min_weight_ratio  = min_weight_ratio,
-    seed              = seed
-  )
-  p <- autoplot(vm,
-    fill_by     = fill_by,
-    palette     = palette,
-    border_col  = border_col,
-    border_size = border_size,
-    show_labels = show_labels,
-    label_col   = label_col,
-    label_size  = label_size,
-    legend      = legend,
-    interactive = interactive
-  )
-  attr(p, "vm") <- vm
-  p
-}

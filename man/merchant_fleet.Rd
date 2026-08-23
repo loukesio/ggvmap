@@ -27,7 +27,7 @@ vm <- voronoi_map(merchant_fleet$owned,
                   labels = merchant_fleet$country,
                   seed = 3)
 \dontrun{
-autoplot(vm) |>
+ggvmap(vm, palette = "alger") |>
   vm_add_flags() |>
   vm_add_labels(value = stats::setNames(merchant_fleet$owned,
                                         merchant_fleet$country))

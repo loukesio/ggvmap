@@ -1,12 +1,12 @@
 # ---- Annotation layers: outer ring, flags, images, value labels ----
 #
-# All `vm_add_*()` helpers take a ggplot built by autoplot() (or ggvmap())
+# All `vm_add_*()` helpers take a ggplot built by ggvmap() (or autoplot())
 # and return a new ggplot with extra layers.  They read the underlying
 # `voronoi_map` object from the plot's `"vm"` attribute (attached by
-# autoplot()), or from an explicit `vm =` argument, and re-attach it so the
+# ggvmap()), or from an explicit `vm =` argument, and re-attach it so the
 # helpers can be chained with the pipe:
 #
-#   vm |> autoplot() |> vm_add_ring() |> vm_add_flags(country = name)
+#   vm |> ggvmap() |> vm_add_ring() |> vm_add_flags(country = name)
 
 #' Retrieve the voronoi_map backing a plot
 #' @noRd
@@ -65,7 +65,7 @@
 #' vm <- voronoi_map(c(5, 3, 8, 4, 6, 2),
 #'                   group = c("A", "A", "B", "B", "C", "C"),
 #'                   clip = clip_circle(), seed = 1)
-#' autoplot(vm) |> vm_add_ring()
+#' ggvmap(vm, palette = "alger") |> vm_add_ring(palette = "alger")
 #' @export
 vm_add_ring <- function(
   p,
@@ -349,8 +349,8 @@ vm_add_images <- function(p, vm = NULL, image, size = 0.05, by = "width",
 #' \dontrun{
 #' vm <- voronoi_map(c(5, 3, 2), labels = c("China", "Norway", "Japan"),
 #'                   seed = 1)
-#' autoplot(vm) |> vm_add_flags()                    # geom_flag
-#' autoplot(vm) |> vm_add_flags(method = "url")      # flagcdn + geom_image
+#' ggvmap(vm, palette = "alger") |> vm_add_flags()          # geom_flag
+#' ggvmap(vm, palette = "alger") |> vm_add_flags(method = "url")  # flagcdn + geom_image
 #' }
 #' @export
 vm_add_flags <- function(p, vm = NULL, country = NULL, iso = NULL,
@@ -415,16 +415,28 @@ vm_add_flags <- function(p, vm = NULL, country = NULL, iso = NULL,
 #' @param prefix,suffix Strings wrapped around the formatted value.
 #' @param size Text size.  Default `2.8`.
 #' @param col Text colour.  Default `"grey20"`.
-#' @param fontface Font face.  Default `"plain"`.
+#' @param fontface Font face: a single value (default `"plain"`) applied to
+#'   all labels, or a vector named by cell label (e.g.
+#'   `c(Brazil = "bold")`) styling only those cells while the rest stay
+#'   `"plain"`.
 #' @param nudge_x,nudge_y Offset from the centroid.  `nudge_y` defaults to a
-#'   small downward shift scaled to the map so the value sits below the name.
+#'   small downward shift scaled to each cell so the value sits below the name
+#'   without leaving small cells.
 #' @param cells Optional subset of cell labels to annotate.
+#' @param inside Logical; clamp the label anchor inside its cell when the
+#'   nudge would push it out?  Default `TRUE`.
+#' @param min_area Cells whose area fraction of the map is below this
+#'   threshold get no value label.  Default `0` (label every cell).
+#' @param autoscale Logical; shrink label text in small cells?  Each cell's
+#'   text size becomes `size * pmin(1, sqrt(cell_area / median_area))`,
+#'   floored at 60% of `size`.  Default `FALSE`.
 #' @return The ggplot with a value-label layer added.
 #' @export
 vm_add_labels <- function(p, vm = NULL, value = NULL, secondary = NULL,
                           fmt = NULL, prefix = "", suffix = "",
                           size = 2.8, col = "grey20", fontface = "plain",
-                          nudge_x = 0, nudge_y = NULL, cells = NULL) {
+                          nudge_x = 0, nudge_y = NULL, cells = NULL,
+                          inside = TRUE, min_area = 0, autoscale = FALSE) {
   vm  <- .vm_of(p, vm)
   if (is.null(value)) value <- vm$sites$data_weight
   value <- .align_to_cells(vm, value, "value")
@@ -436,18 +448,49 @@ vm_add_labels <- function(p, vm = NULL, value = NULL, secondary = NULL,
   if (!is.null(sec)) txt <- paste0(txt, " (", fmt(sec), ")")
 
   meta <- .clip_meta(vm$clip)
-  if (is.null(nudge_y)) nudge_y <- -0.10 * meta$radius
+  ctr  <- vm_centroids(vm)
 
-  ctr <- vm_centroids(vm)
-  df  <- data.frame(x = ctr$cx + nudge_x, y = ctr$cy + nudge_y,
-                    label = txt, cell_label = ctr$label,
-                    stringsAsFactors = FALSE)
+  # Adaptive nudge: proportional to each cell's own size so the value label
+  # of a small cell is not pushed out of it.  Capped at the old global default.
+  if (is.null(nudge_y)) {
+    cell_r  <- sqrt(abs(vapply(vm$cells, polygon_area, numeric(1))) / pi)
+    nudge_y <- -pmin(0.10 * meta$radius, 0.45 * cell_r)
+  }
+  xs <- ctr$cx + nudge_x
+  ys <- ctr$cy + nudge_y
+
+  # Clamp: if the nudged anchor falls outside its cell, shrink the offset
+  # toward the centroid until it is inside (centroid itself always is,
+  # since cells are convex).
+  if (isTRUE(inside)) {
+    for (i in seq_along(xs)) {
+      f <- 1
+      while (f > 0 &&
+             !point_in_polygon(c(ctr$cx[i] + f * (xs[i] - ctr$cx[i]),
+                                 ctr$cy[i] + f * (ys[i] - ctr$cy[i])),
+                               vm$cells[[i]])) {
+        f <- f - 0.25
+      }
+      f <- max(f, 0)
+      xs[i] <- ctr$cx[i] + f * (xs[i] - ctr$cx[i])
+      ys[i] <- ctr$cy[i] + f * (ys[i] - ctr$cy[i])
+    }
+  }
+
+  df <- data.frame(x = xs, y = ys,
+                   label = txt, cell_label = ctr$label,
+                   size = .label_sizes(vm, size, autoscale),
+                   fontface = .resolve_fontface(vm, fontface),
+                   area_frac = .area_fractions(vm),
+                   stringsAsFactors = FALSE)
   if (!is.null(cells)) df <- df[df$cell_label %in% cells, , drop = FALSE]
+  if (min_area > 0) df <- df[df$area_frac >= min_area, , drop = FALSE]
+  if (nrow(df) == 0L) return(p)
 
   layer <- ggplot2::geom_text(
     data = df,
     mapping = ggplot2::aes(x = .data$x, y = .data$y, label = .data$label),
-    inherit.aes = FALSE, colour = col, size = size, fontface = fontface
+    inherit.aes = FALSE, colour = col, size = df$size, fontface = df$fontface
   )
   .vm_plus(p, layer, vm)
 }

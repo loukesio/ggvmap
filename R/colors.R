@@ -38,22 +38,37 @@ okabe_ito <- function(n = NULL, black = FALSE, grey = FALSE) {
 #' @noRd
 .okabe_aliases <- c("okabeito", "okabe", "okabe-ito", "oi", "cud")
 
+#' Built-in named palettes (beyond Okabe-Ito)
+#'
+#' `alger` is the alger palette from the \pkg{ltc} package with the leading
+#' black dropped.  Keys are normalised: lower case, no spaces/underscores/dashes.
+#' @noRd
+.vm_builtin_palettes <- list(
+  alger = c("#1A5B5B", "#ACC8BE", "#F4AB5C", "#D1422F")
+)
+
 #' Resolve a palette specification to a vector of `n` colours
 #'
-#' Accepts a colour vector, a named `grDevices::hcl.colors()` palette, or
-#' `"Okabe-Ito"`.
+#' Accepts a colour vector, a named `grDevices::hcl.colors()` palette,
+#' `"Okabe-Ito"`, or a built-in named palette (see `.vm_builtin_palettes`).
 #'
-#' For **categorical** use (`continuous = FALSE`, the default) a qualitative
-#' palette such as Okabe-Ito is *recycled* when `n` exceeds its length, so every
-#' cell keeps a true palette colour rather than a muddy interpolated one.  For
-#' **continuous** use the colours are interpolated into a smooth ramp.
+#' For **categorical** use (`continuous = FALSE`, the default) the Okabe-Ito
+#' palette is *recycled* when `n` exceeds its length, so every cell keeps a
+#' true palette colour rather than a muddy interpolated one; smaller built-in
+#' palettes such as `"alger"` are interpolated via [grDevices::colorRampPalette()]
+#' when more colours are needed.  For **continuous** use the colours are
+#' interpolated into a smooth ramp.
 #' @noRd
 .vm_palette <- function(n, palette, continuous = FALSE) {
-  is_oi <- length(palette) == 1L &&
-    gsub("[ _-]", "", tolower(palette)) %in% .okabe_aliases
-  if (is_oi) {
+  key <- if (length(palette) == 1L) gsub("[ _-]", "", tolower(palette)) else ""
+  if (key %in% .okabe_aliases) {
     base <- okabe_ito()
     return(if (continuous) grDevices::colorRampPalette(base)(n) else rep_len(base, n))
+  }
+  if (key %in% names(.vm_builtin_palettes)) {
+    base <- .vm_builtin_palettes[[key]]
+    return(if (continuous || n > length(base)) grDevices::colorRampPalette(base)(n)
+           else base[seq_len(n)])
   }
   if (length(palette) > 1L) {
     if (!continuous && n <= length(palette)) palette[seq_len(n)]

@@ -28,6 +28,6 @@ vm <- voronoi_map(world_exports$exports,
                   labels = world_exports$country,
                   group  = as.character(world_exports$income_group),
                   clip   = clip_circle(), seed = 1)
-autoplot(vm, show_labels = FALSE) |> vm_add_ring()
+ggvmap(vm, show_labels = FALSE, palette = "alger") |> vm_add_ring(palette = "alger")
 }
 \keyword{datasets}

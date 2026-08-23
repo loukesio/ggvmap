@@ -69,7 +69,7 @@ offline \code{cache = TRUE} via \code{\link[=flag_cache]{flag_cache()}}.}
 \dontrun{
 vm <- voronoi_map(c(5, 3, 2), labels = c("China", "Norway", "Japan"),
                   seed = 1)
-autoplot(vm) |> vm_add_flags()                    # geom_flag
-autoplot(vm) |> vm_add_flags(method = "url")      # flagcdn + geom_image
+ggvmap(vm, palette = "alger") |> vm_add_flags()          # geom_flag
+ggvmap(vm, palette = "alger") |> vm_add_flags(method = "url")  # flagcdn + geom_image
 }
 }

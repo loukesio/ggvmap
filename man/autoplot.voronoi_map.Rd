@@ -4,65 +4,18 @@
 \alias{autoplot.voronoi_map}
 \title{Autoplot method for voronoi_map objects}
 \usage{
-\method{autoplot}{voronoi_map}(
-  object,
-  fill_by = NULL,
-  border_col = "white",
-  border_size = 0.8,
-  group_border_col = "white",
-  group_border_size = 1.8,
-  show_labels = TRUE,
-  label_col = "white",
-  label_size = 3,
-  palette = "Okabe-Ito",
-  legend = FALSE,
-  interactive = FALSE,
-  tooltip = NULL,
-  ...
-)
+\method{autoplot}{voronoi_map}(object, ...)
 }
 \arguments{
 \item{object}{A \code{voronoi_map} object.}
 
-\item{fill_by}{Cell aesthetic to map fill to: one of \code{"label"}, \code{"group"},
-\code{"data_weight"}, or \code{"none"}.  Defaults to \code{"group"} for hierarchical
-maps and \code{"label"} otherwise.}
-
-\item{border_col}{Border colour.  Default \code{"white"}.}
-
-\item{border_size}{Border line width.  Default \code{0.8}.}
-
-\item{group_border_col}{Colour of the heavier group boundaries drawn for
-hierarchical maps.  \code{NA} disables them.  Default \code{"white"}.}
-
-\item{group_border_size}{Line width of group boundaries.  Default \code{1.8}.}
-
-\item{show_labels}{Logical; add centroid labels?  Default \code{TRUE}.}
-
-\item{label_col}{Label colour.  Default \code{"white"}.}
-
-\item{label_size}{Label size.  Default \code{3}.}
-
-\item{palette}{Character vector of colours, \code{"Okabe-Ito"} (the default,
-colourblind-safe; see \code{\link[=okabe_ito]{okabe_ito()}}), or a named palette from
-\code{\link[grDevices:palettes]{grDevices::hcl.colors()}}.}
-
-\item{legend}{Logical; show the fill legend?  Default \code{FALSE}.}
-
-\item{interactive}{Logical; make the cells interactive (hover highlight and
-tooltips) using \pkg{ggiraph}?  Render the result with \code{\link[=vm_girafe]{vm_girafe()}}.
-Default \code{FALSE}.}
-
-\item{tooltip}{Optional per-cell tooltip text (length-\code{n}, named by label, or
-length 1) used when \code{interactive = TRUE}.  Defaults to the label and value.}
-
-\item{...}{Ignored.}
+\item{...}{Passed to \code{\link[=ggvmap]{ggvmap()}}.}
 }
 \value{
-A ggplot object (pass to \code{\link[=vm_girafe]{vm_girafe()}} to render an interactive
-widget when \code{interactive = TRUE}).
+A ggplot object.
 }
 \description{
-Produces a ggplot2 visualisation with \code{geom_polygon()}.  For hierarchical
-maps the default fill is the group and heavier borders separate the groups.
+A thin wrapper around \code{\link[=ggvmap]{ggvmap()}}, kept so the standard ggplot2
+\code{autoplot()} generic keeps working: \code{autoplot(vm, ...)} is identical to
+\code{ggvmap(vm, ...)}.
 }
