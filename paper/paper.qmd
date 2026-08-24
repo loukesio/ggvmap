@@ -264,6 +264,13 @@ licence. The `freshwater` dataset ships with the package (FAO Aquastat via
 World Bank, 2022 [@faoaquastat]). All figures in this paper are generated
 by the scripts in `paper/figures/` and rendered by `paper/render.R`.
 
+# Acknowledgements {.unnumbered}
+
+This package grew out of the author's Stack Overflow question ["Make a
+circular Voronoi diagram in
+R"](https://stackoverflow.com/questions/71799205/make-a-circular-voronoi-diagram-in-r)
+and owes much to the inspiration of Allan Cameron's answer there.
+
 # References {.unnumbered}
 
 ::: {#refs}
