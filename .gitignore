@@ -26,3 +26,7 @@ docs/
 
 # Session handoff notes (local only)
 HANDOFF*.md
+
+# Logo variants: only the active logo is tracked
+logos/*
+!logos/ggvmap-C3-clear-light.png

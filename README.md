@@ -4,7 +4,7 @@
      interactive GIF) come from data-raw/readme_figures.R and
      data-raw/readme_interactive_gif.R. -->
 
-# ggvmap <img src="man/figures/logo.png" align="right" height="120" />
+# ggvmap
 
 <!-- badges: start -->
 
@@ -28,7 +28,7 @@ value labels, and interactive hover maps.
 
 ggvmap is pure R with a single hard dependency (ggplot2) — no
 compilation, no system libraries. Install the latest version from
-GitHub:
+GitHub: <img align="right" src="man/figures/logo.png" width="400">
 
 ``` r
 # with remotes (lightweight)

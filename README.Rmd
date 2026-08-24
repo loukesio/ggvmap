@@ -22,7 +22,7 @@ has_ggtext   <- requireNamespace("ggtext",   quietly = TRUE)
 has_showtext <- requireNamespace("showtext", quietly = TRUE)
 ```
 
-# ggvmap <img src="man/figures/logo.png" align="right" height="120" />
+# ggvmap
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/loukesio/ggvmap/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/loukesio/ggvmap/actions/workflows/R-CMD-check.yaml)
@@ -42,7 +42,7 @@ rings, flags, value labels, and interactive hover maps.
 ## Installation
 
 ggvmap is pure R with a single hard dependency (ggplot2) — no compilation,
-no system libraries. Install the latest version from GitHub:
+no system libraries. Install the latest version from GitHub: <img align="right" src="man/figures/logo.png" width="400">
 
 ```r
 # with remotes (lightweight)
