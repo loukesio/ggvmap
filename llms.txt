@@ -13,7 +13,7 @@ value labels, and interactive hover maps.
 
 ggvmap is pure R with a single hard dependency (ggplot2) — no
 compilation, no system libraries. Install the latest version from
-GitHub:
+GitHub: ![](reference/figures/logo.png)
 
 ``` r
 
