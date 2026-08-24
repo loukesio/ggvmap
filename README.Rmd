@@ -347,6 +347,14 @@ layouts, custom rings, flags on different shapes, and a combined infographic.
 | Custom shapes | ✅ any convex | ✅ | ✅ |
 | Install complexity | Trivial | Medium | Hard (CGAL) |
 
+## Acknowledgements
+
+This package started from the Stack Overflow question
+[Make a circular Voronoi diagram in R](https://stackoverflow.com/questions/71799205/make-a-circular-voronoi-diagram-in-r),
+and owes a lot to the inspiration of
+[Allan Cameron](https://stackoverflow.com/users/12500315/allan-cameron)'s
+answer there — thank you, Allan.
+
 ## License
 
 MIT
