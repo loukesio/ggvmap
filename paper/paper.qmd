@@ -34,8 +34,10 @@ abstract: |
   tessellations it produces are exact power diagrams whose defining
   geometric properties are enforced by property-based tests. Benchmarks
   against voronoiTreemap (D3) and WeightedTreemaps (CGAL) show that ggvmap
-  achieves comparable layout accuracy with a trivially simple installation,
-  at the cost of longer runtimes for very large maps.
+  has the simplest installation and the shortest code for the same plot, is
+  the fastest of the measurable implementations below about fifty cells,
+  and trades runtime -- governed by an explicit, user-visible iteration
+  budget -- at larger sizes.
 keywords: [data visualization, treemap, Voronoi diagram, power diagram, R, ggplot2]
 ---
 
@@ -99,12 +101,26 @@ uniform map is a one-argument change. Because every result is a ggplot,
 titles, themes, and extensions from the wider ggplot2 ecosystem (e.g.
 markdown titles via ggtext, custom fonts via showtext) apply unchanged.
 
-![Design of ggvmap. (A) The workflow: one computation function, one plot
-function, pipe-able annotation verbs, and either static (`ggsave()`) or
-interactive (`vm_girafe()`) output. (B) From data to plot: the bundled
-`freshwater` dataset (share of global renewable freshwater resources, 2022
-[@faoaquastat]) rendered by the code shown. (C) The annotation-layer verbs.
-(D) The three levels of appearance control.](figures/fig1_design.png){#fig-design width="100%"}
+![Design of ggvmap. (A) The workflow: a weight vector (with optional
+labels and a grouping variable) flows through `voronoi_map()`, which
+computes the tessellation, into `ggvmap()`, which renders it; annotation
+verbs are chained with R's native pipe, and the result is written to file
+with `ggsave()` or made interactive with `vm_girafe()`. (B) From data to
+plot: the nine lines of code shown produce the finished infographic below
+them from the bundled `freshwater` dataset (columns `country`, `share`,
+`region`; each country's share of global renewable freshwater resources,
+2022 [@faoaquastat]). Every cell is a country with area proportional to its
+share, colour and sector encode the region, values sit beneath the names
+(shrunk or hidden in the smallest cells), and the outer arc ring carries
+each region's total share. (C) The complete exported vocabulary, grouped by
+role: one computation function; four output functions; four pipe-able
+annotation verbs; accessors that return tidy data frames for custom
+ggplot2 work; the colour and flag helpers; and the ten convex boundary
+constructors. (D) Appearance arguments by the level they act on -- whole
+map, group, or single cell. Every cell-level argument also accepts a
+vector named by cell label, so emphasising one cell (bold face, different
+colour, its own label) is a one-argument change with no data
+manipulation.](figures/fig1_design.png){#fig-design width="100%"}
 
 ## One dataset, many maps
 
@@ -116,9 +132,22 @@ weight, and flag annotations. Labels in small cells are automatically
 shrunk (`autoscale`) or suppressed (`min_area`), which keeps maps with
 long-tailed weight distributions legible without manual tuning.
 
-![Gallery. All panels are drawn from `data(freshwater)`: the nine built-in
-convex boundaries (rows 1--2), and the grouped layout, ring styles,
-continuous fill, and flags (row 3).](figures/fig2_gallery.png){#fig-gallery width="100%"}
+![Gallery: one dataset, fourteen maps. Rows 1--2: the ten largest
+freshwater-holding countries laid out on each of the nine built-in convex
+boundaries -- the identical weight vector fills any convex shape with
+area-true cells, so the boundary is a free design choice. Row 3, left to
+right: the full 30-row dataset in a hierarchical layout (one sector per
+region) with the LATAM region singled out by a dark border
+(`group_border_col = c(LATAM = "#333333")`); the filled `"band"` ring
+style, where each segment spans the angular extent of its region's sector;
+the thin `"arc"` ring style with each region's share appended to its label
+(`values = TRUE`); continuous fill mapped to cell weight
+(`fill_by = "data_weight"`), turning the map into a treemap-heatmap
+hybrid; and national flags resolved automatically from the country names
+(`vm_add_flags()`). Throughout, labels in small cells shrink
+(`autoscale = TRUE`) or disappear below an area threshold (`min_area`),
+keeping long-tailed data legible without manual
+tuning.](figures/fig2_gallery.png){#fig-gallery width="100%"}
 
 ## Use cases
 
@@ -129,11 +158,22 @@ contaminant fraction outlined for emphasis), and household expenditure
 shares. The data in this figure are simulated but realistic; the scripts
 are drop-in templates for real data.
 
-![Use cases (simulated data; scripts in `paper/figures/`). (A) Gene
-families grouped by functional class. (B) GWAS hits per chromosome,
-continuous fill. (C) RNA-seq library composition with the contaminant
-group outlined. (D) Household expenditure by need
-category.](figures/fig3_usecases.png){#fig-usecases width="88%"}
+![Use cases across disciplines. All data are simulated but realistic, and
+each panel's complete script ships in `paper/figures/fig3_usecases.R` as a
+drop-in template. (A) Genomics: twelve large gene families sized by gene
+count and grouped by functional class; the arc ring reports each class's
+share of the depicted families, and light-on-dark label colours keep the
+dark Regulation sector readable. (B) Genetics: simulated genome-wide
+association hits per human chromosome (weights roughly proportional to
+chromosome length) on a rectangular boundary, with continuous fill
+restating each cell's weight so hot chromosomes stand out twice -- by area
+and by colour. (C) Transcriptomics: where the reads of an RNA-seq library
+end up, grouped into signal, contaminant, and noise classes; the
+contaminant class is outlined dark for emphasis and fractions below 2% of
+the library lose their labels (`min_area`). (D) Social science: household
+expenditure shares grouped by need category, the same
+hierarchy-plus-arc-ring pattern as panel A applied to survey-style
+data.](figures/fig3_usecases.png){#fig-usecases width="88%"}
 
 ## Benchmarks
 
@@ -152,40 +192,66 @@ gg500 <- gg[gg$n == 500, ]; wt500 <- wt[wt$n == 500, ]
 ```
 
 @fig-benchmark compares ggvmap with voronoiTreemap and
-WeightedTreemaps on four axes. *Install complexity*: ggvmap needs
+WeightedTreemaps on four axes, each package at its default settings.
+*Install complexity* (@fig-benchmark A): ggvmap needs
 `r unique(gg$n_deps)` recursively resolved CRAN packages and no compiled
 code, versus `r unique(wt$n_deps)` packages plus CGAL compilation for
-WeightedTreemaps; voronoiTreemap installs many htmlwidgets dependencies and
-runs its layout in a browser. *Code length*: the same grouped treemap takes
-the fewest words, characters, and function calls in ggvmap. *Runtime*: the
-picture is size-dependent. At small maps ggvmap is the faster of the two
-measurable implementations -- `r fmt_s(gg10$median_s)` versus
-`r fmt_s(wt10$median_s)` at n = 10 and `r fmt_s(gg50$median_s)` versus
-`r fmt_s(wt50$median_s)` at n = 50 -- because it avoids the fixed setup
-cost of the compiled pipeline. Beyond that, pure R pays its price: at
-n = 100 ggvmap needs `r fmt_s(gg100$median_s)` versus
-`r fmt_s(wt100$median_s)`, and at n = 500 the gap is
-`r round(gg500$median_s / wt500$median_s)`-fold
+WeightedTreemaps; voronoiTreemap resolves 44 packages and runs its layout
+in a browser. *Code length* (@fig-benchmark B): the same grouped treemap
+takes the fewest words, characters, and function calls in ggvmap.
+*Runtime* (@fig-benchmark C) is size-dependent. On small maps ggvmap is
+the faster of the two measurable implementations --
+`r fmt_s(gg10$median_s)` versus `r fmt_s(wt10$median_s)` at n = 10 and
+`r fmt_s(gg50$median_s)` versus `r fmt_s(wt50$median_s)` at n = 50 --
+because it avoids the fixed setup cost of the compiled pipeline. Beyond
+that, pure R pays its price: `r fmt_s(gg100$median_s)` versus
+`r fmt_s(wt100$median_s)` at n = 100, and a
+`r round(gg500$median_s / wt500$median_s)`-fold gap at n = 500
 (`r fmt_s(gg500$median_s)` vs `r fmt_s(wt500$median_s)`). Treemaps
 typically summarise tens of categories, where ggvmap is competitive or
-faster; for maps of many hundreds or thousands of cells, WeightedTreemaps
-is the right tool. *Accuracy*: on these deliberately long-tailed
-lognormal weights, both implementations concentrate their error in the very
-smallest cells, whose target areas are near zero -- a large *relative*
-error there is visually invisible. Mean relative cell-area error for
-ggvmap ranges from `r pct(min(gg$mean_rel_area_error))` to
-`r pct(max(gg$mean_rel_area_error))` across sizes, against
-`r pct(min(wt$mean_rel_area_error))` to
-`r pct(max(wt$mean_rel_area_error))` for WeightedTreemaps; ggvmap's error
-is the lower of the two at three of the four sizes. voronoiTreemap
-computes its layout in the browser, so R-side runtime and accuracy are not
-measurable and it appears only in the first two panels.
+faster; for maps of many hundreds of cells, WeightedTreemaps is the right
+tool.
 
-![Benchmarks. (A) Recursive dependency count and compiled code. (B) Code
-length for the same grouped treemap. (C) Runtime on flat maps of lognormal
-weights (median of 10 runs; 3 at n = 500). (D) Mean relative cell-area
-error. Panels C--D omit voronoiTreemap, whose layout runs in the
-browser.](figures/fig4_benchmark.png){#fig-benchmark width="92%"}
+*Accuracy* (@fig-benchmark D) turns out to measure convergence, not
+intrinsic layout quality. At n = 10 and n = 50 the layout converges below
+the default 1% area-error threshold within 32 and 63 iterations, giving
+`r pct(gg10$mean_rel_area_error)` and `r pct(gg50$mean_rel_area_error)`
+mean relative cell-area error. The n = 100 and n = 500 instances exhaust
+the default budget of 200 iterations before converging; the stopped
+layouts show `r pct(gg100$mean_rel_area_error)` and
+`r pct(gg500$mean_rel_area_error)` mean error, and the n = 100 draw --
+whose lognormal weights span a 128-fold range -- is the hardest of the
+four. This is an iteration-budget artefact, not a ceiling: rerunning the
+same n = 100 instance with `max_iter = 500` converges after 383 iterations
+to 2.3% mean error (63 s). ggvmap is deliberately transparent about this:
+the returned object carries a `converged` flag and the iteration count.
+WeightedTreemaps shows the same budget-dependence under its own defaults
+(`r pct(min(wt$mean_rel_area_error))` to
+`r pct(max(wt$mean_rel_area_error))` across sizes), and both
+implementations concentrate their largest relative errors in the smallest
+cells, where the target area is near zero and a large *relative* error is
+visually invisible. voronoiTreemap computes its layout in the browser, so
+R-side runtime and accuracy are not measurable; it appears only in panels
+A--B.
+
+![Benchmarks against the two existing R implementations, all packages at
+default settings; the full protocol is in Methods and
+`paper/figures/fig4_benchmark.R`. (A) Install complexity: recursively
+resolved CRAN dependencies (Depends, Imports, LinkingTo; base packages
+excluded). ggvmap's 17 are ggplot2 and its tree, with no compiled code;
+WeightedTreemaps adds CGAL compilation; voronoiTreemap runs on the
+htmlwidgets/D3 stack. (B) Code length for the same grouped treemap of
+`data(freshwater)`: lines, words, characters, and function calls of the
+minimal script in each package (log scale; lower is better). (C) Median
+layout runtime on flat maps of lognormal(3, 1) weights, log--log axes:
+ggvmap (teal) is fastest up to n = 50, then the compiled implementation
+(orange) pulls ahead -- 33 s vs 5.5 s at n = 100 and 14.5 min vs 29 s at
+n = 500. (D) Mean relative cell-area error, |actual - target| / target.
+The ggvmap points at n = 100 and n = 500 are layouts stopped by the
+default 200-iteration budget (the returned `converged` flag is `FALSE`);
+the same n = 100 instance converges to 2.3% mean error given
+`max_iter = 500`. Panels C--D omit voronoiTreemap, whose layout runs in
+the browser and is not measurable from R.](figures/fig4_benchmark.png){#fig-benchmark width="92%"}
 
 # Conclusion
 
@@ -194,7 +260,14 @@ ecosystem: a one-line install, a small pipe-able grammar, verified
 geometry, and publication-style annotation layers. The pure-R
 implementation trades raw speed at large cell counts for zero installation
 friction and full composability -- a trade that favours the typical
-treemap, which summarises tens of categories, not thousands.
+treemap, which summarises tens of categories, not thousands. Its main
+current limitations are the quadratic per-iteration cost of the clipping
+loop, which makes maps beyond a few hundred cells slow, and the absence of
+leader lines for labelling cells too small to hold text. Both are planned:
+spatial indexing restricts clipping to a cell's actual neighbours and is
+expected to reduce the large-map runtime by an order of magnitude without
+leaving pure R, and callout labels are deferred until they can be added
+without new hard dependencies.
 
 # Methods
 
@@ -225,6 +298,11 @@ exactly its share of the room. Hierarchical maps solve the group-level
 map first, then run the same algorithm inside each group polygon -- a valid
 nested power diagram. Weights are initialised proportional to target areas
 and sites by farthest-point sampling, which removes degenerate starts.
+Iteration stops when the maximum relative area error falls below
+`convergence_ratio` (default 1%) or after `max_iter` iterations (default
+200); the returned object records both the iteration count and a
+`converged` flag, so an unconverged layout is never silent -- rerunning
+with a larger `max_iter` or a different `seed` resolves it.
 
 ## Correctness
 
@@ -248,7 +326,10 @@ guards: ggimage (flags, images), ggiraph (interactivity), geomtextpath
 Benchmarks (@fig-benchmark) were run with bench [@bench]: flat maps
 of n = 10, 50, 100, 500 lognormal(3, 1) weights, median of 10 iterations
 (3 at n = 500), on a single laptop core, each package at its default
-convergence settings. Dependency counts are recursive Depends, Imports and
+settings (for ggvmap: `convergence_ratio = 0.01`, `max_iter = 200`,
+`min_weight_ratio = 0.01`). Layouts that reach `max_iter` unconverged are
+reported as measured; the text notes where a larger budget converges
+them. Dependency counts are recursive Depends, Imports and
 LinkingTo on CRAN, excluding base packages. Code-length metrics count
 lines, words, characters, and function calls of the minimal code producing
 the same grouped treemap in each package. Layout accuracy is the mean over

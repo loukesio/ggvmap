@@ -52,8 +52,8 @@ pA <- canvas() + ggtitle("A  Workflow") +
            linewidth = 0.4, colour = "grey40") +
   annotate("segment", x = 0.5, xend = 0.7, y = 0.095, yend = 0.095,
            linewidth = 0.4, colour = "grey40") +
-  annotate("text", x = 0.955, y = 0.35, label = "pipe  |>",
-           angle = 90, size = 3, colour = "grey45", family = "mono")
+  annotate("text", x = 0.56, y = c(0.575, 0.425, 0.275), label = "|>",
+           hjust = 0, size = 2.6, colour = "grey45", family = "mono")
 
 # --- (B) data -> code -> plot ----------------------------------------------
 data(freshwater)
@@ -92,34 +92,48 @@ pB_code <- canvas() + ggtitle("B  Data to plot") +
            size = 2.7, colour = "grey40")
 pB <- pB_code / hero + plot_layout(heights = c(1, 2.1))
 
-# --- (C) grammar of annotation layers --------------------------------------
-pC <- canvas() + ggtitle("C  Annotation layers") +
-  box(0.26, 0.86, "vm_add_ring()",   fill = alger[2]) +
-  box(0.26, 0.64, "vm_add_labels()", fill = alger[2]) +
-  box(0.26, 0.42, "vm_add_flags()",  fill = alger[2]) +
-  box(0.26, 0.20, "vm_add_images()", fill = alger[2]) +
-  box(0.74, 0.86, "group band or arc,\nshares (values = TRUE)",
-      fill = "white", family = "", size = 2.7, h = 0.14) +
-  box(0.74, 0.64, "per-cell values,\nformatted, kept inside",
-      fill = "white", family = "", size = 2.7, h = 0.14) +
-  box(0.74, 0.42, "country flags from\nnames or ISO codes",
-      fill = "white", family = "", size = 2.7, h = 0.14) +
-  box(0.74, 0.20, "any image or logo\nat cell centroids",
-      fill = "white", family = "", size = 2.7, h = 0.14)
+# --- (C) the complete function vocabulary ----------------------------------
+fn_col <- function(x, y0, title, fns, col_title, dy = 0.052) {
+  out <- list(annotate("text", x = x, y = y0, label = title, hjust = 0,
+                       size = 2.9, fontface = "bold", colour = col_title))
+  for (i in seq_along(fns)) {
+    out <- c(out, list(annotate("text", x = x + 0.015, y = y0 - i * dy,
+                                label = fns[i], hjust = 0, size = 2.55,
+                                family = "mono", colour = "grey15")))
+  }
+  out
+}
+pC <- canvas() + ggtitle("C  The complete vocabulary") +
+  fn_col(0.00, 0.93, "COMPUTE", "voronoi_map()", alger[1]) +
+  fn_col(0.00, 0.78, "PLOT",
+         c("ggvmap()", "autoplot()", "plot()", "vm_girafe()"), alger[1]) +
+  fn_col(0.00, 0.42, "TIDY DATA",
+         c("vm_as_df()", "vm_centroids()"), alger[1]) +
+  fn_col(0.00, 0.22, "PALETTE", "okabe_ito()", alger[1]) +
+  fn_col(0.34, 0.93, "ANNOTATE",
+         c("vm_add_ring()", "vm_add_labels()", "vm_add_flags()",
+           "vm_add_images()"), alger[4]) +
+  fn_col(0.34, 0.55, "FLAG HELPERS",
+         c("country_to_iso()", "flag_url()", "flag_cache()"), alger[4]) +
+  fn_col(0.68, 0.93, "BOUNDARIES",
+         c("clip_square()", "clip_rectangle()", "clip_hexagon()",
+           "clip_pentagon()", "clip_octagon()", "clip_diamond()",
+           "clip_triangle()", "clip_circle()", "clip_ellipse()",
+           "regular_polygon(n)"), alger[3])
 
-# --- (D) grammar of appearance ---------------------------------------------
-pD <- canvas() + ggtitle("D  Appearance") +
-  box(0.22, 0.86, "map",   fill = alger[3], w = 0.3, family = "") +
-  box(0.22, 0.58, "group", fill = alger[3], w = 0.3, family = "") +
-  box(0.22, 0.28, "cell",  fill = alger[3], w = 0.3, family = "") +
-  box(0.70, 0.86, "palette, fill_by, legend,\nclip shape, family",
-      fill = "white", family = "", size = 2.7, h = 0.14, w = 0.52) +
-  box(0.70, 0.58, "group_border_col\n(all groups or named)",
-      fill = "white", family = "", size = 2.7, h = 0.14, w = 0.52) +
-  box(0.70, 0.28, "fontface, label_col, label_cells,\nautoscale, min_area",
-      fill = "white", family = "", size = 2.7, h = 0.16, w = 0.52)
+# --- (D) appearance arguments by level --------------------------------------
+pD <- canvas() + ggtitle("D  Appearance arguments") +
+  box(0.16, 0.88, "map",   fill = alger[3], w = 0.24, family = "") +
+  box(0.16, 0.56, "group", fill = alger[3], w = 0.24, family = "") +
+  box(0.16, 0.22, "cell",  fill = alger[3], w = 0.24, family = "") +
+  box(0.66, 0.86, "palette, fill_by, legend, clip,\nborder_col/size, family,\ninteractive + tooltip",
+      fill = "white", family = "", size = 2.55, h = 0.20, w = 0.62) +
+  box(0.66, 0.56, "group_border_col/size\n(all groups or named);\nring style, colors, values",
+      fill = "white", family = "", size = 2.55, h = 0.20, w = 0.62) +
+  box(0.66, 0.22, "fontface, label_col, label_cells,\nlabel_size, autoscale, min_area,\nwrap  (all named-by-cell aware)",
+      fill = "white", family = "", size = 2.55, h = 0.20, w = 0.62)
 
-fig1 <- (pA | pB | (pC / pD)) + plot_layout(widths = c(1, 1.35, 1.1))
+fig1 <- (pA | pB | (pC / pD)) + plot_layout(widths = c(0.85, 1.35, 1.15))
 ggsave("paper/figures/fig1_design.png", fig1, width = 12, height = 6.4,
        dpi = 300, bg = "white")
 message("wrote paper/figures/fig1_design.png")
