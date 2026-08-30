@@ -106,7 +106,12 @@ the arc colours unless <code>label_col</code> is set.</p></dd>
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
 <dd><p>Logical, or a named character vector of display labels keyed
-by group.  <code>TRUE</code> (default) uses the group names; <code>FALSE</code> draws no text.</p></dd>
+by group.  <code>TRUE</code> (default) uses the group names; <code>FALSE</code> draws no text.
+In the <code>"arc"</code> style, an empty string omits one group's label and leaves
+its arc unbroken (e.g. <code>labels = c("Middle East" = "")</code>) – useful when a
+group's segment is too short to carry its label, which otherwise stays
+on the ring with its gap cut into the neighbouring arcs (a message
+points this out when it happens).</p></dd>
 
 
 <dt id="arg-curved">curved<a class="anchor" aria-label="anchor" href="#arg-curved"></a></dt>

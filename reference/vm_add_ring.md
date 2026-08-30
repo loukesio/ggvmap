@@ -66,7 +66,12 @@ vm_add_ring(
 - labels:
 
   Logical, or a named character vector of display labels keyed by group.
-  `TRUE` (default) uses the group names; `FALSE` draws no text.
+  `TRUE` (default) uses the group names; `FALSE` draws no text. In the
+  `"arc"` style, an empty string omits one group's label and leaves its
+  arc unbroken (e.g. `labels = c("Middle East" = "")`) – useful when a
+  group's segment is too short to carry its label, which otherwise stays
+  on the ring with its gap cut into the neighbouring arcs (a message
+  points this out when it happens).
 
 - curved:
 

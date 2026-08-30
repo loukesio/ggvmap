@@ -35,7 +35,10 @@
   now scales with the label’s length and size, and a label wider than
   its own segment (e.g. a long group name on a 1% group) keeps its place
   on the ring — its gap is cut into the neighbouring segments’ arcs as
-  well, so every label follows the same pattern.
+  well, so every label follows the same pattern. A message points out
+  when this happens, and an empty string in `labels`
+  (e.g. `labels = c("Middle East" = "")`) omits that group’s ring label
+  and leaves its arc unbroken.
 
 - **`data(freshwater)`** — share of global renewable internal freshwater
   resources by country (2022, FAO Aquastat via World Bank): 30 rows of
