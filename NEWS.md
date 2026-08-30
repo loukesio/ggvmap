@@ -25,8 +25,9 @@
   cut into the arc under each label was too narrow (and did not scale with
   `label_size`), so long labels overlapped the line. The gap now scales with
   the label's length and size, and a label wider than its own segment (e.g. a
-  long group name on a 1% group) is shifted just outside the ring instead of
-  overlapping the neighbouring segments' arcs.
+  long group name on a 1% group) keeps its place on the ring — its gap is
+  cut into the neighbouring segments' arcs as well, so every label follows
+  the same pattern.
 
 * **`data(freshwater)`** — share of global renewable internal freshwater
   resources by country (2022, FAO Aquastat via World Bank): 30 rows of

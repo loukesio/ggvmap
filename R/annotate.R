@@ -287,37 +287,61 @@ vm_add_ring <- function(
     data.frame(id = id, x = cx + ra * cos(ang), y = cy + ra * sin(ang))
   }
 
-  layers <- list()
-  lab_rows <- list()
+  # Pass 1 -- padded segment extents and, per label, the angular interval it
+  # occupies on the ring: ~0.023 rad per character at the default label size,
+  # scaled with `label_size`.  Every label sits ON the ring; a label wider
+  # than its own segment keeps its place and its gap is cut into the
+  # neighbouring segments' arcs as well (pass 2), so all labels follow the
+  # same pattern.
+  seg_a0 <- seg_a1 <- numeric(nrow(seg))
   for (k in seq_len(nrow(seg))) {
     a0 <- seg$start[k] + pad_rad
     a1 <- seg$end[k]   - pad_rad
     if (a1 <= a0) { a0 <- seg$start[k]; a1 <- seg$end[k] }
-    mid <- (a0 + a1) / 2
-    col_k <- unname(cols[seg$group[k]])
-
-    if (draw_labels) {
-      # Gap for the label: ~0.023 rad per character at the default label
-      # size, scaled with `label_size`; the label sits in it, on the arc's
-      # own radius.  A label wider than its segment cannot be protected by
-      # a gap (it overflows onto the neighbouring segments' arcs), so it is
-      # pushed radially outward instead, clear of every arc line.
+    seg_a0[k] <- a0; seg_a1[k] <- a1
+  }
+  lab_rows <- list()
+  cuts <- NULL
+  if (draw_labels) {
+    for (k in seq_len(nrow(seg))) {
+      mid <- (seg_a0[k] + seg_a1[k]) / 2
       gap_ang <- 0.023 * (label_size / 3.2) * nchar(lab_txt[k])
-      overflow <- gap_ang >= 0.85 * (a1 - a0)
-      if (overflow) {
-        pieces <- arc_path(a0, a1, paste0(k, "a"))
-      } else {
-        pieces <- rbind(arc_path(a0, mid - gap_ang / 2, paste0(k, "a")),
-                        arc_path(mid + gap_ang / 2, a1, paste0(k, "b")))
-      }
       lab_rows[[k]] <- data.frame(seg = k, group = seg$group[k], mid = mid,
-                                  a0 = mid - gap_ang / 2, a1 = mid + gap_ang / 2,
-                                  r = if (overflow) ra + 0.055 * r else ra,
-                                  label = lab_txt[k], col = col_k,
+                                  a0 = mid - gap_ang / 2,
+                                  a1 = mid + gap_ang / 2,
+                                  label = lab_txt[k],
+                                  col = unname(cols[seg$group[k]]),
                                   stringsAsFactors = FALSE)
-    } else {
-      pieces <- arc_path(a0, a1, paste0(k, "a"))
+      cuts <- rbind(cuts, data.frame(c0 = mid - gap_ang / 2,
+                                     c1 = mid + gap_ang / 2))
     }
+  }
+
+  # Pass 2 -- draw each segment's arc minus every label interval that
+  # intersects it (its own and, for overflowing labels, its neighbours').
+  layers <- list()
+  for (k in seq_len(nrow(seg))) {
+    iv <- list(c(seg_a0[k], seg_a1[k]))
+    if (!is.null(cuts)) {
+      for (j in seq_len(nrow(cuts))) {
+        for (shift in c(-2 * pi, 0, 2 * pi)) {  # labels wrap around 0/2pi
+          c0 <- cuts$c0[j] + shift; c1 <- cuts$c1[j] + shift
+          iv <- unlist(lapply(iv, function(p) {
+            if (c1 <= p[1] || c0 >= p[2]) return(list(p))
+            out <- list()
+            if (c0 > p[1]) out <- c(out, list(c(p[1], c0)))
+            if (c1 < p[2]) out <- c(out, list(c(c1, p[2])))
+            out
+          }), recursive = FALSE)
+        }
+      }
+    }
+    col_k  <- unname(cols[seg$group[k]])
+    pieces <- do.call(rbind, lapply(seq_along(iv), function(i) {
+      p <- iv[[i]]
+      if (p[2] - p[1] < 0.02) return(NULL)   # drop sliver stubs
+      arc_path(p[1], p[2], paste0(k, "-", i))
+    }))
     if (!is.null(pieces) && nrow(pieces)) {
       layers <- c(layers, list(ggplot2::geom_path(
         data = pieces,
@@ -335,7 +359,7 @@ vm_add_ring <- function(
       path_df <- do.call(rbind, lapply(seq_len(nrow(lab)), function(k) {
         ang <- seq(lab$a0[k], lab$a1[k], length.out = 64)
         data.frame(seg = lab$seg[k],
-                   x = cx + lab$r[k] * cos(ang), y = cy + lab$r[k] * sin(ang),
+                   x = cx + ra * cos(ang), y = cy + ra * sin(ang),
                    label = lab$label[k], col_final = lab$col_final[k])
       }))
       layers <- c(layers, list(do.call(geomtextpath::geom_textpath, .add_family(
@@ -354,7 +378,7 @@ vm_add_ring <- function(
       flip <- ang_txt > 90 & ang_txt < 270
       ang_txt[flip] <- (ang_txt[flip] + 180) %% 360
       lab_df <- data.frame(
-        x = cx + lab$r * cos(mid), y = cy + lab$r * sin(mid),
+        x = cx + ra * cos(mid), y = cy + ra * sin(mid),
         label = lab$label, angle = ang_txt, col_final = lab$col_final
       )
       layers <- c(layers, list(do.call(ggplot2::geom_text, .add_family(
