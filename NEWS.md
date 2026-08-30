@@ -19,18 +19,6 @@
   keep the default. Previously a named vector was silently recycled in cell
   order, sizing the wrong cells.
 
-## Bug fixes
-
-* **Arc ring labels are no longer struck through by the arc line.** The gap
-  cut into the arc under each label was too narrow (and did not scale with
-  `label_size`), so long labels overlapped the line. The gap now scales with
-  the label's length and size, and a label wider than its own segment (e.g. a
-  long group name on a 1% group) keeps its place on the ring — its gap is
-  cut into the neighbouring segments' arcs as well, so every label follows
-  the same pattern. A message points out when this happens, and an empty
-  string in `labels` (e.g. `labels = c("Middle East" = "")`) omits that
-  group's ring label and leaves its arc unbroken.
-
 * **`data(freshwater)`** — share of global renewable internal freshwater
   resources by country (2022, FAO Aquastat via World Bank): 30 rows of
   `country`, `share`, `region`. Now the canonical demo dataset; see
@@ -71,6 +59,18 @@
   `pdf()` devices the dot can fail glyph-encoding conversion (seen on CI as
   U+A78F in `mbcsToSbcs`); pass `values_sep = " - "` there. The shipped
   example does so.
+
+## Bug fixes
+
+* **Arc ring labels are no longer struck through by the arc line.** The gap
+  cut into the arc under each label was too narrow (and did not scale with
+  `label_size`), so long labels overlapped the line. The gap now scales with
+  the label's length and size, and a label wider than its own segment (e.g. a
+  long group name on a 1% group) keeps its place on the ring — its gap is
+  cut into the neighbouring segments' arcs as well, so every label follows
+  the same pattern. A message points out when this happens, and an empty
+  string in `labels` (e.g. `labels = c("Middle East" = "")`) omits that
+  group's ring label and leaves its arc unbroken.
 
 # ggvmap 0.3.0
 
