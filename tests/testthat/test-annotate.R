@@ -53,3 +53,27 @@ test_that("vm_add_labels adds a text layer", {
   p2 <- vm_add_labels(p, value = c(100, 200, 300))
   expect_gt(length(p2$layers), length(p$layers))
 })
+
+test_that("arc ring: overflowing label messages, empty string omits", {
+  set.seed(1)
+  vm <- voronoi_map(c(60, 30, 5, 1), labels = c("a", "b", "c", "d"),
+                    group = c("Giant", "Big", "Small", "A very tiny group"),
+                    clip = clip_circle(), seed = 1)
+  p <- ggvmap(vm)
+  # the tiny group's label cannot fit its segment -> informative message
+  expect_message(vm_add_ring(p, style = "arc", values = TRUE),
+                 "wider than their arc segment")
+  # omitting that label silences the message and still builds
+  expect_no_message(
+    p2 <- vm_add_ring(p, style = "arc", values = TRUE,
+                      labels = c("A very tiny group" = ""))
+  )
+  expect_s3_class(p2, "ggplot")
+  # all labels omitted also builds
+  expect_s3_class(
+    vm_add_ring(p, style = "arc",
+                labels = setNames(rep("", 4),
+                                  c("Giant", "Big", "Small",
+                                    "A very tiny group"))),
+    "ggplot")
+})

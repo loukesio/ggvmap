@@ -46,7 +46,12 @@ interpolated across the groups.  With \code{style = "arc"}, the labels follow
 the arc colours unless \code{label_col} is set.}
 
 \item{labels}{Logical, or a named character vector of display labels keyed
-by group.  \code{TRUE} (default) uses the group names; \code{FALSE} draws no text.}
+by group.  \code{TRUE} (default) uses the group names; \code{FALSE} draws no text.
+In the \code{"arc"} style, an empty string omits one group's label and leaves
+its arc unbroken (e.g. \code{labels = c("Middle East" = "")}) -- useful when a
+group's segment is too short to carry its label, which otherwise stays
+on the ring with its gap cut into the neighbouring arcs (a message
+points this out when it happens).}
 
 \item{curved}{Draw labels curved along the arc using \pkg{geomtextpath}?
 \code{NULL} (default) curves them when that package is installed and otherwise

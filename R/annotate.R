@@ -51,6 +51,11 @@
 #'   the arc colours unless `label_col` is set.
 #' @param labels Logical, or a named character vector of display labels keyed
 #'   by group.  `TRUE` (default) uses the group names; `FALSE` draws no text.
+#'   In the `"arc"` style, an empty string omits one group's label and leaves
+#'   its arc unbroken (e.g. `labels = c("Middle East" = "")`) -- useful when a
+#'   group's segment is too short to carry its label, which otherwise stays
+#'   on the ring with its gap cut into the neighbouring arcs (a message
+#'   points this out when it happens).
 #' @param curved Draw labels curved along the arc using \pkg{geomtextpath}?
 #'   `NULL` (default) curves them when that package is installed and otherwise
 #'   uses straight tangential text; `TRUE`/`FALSE` force the choice.
@@ -263,9 +268,12 @@ vm_add_ring <- function(
   }
   shares <- 100 * gw / sum(gw)
 
-  # Display labels
+  # Display labels.  An empty string ("") for a group omits its ring label
+  # entirely (the arc is drawn unbroken) -- the escape hatch for a group
+  # whose segment is too short to carry text.
   lab_txt <- if (is.character(labels)) labels[seg$group] else seg$group
   lab_txt[is.na(lab_txt)] <- seg$group[is.na(lab_txt)]
+  omit <- !nzchar(lab_txt)
   if (isTRUE(values)) {
     lab_txt <- paste0(lab_txt, values_sep, round(shares[seg$group]), "%")
   }
@@ -304,6 +312,7 @@ vm_add_ring <- function(
   cuts <- NULL
   if (draw_labels) {
     for (k in seq_len(nrow(seg))) {
+      if (omit[k]) next
       mid <- (seg_a0[k] + seg_a1[k]) / 2
       gap_ang <- 0.023 * (label_size / 3.2) * nchar(lab_txt[k])
       lab_rows[[k]] <- data.frame(seg = k, group = seg$group[k], mid = mid,
@@ -314,6 +323,15 @@ vm_add_ring <- function(
                                   stringsAsFactors = FALSE)
       cuts <- rbind(cuts, data.frame(c0 = mid - gap_ang / 2,
                                      c1 = mid + gap_ang / 2))
+    }
+    over <- !omit &
+      0.023 * (label_size / 3.2) * nchar(lab_txt) > (seg_a1 - seg_a0)
+    if (any(over)) {
+      message("Ring label(s) wider than their arc segment: ",
+              paste0('"', lab_txt[over], '"', collapse = ", "),
+              ". They stay on the ring and their gap is cut into the ",
+              "neighbouring arcs. To omit one instead, pass e.g. labels = c(\"",
+              seg$group[which(over)[1]], "\" = \"\").")
     }
   }
 
@@ -352,8 +370,8 @@ vm_add_ring <- function(
     }
   }
 
-  if (draw_labels) {
-    lab <- do.call(rbind, lab_rows)
+  lab <- do.call(rbind, lab_rows)
+  if (draw_labels && !is.null(lab)) {
     lab$col_final <- if (is.null(label_col)) lab$col else rep_len(label_col, nrow(lab))
     if (use_curved) {
       path_df <- do.call(rbind, lapply(seq_len(nrow(lab)), function(k) {
