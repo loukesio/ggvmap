@@ -52,6 +52,9 @@ keywords: [data visualization, treemap, Voronoi diagram, power diagram, R, ggplo
   label suppression.
 - Verified correctness: the layout is an exact power diagram, enforced by
   property-based tests on every build.
+- Convergence is never silent: printing the layout reports the iteration
+  count, the residual area error, and a `converged` flag, so an unfaithful
+  map is caught before it is plotted.
 
 # Introduction
 
@@ -121,6 +124,43 @@ map, group, or single cell. Every cell-level argument also accepts a
 vector named by cell label, so emphasising one cell (bold face, different
 colour, its own label) is a one-argument change with no data
 manipulation.](figures/fig1_design.png){#fig-design width="100%"}
+
+## The layout is a diagnosable object
+
+Between computation and rendering sits a deliberate checkpoint. The
+recommended workflow is two steps -- compute the layout, inspect it, and
+only then plot:
+
+```r
+vm <- voronoi_map(freshwater$share, labels = freshwater$country,
+                  group = freshwater$region, clip = clip_circle(),
+                  seed = 5, max_iter = 80)
+vm
+#> Voronoi Map
+#>   hierarchical | 6 groups | 30 cells
+#>   30 cells | 17 iterations | convergence: 1.509%
+#>   Converged: TRUE
+```
+
+Printing the object reports the three facts that cannot be read off the
+picture. First, the `Converged` flag: the layout is an iterative
+optimisation with a finite budget (`max_iter`), so it can stop before cell
+areas match their targets -- and an unconverged map still renders and looks
+entirely plausible, which is precisely why the check must precede the
+plot. If the flag is `FALSE`, the defining promise of a treemap (area
+proportional to value) is broken, and the remedy is a larger `max_iter` or
+a different `seed`. Second, the residual area error, which quantifies how
+faithful the converged areas are -- a figure a manuscript can report
+directly. Third, the iteration count, which shows how much of the budget
+was consumed and therefore how much margin the layout had.
+
+The separation also reflects where the cost and the randomness live. The
+layout is the expensive, seed-dependent step; rendering is cheap and
+deterministic. Computing the tessellation once, verifying it, and passing
+the same object to every downstream call -- `ggvmap()`, the annotation
+verbs, the tidy accessors, `vm_girafe()` -- guarantees that all outputs
+describe one verified layout instead of silently recomputing (and
+potentially re-randomising) it per plot.
 
 ## One dataset, many maps
 
