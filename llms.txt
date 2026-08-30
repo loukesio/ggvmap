@@ -559,7 +559,10 @@ answer there — thank you, Allan.
 
 ## License
 
-MIT
+MIT © 2026 Loukas Theodosiou — see
+[LICENSE.md](https://loukesio.github.io/ggvmap/LICENSE.md) for the full
+text. (The two-line [LICENSE](https://loukesio.github.io/ggvmap/LICENSE)
+file is the CRAN-required stub that points to the same terms.)
 
 # Package index
 
