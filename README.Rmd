@@ -517,4 +517,6 @@ answer there — thank you, Allan.
 
 ## License
 
-MIT
+MIT © 2026 Loukas Theodosiou — see [LICENSE.md](LICENSE.md) for the full
+text. (The two-line [LICENSE](LICENSE) file is the CRAN-required stub
+that points to the same terms.)
