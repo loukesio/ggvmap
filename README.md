@@ -85,7 +85,7 @@ ggvmap(vm, palette = "casa_natal", autoscale = TRUE, min_area = 0.009,
   vm_add_ring(style = "arc", palette = "casa_natal", values = TRUE)
 ```
 
-<img src="man/figures/README-hero.png" alt="" width="75%" style="display: block; margin: auto;" />
+<img src="man/figures/README-hero.png" alt="" width="92%" style="display: block; margin: auto;" />
 
 The full script is
 [`examples/freshwater_tour.R`](examples/freshwater_tour.R).

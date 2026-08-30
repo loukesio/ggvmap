@@ -99,7 +99,7 @@ ggvmap(vm, palette = "casa_natal", autoscale = TRUE, min_area = 0.009,
   vm_add_ring(style = "arc", palette = "casa_natal", values = TRUE)
 ```
 
-```{r hero, echo = FALSE, out.width = "75%", fig.align = "center"}
+```{r hero, echo = FALSE, out.width = "92%", fig.align = "center"}
 knitr::include_graphics("man/figures/README-hero.png")
 ```
 

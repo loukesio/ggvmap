@@ -296,7 +296,7 @@ vm_add_ring <- function(
   }
 
   # Pass 1 -- padded segment extents and, per label, the angular interval it
-  # occupies on the ring: ~0.023 rad per character at the default label size,
+  # occupies on the ring: ~0.027 rad per character at the default label size,
   # scaled with `label_size`.  Every label sits ON the ring; a label wider
   # than its own segment keeps its place and its gap is cut into the
   # neighbouring segments' arcs as well (pass 2), so all labels follow the
@@ -314,7 +314,7 @@ vm_add_ring <- function(
     for (k in seq_len(nrow(seg))) {
       if (omit[k]) next
       mid <- (seg_a0[k] + seg_a1[k]) / 2
-      gap_ang <- 0.023 * (label_size / 3.2) * nchar(lab_txt[k])
+      gap_ang <- 0.027 * (label_size / 3.2) * nchar(lab_txt[k])
       lab_rows[[k]] <- data.frame(seg = k, group = seg$group[k], mid = mid,
                                   a0 = mid - gap_ang / 2,
                                   a1 = mid + gap_ang / 2,
@@ -325,7 +325,7 @@ vm_add_ring <- function(
                                      c1 = mid + gap_ang / 2))
     }
     over <- !omit &
-      0.023 * (label_size / 3.2) * nchar(lab_txt) > (seg_a1 - seg_a0)
+      0.027 * (label_size / 3.2) * nchar(lab_txt) > (seg_a1 - seg_a0)
     if (any(over)) {
       message("Ring label(s) wider than their arc segment: ",
               paste0('"', lab_txt[over], '"', collapse = ", "),
