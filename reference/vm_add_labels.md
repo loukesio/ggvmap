@@ -63,7 +63,9 @@ vm_add_labels(
 
 - size:
 
-  Text size. Default `2.8`.
+  Text size: a single value, a length-`n` vector in cell order, or a
+  vector named by cell label (unnamed cells keep the default `2.8`).
+  Default `2.8`.
 
 - col:
 

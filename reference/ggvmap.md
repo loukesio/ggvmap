@@ -85,7 +85,9 @@ ggvmap(
 
 - label_size:
 
-  Label size. Default `3`.
+  Label size: a single value, a length-`n` vector in cell order, or a
+  vector named by cell label (unnamed cells keep the default `3`) – e.g.
+  `c(Brazil = 5)` to enlarge one label. Default `3`.
 
 - fontface:
 
@@ -122,7 +124,10 @@ ggvmap(
   Character vector of colours, `"Okabe-Ito"` (the default,
   colourblind-safe; see
   [`okabe_ito()`](https://loukesio.github.io/ggvmap/reference/okabe_ito.md)),
-  a built-in named palette such as `"alger"`, or a named palette from
+  the name of a built-in palette (all 32 ltc palettes, e.g. `"alger"` or
+  `"casa_natal"`; list them with
+  [`vm_palettes()`](https://loukesio.github.io/ggvmap/reference/vm_palettes.md)),
+  or a named palette from
   [`grDevices::hcl.colors()`](https://rdrr.io/r/grDevices/palettes.html).
 
 - legend:

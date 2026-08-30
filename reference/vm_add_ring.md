@@ -76,7 +76,12 @@ vm_add_ring(
 
 - palette:
 
-  Palette used when `colors` is `NULL`. Default `"Okabe-Ito"`.
+  Palette used when `colors` is `NULL`: a colour vector, a built-in
+  palette name (see
+  [`vm_palettes()`](https://loukesio.github.io/ggvmap/reference/vm_palettes.md)),
+  or an
+  [`grDevices::hcl.colors()`](https://rdrr.io/r/grDevices/palettes.html)
+  name. Default `"Okabe-Ito"`.
 
 - style:
 

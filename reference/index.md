@@ -45,6 +45,10 @@ Outer ring, flags, images and value labels.
 
 ## Colours
 
+The 32 built-in ltc palettes and the Okabe-Ito default.
+
+- [`vm_palettes()`](https://loukesio.github.io/ggvmap/reference/vm_palettes.md)
+  : List the built-in colour palettes
 - [`okabe_ito()`](https://loukesio.github.io/ggvmap/reference/okabe_ito.md)
   : The Okabe-Ito colourblind-safe qualitative palette
 

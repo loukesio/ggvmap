@@ -124,7 +124,9 @@ not named keep the default) – useful for light text on dark cells.</p></dd>
 
 
 <dt id="arg-label-size">label_size<a class="anchor" aria-label="anchor" href="#arg-label-size"></a></dt>
-<dd><p>Label size.  Default <code>3</code>.</p></dd>
+<dd><p>Label size: a single value, a length-<code>n</code> vector in cell
+order, or a vector named by cell label (unnamed cells keep the default
+<code>3</code>) – e.g. <code>c(Brazil = 5)</code> to enlarge one label.  Default <code>3</code>.</p></dd>
 
 
 <dt id="arg-fontface">fontface<a class="anchor" aria-label="anchor" href="#arg-fontface"></a></dt>
@@ -158,8 +160,9 @@ multiple lines (word-aware, via <code><a href="https://rdrr.io/r/base/strwrap.ht
 
 <dt id="arg-palette">palette<a class="anchor" aria-label="anchor" href="#arg-palette"></a></dt>
 <dd><p>Character vector of colours, <code>"Okabe-Ito"</code> (the default,
-colourblind-safe; see <code><a href="okabe_ito.html">okabe_ito()</a></code>), a built-in named palette such as
-<code>"alger"</code>, or a named palette from <code><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">grDevices::hcl.colors()</a></code>.</p></dd>
+colourblind-safe; see <code><a href="okabe_ito.html">okabe_ito()</a></code>), the name of a built-in palette
+(all 32 ltc palettes, e.g. <code>"alger"</code> or <code>"casa_natal"</code>; list them with
+<code><a href="vm_palettes.html">vm_palettes()</a></code>), or a named palette from <code><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">grDevices::hcl.colors()</a></code>.</p></dd>
 
 
 <dt id="arg-legend">legend<a class="anchor" aria-label="anchor" href="#arg-legend"></a></dt>

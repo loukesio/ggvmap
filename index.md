@@ -7,13 +7,14 @@ proportional to data weights — a *Voronoi treemap*. It implements the
 Nocaj & Brandes (2012) iterative power-diagram algorithm in **pure R**
 (no compiled code, no CGAL, no JavaScript) with first-class **ggplot2**
 integration: hierarchical (grouped) layouts, annotation rings, flags,
-value labels, and interactive hover maps.
+value labels, 32 built-in colour palettes, and interactive hover maps.
 
 ## Installation
 
 ggvmap is pure R with a single hard dependency (ggplot2) — no
 compilation, no system libraries. Install the latest version from
-GitHub: ![](reference/figures/logo.png)
+GitHub: ![ggvmap logo: a stained-glass Voronoi
+hexagon](reference/figures/logo.png)
 
 ``` r
 
@@ -67,10 +68,11 @@ vm <- voronoi_map(freshwater$share, labels = freshwater$country,
                   group = freshwater$region, clip = clip_circle(),
                   seed = 5, max_iter = 80)
 
-ggvmap(vm, palette = "alger", autoscale = TRUE, min_area = 0.004,
-       label_col = c(Brazil = "grey95"), fontface = c(Brazil = "bold")) |>
-  vm_add_labels(fmt = \(v) paste0(v, "%"), autoscale = TRUE) |>
-  vm_add_ring(style = "arc", palette = "alger", values = TRUE)
+ggvmap(vm, palette = "casa_natal", autoscale = TRUE, min_area = 0.009,
+       wrap = 10, fontface = c(Brazil = "bold")) |>
+  vm_add_labels(fmt = \(v) paste0(v, "%"), autoscale = TRUE,
+                min_area = 0.009) |>
+  vm_add_ring(style = "arc", palette = "casa_natal", values = TRUE)
 ```
 
 ![](reference/figures/README-hero.png)
@@ -91,57 +93,200 @@ data(freshwater)
 
 top10 <- freshwater[!grepl("^Rest of|Middle East", freshwater$country), ][1:10, ]
 
-ggvmap(top10$share, labels = top10$country, palette = "alger", seed = 42)
+ggvmap(top10$share, labels = top10$country, palette = "minou", seed = 42)
 ```
 
 ![](reference/figures/README-quickstart-1.png)
 
-## Feature tour
+For anything beyond a quick look, the recommended workflow is two steps
+— compute the layout with
+[`voronoi_map()`](https://loukesio.github.io/ggvmap/reference/voronoi_map.md),
+*check it*, then plot — explained next. Every function below follows the
+same pattern: what it is for, the arguments that matter (with their
+defaults), and a worked example. Each example uses a different built-in
+palette, named in its code.
 
-### Any convex boundary
+## The functions
 
-The same data on
-[`clip_square()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
-[`clip_hexagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
-[`clip_circle()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
-[`clip_diamond()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
-[`clip_triangle()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
-[`clip_pentagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
-[`clip_octagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
-[`clip_rectangle()`](https://loukesio.github.io/ggvmap/reference/clip_rectangle.md),
-[`clip_ellipse()`](https://loukesio.github.io/ggvmap/reference/clip_ellipse.md)
-— or any `regular_polygon(n)`:
+### `voronoi_map()` — compute the layout, then check it
 
-![](reference/figures/README-shapes-grid.png)
+**What it’s for:** turning a weight vector into the tessellation. This
+is the expensive, seed-dependent step; everything else (plotting,
+labels, rings) is cheap decoration on the object it returns.
 
-### Small cells: autoscale and min_area
+| Argument | Default | What it does |
+|----|----|----|
+| `weights` | — | The numeric values; each cell’s area will be proportional to its weight |
+| `labels` | `NULL` | Cell names; also the names that per-cell arguments match against |
+| `group` | `NULL` | Grouping vector — makes the layout *hierarchical* (one sector per group) |
+| `clip` | [`clip_square()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md) | The boundary polygon; any convex shape (see the shapes below) |
+| `seed` | `NULL` | Random seed for the initial site placement — set it for reproducibility |
+| `convergence_ratio` | `0.01` | Stop when total area error falls below this fraction (1%) |
+| `max_iter` | `200` | Iteration budget; the layout stops here even if not converged |
 
-Real part-of-whole data has a long tail of sub-1% cells.
-`autoscale = TRUE` shrinks their labels (floored at 60% of
-`label_size`), and `min_area` hides labels below an area threshold:
+The layout is an iterative optimisation with a finite budget, so it can
+stop *before* cell areas match the data — and an unconverged map still
+renders and looks plausible. That is why you print the object before
+trusting any plot of it:
 
 ``` r
 
 vm <- voronoi_map(freshwater$share, labels = freshwater$country,
                   group = freshwater$region, clip = clip_circle(),
                   seed = 5, max_iter = 80)
+vm
+#> Voronoi Map
+#>   hierarchical | 6 groups | 30 cells
+#>   30 cells | 17 iterations | convergence: 1.509%
+#>   Converged: TRUE
+```
 
-ggvmap(vm, palette = "alger", label_col = "grey15",
-       autoscale = TRUE, min_area = 0.004)
+`Converged: TRUE` means the areas faithfully represent the weights; the
+convergence percentage is the residual area error, and the iteration
+count shows how much of the budget was used. If `Converged` is `FALSE`,
+raise `max_iter` or try another `seed` — never publish an unconverged
+map.
+
+### `clip_*()` — the boundary shapes
+
+**What they’re for:** the same weights fill *any* convex polygon with
+area-true cells, so the outline is a free design choice. Ten
+constructors:
+[`clip_square()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
+[`clip_circle()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
+[`clip_hexagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
+[`clip_diamond()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
+[`clip_triangle()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
+[`clip_pentagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
+[`clip_octagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md),
+`clip_rectangle(w, h)`, `clip_ellipse(rx, ry)`, and the general
+`regular_polygon(n)`. Each panel below also names the palette it uses:
+
+![](reference/figures/README-shapes-grid.png)
+
+### `ggvmap()` — render the map
+
+**What it’s for:** turning the layout into a ggplot. Everything about
+the map level — colours, which labels appear and how they behave — is
+decided here.
+
+| Argument | Default | What it does |
+|----|----|----|
+| `palette` | `"Okabe-Ito"` | A palette name (see the palette section), colour vector, or [`hcl.colors()`](https://rdrr.io/r/grDevices/palettes.html) name |
+| `autoscale` | `FALSE` | Shrink labels in small cells (down to 60% of `label_size`) |
+| `min_area` | `0` | Hide labels of cells below this fraction of the map area |
+| `wrap` | `NULL` | Wrap long names at this many characters (e.g. `wrap = 10`) |
+| `label_size` | `3` | Text size; also takes a vector *named by cell*: `c(Brazil = 5)` |
+| `label_col` | `"white"` | Text colour; also named-by-cell |
+| `fontface` | `"bold"` | Face; also named-by-cell (`"plain"`, `"italic"`, `"bold.italic"`) |
+| `fill_by` | `NULL` | `"data_weight"` fills by value instead of by group — see continuous fill |
+| `legend` | `FALSE` | Show the fill legend |
+| `interactive` | `FALSE` | Build ggiraph-interactive cells — see the interactive section |
+
+The three label arguments above solve the problem every real dataset has
+— a long tail of tiny cells and a few long names:
+
+``` r
+
+ggvmap(vm, palette = "paloma", label_col = "grey15",
+       autoscale = TRUE, min_area = 0.009, wrap = 10)
 ```
 
 ![](reference/figures/README-small-cells-1.png)
 
-### Emphasis: single cells and single groups
+`autoscale` shrinks a label in proportion to the square root of its
+cell’s area relative to the median cell — so text in the *bigger half*
+of the map all stays at full size (area encodes the value; the font does
+not re-encode it), and only genuinely small cells shrink, floored at 60%
+so they stay legible. Below `min_area`, labels disappear entirely.
 
-`fontface`, `label_col` and `group_border_col` accept vectors *named by
-cell or group*, and `label_cells` / `cells` restrict which cells get
-labels at all:
+### `vm_add_labels()` — value labels under the names
+
+**What it’s for:** printing each cell’s value (by default its weight)
+beneath the name, with free-form formatting.
+
+| Argument | Default | What it does |
+|----|----|----|
+| `fmt` | `NULL` | Formatting function, e.g. `\(v) paste0(v, "%")` |
+| `size` | `2.8` | Text size; also named-by-cell |
+| `col` | `"grey20"` | Colour; also named-by-cell |
+| `autoscale`, `min_area` | `FALSE`, `0` | Same meaning as in [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md) — **use the same `min_area` in both**, or hidden names leave orphaned values behind |
+| `cells` | `NULL` | Restrict to specific cells |
+| `value` | weights | Label a *different* variable than the weights |
 
 ``` r
 
-ggvmap(vm, palette = "alger",
+ggvmap(vm, palette = "sylvie", label_col = "grey15",
+       autoscale = TRUE, min_area = 0.009, wrap = 10) |>
+  vm_add_labels(fmt = \(v) paste0(v, "%"), autoscale = TRUE,
+                min_area = 0.009)
+```
+
+![](reference/figures/README-value-labels-1.png)
+
+### `vm_add_ring()` — label the groups without a legend
+
+**What it’s for:** wrapping a circular map in a group-aligned annotation
+ring, so the reader learns the groups from the map’s edge instead of a
+detached legend.
+
+| Argument | Default | What it does |
+|----|----|----|
+| `style` | `"band"` | `"band"` = filled ring segments; `"arc"` = thin line, label in a gap |
+| `values` | `FALSE` | Append each group’s share to its label (“LATAM · 31%”) |
+| `label_size` | `3.2` | Ring label text size (the gap in the arc scales with it) |
+| `colors` | `NULL` | Override segment colours: one colour, or a vector named by group |
+| `width` | `0.1` | Band thickness (band style) |
+| `offset` | `0.06` | Distance of the arc from the map edge (arc style) |
+
+The filled band:
+
+``` r
+
+ggvmap(vm, palette = "gaby", label_col = "grey15",
+       autoscale = TRUE, min_area = 0.009, wrap = 10) |>
+  vm_add_ring(style = "band", palette = "gaby", width = 0.11)
+```
+
+![](reference/figures/README-ring-band-1.png)
+
+The thin arc, with values. A label that cannot fit inside its own arc
+segment (here “Middle East · 1%”) is automatically placed just outside
+the ring instead of colliding with it:
+
+``` r
+
+ggvmap(vm, palette = "fernande", label_col = "grey15",
+       autoscale = TRUE, min_area = 0.009, wrap = 10) |>
+  vm_add_ring(style = "arc", palette = "fernande", values = TRUE)
+```
+
+![](reference/figures/README-ring-arc-1.png)
+
+And with `colors =` overriding the palette — one uniform dark ring:
+
+``` r
+
+ggvmap(vm, palette = "reading", label_col = "grey15",
+       autoscale = TRUE, min_area = 0.009, wrap = 10) |>
+  vm_add_ring(style = "arc", colors = "#333333", values = TRUE)
+```
+
+![](reference/figures/README-ring-arc-dark-1.png)
+
+### Emphasis — any argument, one cell at a time
+
+**What it’s for:** highlighting one cell or one group without touching
+the data. `label_size`, `label_col`, `fontface` (per cell) and
+`group_border_col` (per group) all accept vectors *named by* cell or
+group; anything unnamed keeps the default. `label_cells` / `cells`
+restrict which cells get labels at all:
+
+``` r
+
+ggvmap(vm, palette = "shuggie",
        label_cells      = c("Brazil", "Russia", "Canada"),
+       label_size       = c(Brazil = 5),
        label_col        = c(Brazil = "grey95", Russia = "grey15",
                             Canada = "grey15"),
        fontface         = c(Brazil = "bold.italic"),
@@ -153,66 +298,77 @@ ggvmap(vm, palette = "alger",
 
 ![](reference/figures/README-emphasis-1.png)
 
-### Continuous fill
+### `vm_palettes()` — the built-in colours
+
+**What it’s for:** every `palette =` argument accepts, by name, all 32
+palettes of the [ltc package](https://github.com/loukesio/ltc_palettes)
+(vendored — ltc need not be installed). Names match case-insensitively
+and ignore spaces, underscores and dashes, so `"casa_natal"`,
+`"Casa Natal"` and `"casanatal"` are the same palette.
+[`vm_palettes()`](https://loukesio.github.io/ggvmap/reference/vm_palettes.md)
+returns them all as a named list:
 
 ``` r
 
-ggvmap(vm, fill_by = "data_weight", palette = "alger",
-       label_col = "grey15", autoscale = TRUE, min_area = 0.006,
-       legend = TRUE)
+names(vm_palettes())   # all 32 names
+vm_palettes()$dora     # the hex colours of one palette
+```
+
+![](reference/figures/README-palettes.png)
+
+Beyond the names, `palette =` takes any colour vector, so two tricks
+come free. **Softer fills**: wrap the palette in
+[`ggplot2::alpha()`](https://scales.r-lib.org/reference/alpha.html) and
+switch the labels to a dark colour:
+
+``` r
+
+ggvmap(vm, palette = ggplot2::alpha(vm_palettes()$casa_natal, 0.55),
+       label_col = "grey15", autoscale = TRUE, min_area = 0.009,
+       wrap = 10) |>
+  vm_add_labels(fmt = \(v) paste0(v, "%"), autoscale = TRUE,
+                min_area = 0.009)
+```
+
+![](reference/figures/README-alpha-fills-1.png)
+
+**Continuous fill**: `fill_by = "data_weight"` colours each cell by its
+value, restating area as colour. The `heatmap0`–`heatmap3` palettes are
+ordered ramps (always interpolated end-to-end), which makes them the
+natural choice here — a qualitative palette would imply categories that
+don’t exist. With a ramp that reaches very dark or very light, pair it
+with a matching `label_col`; the mid-tone `heatmap1` keeps dark text
+readable everywhere:
+
+``` r
+
+ggvmap(vm, fill_by = "data_weight", palette = "heatmap1",
+       label_col = "grey15", autoscale = TRUE, min_area = 0.009,
+       wrap = 10, legend = TRUE)
 ```
 
 ![](reference/figures/README-continuous-1.png)
 
-### Ring styles: band and arc
+### `vm_add_flags()` and `vm_add_images()` — pictures in cells
 
-[`vm_add_ring()`](https://loukesio.github.io/ggvmap/reference/vm_add_ring.md)
-wraps a circular map in a group-aligned annotation ring: the filled
-`"band"` (default), or the thin `"arc"` with the group label —
-optionally with its share (`values = TRUE`) — sitting in a gap broken
-into the line:
-
-``` r
-
-ggvmap(vm, palette = "alger", label_col = "grey15",
-       autoscale = TRUE, min_area = 0.004) |>
-  vm_add_ring(style = "band", palette = "alger", width = 0.11)
-```
-
-![](reference/figures/README-ring-band-1.png)
-
-``` r
-
-ggvmap(vm, palette = "alger", label_col = "grey15",
-       autoscale = TRUE, min_area = 0.004) |>
-  vm_add_ring(style = "arc", palette = "alger", values = TRUE)
-```
-
-![](reference/figures/README-ring-arc-1.png)
-
-The arcs follow the group colours by default; `colors =` overrides them
-— one colour for all arcs (e.g. `colors = "#333333"` for a uniform dark
-ring), or a vector named by group for full control:
-
-``` r
-
-ggvmap(vm, palette = "alger", label_col = "grey15",
-       autoscale = TRUE, min_area = 0.004) |>
-  vm_add_ring(style = "arc", colors = "#333333", values = TRUE)
-```
-
-![](reference/figures/README-ring-arc-dark-1.png)
-
-### Flags
-
+**What they’re for:**
 [`vm_add_flags()`](https://loukesio.github.io/ggvmap/reference/vm_add_flags.md)
 resolves country names (English or German) to national flags via the
-**ggimage** package:
+**ggimage** package and places them at the cell centroids;
+[`vm_add_images()`](https://loukesio.github.io/ggvmap/reference/vm_add_images.md)
+does the same with any image files or URLs. Key arguments: `size`
+(fraction of the plot, default `0.045`), `nudge_y` to sit the flag above
+the label, `cells` to restrict. The helpers
+[`country_to_iso()`](https://loukesio.github.io/ggvmap/reference/country_to_iso.md),
+[`flag_url()`](https://loukesio.github.io/ggvmap/reference/flag_url.md)
+and
+[`flag_cache()`](https://loukesio.github.io/ggvmap/reference/flag_cache.md)
+are exported for custom use:
 
 ``` r
 
 ggvmap(top10$share, labels = top10$country, clip = clip_circle(),
-       palette = "alger", label_col = "grey15", seed = 42) |>
+       palette = "seafarer", label_col = "grey15", seed = 42) |>
   vm_add_labels(fmt = \(v) paste0(v, "%")) |>
   vm_add_flags(size = 0.05, nudge_y = 0.055)
 ```
@@ -221,11 +377,12 @@ ggvmap(top10$share, labels = top10$country, clip = clip_circle(),
 
 ### Titles and fonts
 
-A ggvmap plot is a ggplot, so titles work the usual way:
+A ggvmap plot is a ggplot, so titles, themes and the wider ggplot2
+ecosystem apply unchanged:
 
 ``` r
 
-ggvmap(top10$share, labels = top10$country, palette = "alger", seed = 42) +
+ggvmap(top10$share, labels = top10$country, palette = "dora", seed = 42) +
   ggplot2::ggtitle("Countries with the most freshwater",
                    subtitle = "Share of global renewable freshwater, 2022") +
   ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
@@ -241,9 +398,9 @@ the map instead of using a legend:
 ``` r
 
 library(ggtext)
-ggvmap(top10$share, labels = top10$country, palette = "alger", seed = 42) +
+ggvmap(top10$share, labels = top10$country, palette = "luminaries", seed = 42) +
   ggplot2::labs(title = paste0(
-    "**<span style='color:#1A5B5B;'>Brazil</span> holds more freshwater ",
+    "**<span style='color:#FF5B04;'>Brazil</span> holds more freshwater ",
     "than any other country**")) +
   ggplot2::theme(plot.title = element_markdown(hjust = 0.5, size = 13))
 ```
@@ -259,18 +416,21 @@ library(showtext)
 font_add_google("Bitter", "bitter")
 showtext_auto()
 
-ggvmap(top10$share, labels = top10$country, palette = "alger",
+ggvmap(top10$share, labels = top10$country, palette = "olga",
        family = "bitter", seed = 42) |>
   vm_add_labels(fmt = \(v) paste0(v, "%"), family = "bitter")
 ```
 
 ![](reference/figures/README-fonts-1.png)
 
-### Interactive maps
+### `vm_girafe()` — interactive maps
 
-`ggvmap(interactive = TRUE)` makes the cells hoverable (highlight +
-tooltip) via **ggiraph**; render the widget with
-[`vm_girafe()`](https://loukesio.github.io/ggvmap/reference/vm_girafe.md):
+**What it’s for:** hover highlighting and tooltips in HTML output (R
+Markdown, Shiny, pkgdown) via **ggiraph**. Build the plot with
+`ggvmap(interactive = TRUE)`, then render the widget with
+[`vm_girafe()`](https://loukesio.github.io/ggvmap/reference/vm_girafe.md)
+(key arguments: `width_svg`/`height_svg` in inches, `hover_css` for the
+highlight style):
 
 ``` r
 
@@ -282,29 +442,48 @@ ggvmap(vm, interactive = TRUE, palette = "alger") |> vm_girafe()
 Live version (hover it yourself) in the [Interactive
 article](https://loukesio.github.io/ggvmap/articles/interactive.html).
 
-## Step-by-step usage
+### `vm_as_df()` and `vm_centroids()` — take the data with you
+
+**What they’re for:** escaping the helpers entirely.
+[`vm_as_df()`](https://loukesio.github.io/ggvmap/reference/vm_as_df.md)
+returns the tessellation as a tidy data frame (one row per polygon
+vertex, with cell label, group, weight, and area), and
+[`vm_centroids()`](https://loukesio.github.io/ggvmap/reference/vm_centroids.md)
+one row per cell centre — both ready for hand-rolled `geom_polygon()` /
+`geom_text()` layers when you need something the `vm_*` verbs don’t do:
 
 ``` r
 
-# 1. Compute the map
-vm <- voronoi_map(
-  weights = freshwater$share,
-  labels  = freshwater$country,
-  clip    = clip_hexagon(),
-  seed    = 42
-)
-print(vm)
-
-# 2. Plot with ggplot2
-ggvmap(vm, palette = "alger")
-
-# 3. Or with base R
-plot(vm)
-
-# 4. Access the tidy data frame for custom ggplot2
 df <- vm_as_df(vm)
 head(df)
+vm_centroids(vm)
 ```
+
+## Saving your map
+
+Two independent knobs control a saved PNG, and confusing them is the \#1
+source of “why are my letters tiny / why is everything overlapping”:
+
+- **`width`/`height` in pixels** = how big (and how sharp) the image is.
+- **`dpi`** = how big the *letters* are relative to the map. More dpi =
+  bigger text, same pixels.
+
+``` r
+
+ggsave("map.png", p, width = 2600, height = 2600, units = "px",
+       dpi = 350, bg = "white")
+```
+
+Rules of thumb:
+
+- **Square canvas for circular maps** — on a wide rectangle the circle
+  is limited by the height and the rest is wasted margin.
+- Letters too small → raise `dpi` a notch (350 → 400). Labels
+  overlapping → lower it. The pixel size never changes.
+- `bg = "white"` — otherwise the PNG is transparent, which some viewers
+  display as black.
+- For print/journals, save a vector format instead — `ggsave("map.pdf")`
+  — which has no resolution at all.
 
 ## How it works
 
@@ -343,15 +522,16 @@ infographic.
 
 | Function | Purpose |
 |----|----|
-| [`voronoi_map()`](https://loukesio.github.io/ggvmap/reference/voronoi_map.md) | Core computation (add `group =` for a hierarchical layout) |
-| [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md) | The main ggplot2 visualisation (accepts a map or raw weights; `autoscale`, `min_area`, `fontface`, `family`, per-cell `label_col`) |
+| [`voronoi_map()`](https://loukesio.github.io/ggvmap/reference/voronoi_map.md) | Core computation (add `group =` for a hierarchical layout); print it to check convergence |
+| [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md) | The main ggplot2 visualisation (`autoscale`, `min_area`, `wrap`, per-cell `label_size` / `label_col` / `fontface`, `fill_by`, `family`) |
 | [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html) | Alias for [`ggvmap()`](https://loukesio.github.io/ggvmap/reference/ggvmap.md) via the ggplot2 generic |
 | [`plot()`](https://rdrr.io/r/graphics/plot.default.html) | Base R visualisation |
-| [`vm_add_ring()`](https://loukesio.github.io/ggvmap/reference/vm_add_ring.md) | Outer annotation ring: `style = "band"` or `"arc"` (with `values`, `linetype`, `offset`) |
+| [`vm_add_ring()`](https://loukesio.github.io/ggvmap/reference/vm_add_ring.md) | Outer annotation ring: `style = "band"` or `"arc"` (with `values`, `colors`, `label_size`, `offset`) |
 | [`vm_add_flags()`](https://loukesio.github.io/ggvmap/reference/vm_add_flags.md) | Add country flags at cell centroids |
 | [`vm_add_images()`](https://loukesio.github.io/ggvmap/reference/vm_add_images.md) | Add arbitrary images at cell centroids |
-| [`vm_add_labels()`](https://loukesio.github.io/ggvmap/reference/vm_add_labels.md) | Add value labels (`inside`, `autoscale`, `min_area`, per-cell `col`) |
+| [`vm_add_labels()`](https://loukesio.github.io/ggvmap/reference/vm_add_labels.md) | Add value labels (`fmt`, `inside`, `autoscale`, `min_area`, per-cell `size` / `col`) |
 | [`vm_girafe()`](https://loukesio.github.io/ggvmap/reference/vm_girafe.md) | Render an `interactive = TRUE` plot as a hoverable widget |
+| [`vm_palettes()`](https://loukesio.github.io/ggvmap/reference/vm_palettes.md) | List the 32 built-in colour palettes |
 | [`vm_as_df()`](https://loukesio.github.io/ggvmap/reference/vm_as_df.md) / [`vm_centroids()`](https://loukesio.github.io/ggvmap/reference/vm_centroids.md) | Tidy data frame / centroids |
 | [`country_to_iso()`](https://loukesio.github.io/ggvmap/reference/country_to_iso.md) / [`flag_url()`](https://loukesio.github.io/ggvmap/reference/flag_url.md) / [`flag_cache()`](https://loukesio.github.io/ggvmap/reference/flag_cache.md) | Flag helpers |
 | [`clip_square()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md) / [`clip_hexagon()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md) / [`clip_circle()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md) / [`clip_diamond()`](https://loukesio.github.io/ggvmap/reference/clip_shapes.md) / [`regular_polygon()`](https://loukesio.github.io/ggvmap/reference/regular_polygon.md) | Boundary shapes |
