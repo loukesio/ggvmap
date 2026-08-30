@@ -52,7 +52,9 @@ by group.  \code{TRUE} (default) uses the group names; \code{FALSE} draws no tex
 \code{NULL} (default) curves them when that package is installed and otherwise
 uses straight tangential text; \code{TRUE}/\code{FALSE} force the choice.}
 
-\item{palette}{Palette used when \code{colors} is \code{NULL}.  Default \code{"Okabe-Ito"}.}
+\item{palette}{Palette used when \code{colors} is \code{NULL}: a colour vector, a
+built-in palette name (see \code{\link[=vm_palettes]{vm_palettes()}}), or an
+\code{\link[grDevices:palettes]{grDevices::hcl.colors()}} name.  Default \code{"Okabe-Ito"}.}
 
 \item{style}{Ring style: \code{"band"} (default) draws the filled arc segments;
 \code{"arc"} draws a thin line per group with the group label sitting in a gap

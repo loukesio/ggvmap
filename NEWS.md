@@ -2,6 +2,17 @@
 
 ## New features
 
+* **All 32 ltc palettes built in.** The `palette` argument now accepts every
+  palette of the [ltc package](https://github.com/loukesio/ltc_palettes) by
+  name (e.g. `palette = "casa_natal"`), vendored so ltc need not be
+  installed. Names match case-insensitively and ignore spaces, underscores
+  and dashes. A few palettes are curated for use as map fills (pure-black
+  and near-white entries dropped); the `heatmap0`--`heatmap3` ramps are
+  always interpolated end-to-end, making them the natural choice for
+  `fill_by = "data_weight"`. New `vm_palettes()` lists them all, and an
+  unknown palette name now gives an informative error instead of the bare
+  `hcl.colors()` one.
+
 * **Per-cell label sizes.** `label_size` (in `ggvmap()`) and `size` (in
   `vm_add_labels()`) now accept a vector named by cell label, matching the
   behaviour already documented for `label_col` and `fontface`; unnamed cells

@@ -84,8 +84,9 @@ multiple lines (word-aware, via \code{\link[=strwrap]{strwrap()}}) -- e.g. \code
 "Papua New Guinea" into two lines.  Default \code{NULL} (no wrapping).}
 
 \item{palette}{Character vector of colours, \code{"Okabe-Ito"} (the default,
-colourblind-safe; see \code{\link[=okabe_ito]{okabe_ito()}}), a built-in named palette such as
-\code{"alger"}, or a named palette from \code{\link[grDevices:palettes]{grDevices::hcl.colors()}}.}
+colourblind-safe; see \code{\link[=okabe_ito]{okabe_ito()}}), the name of a built-in palette
+(all 32 ltc palettes, e.g. \code{"alger"} or \code{"casa_natal"}; list them with
+\code{\link[=vm_palettes]{vm_palettes()}}), or a named palette from \code{\link[grDevices:palettes]{grDevices::hcl.colors()}}.}
 
 \item{legend}{Logical; show the fill legend?  Default \code{FALSE}.}
 

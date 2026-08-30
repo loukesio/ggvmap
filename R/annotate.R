@@ -54,7 +54,9 @@
 #' @param curved Draw labels curved along the arc using \pkg{geomtextpath}?
 #'   `NULL` (default) curves them when that package is installed and otherwise
 #'   uses straight tangential text; `TRUE`/`FALSE` force the choice.
-#' @param palette Palette used when `colors` is `NULL`.  Default `"Okabe-Ito"`.
+#' @param palette Palette used when `colors` is `NULL`: a colour vector, a
+#'   built-in palette name (see [vm_palettes()]), or an
+#'   [grDevices::hcl.colors()] name.  Default `"Okabe-Ito"`.
 #' @param style Ring style: `"band"` (default) draws the filled arc segments;
 #'   `"arc"` draws a thin line per group with the group label sitting in a gap
 #'   broken into the arc at the segment midpoint (the classic infographic

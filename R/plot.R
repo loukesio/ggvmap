@@ -220,8 +220,9 @@ vm_centroids <- function(vm) {
 #'   multiple lines (word-aware, via [strwrap()]) -- e.g. `wrap = 10` turns
 #'   "Papua New Guinea" into two lines.  Default `NULL` (no wrapping).
 #' @param palette Character vector of colours, `"Okabe-Ito"` (the default,
-#'   colourblind-safe; see [okabe_ito()]), a built-in named palette such as
-#'   `"alger"`, or a named palette from [grDevices::hcl.colors()].
+#'   colourblind-safe; see [okabe_ito()]), the name of a built-in palette
+#'   (all 32 ltc palettes, e.g. `"alger"` or `"casa_natal"`; list them with
+#'   [vm_palettes()]), or a named palette from [grDevices::hcl.colors()].
 #' @param legend Logical; show the fill legend?  Default `FALSE`.
 #' @param interactive Logical; make the cells interactive (hover highlight and
 #'   tooltips) using \pkg{ggiraph}?  Render the result with [vm_girafe()].
