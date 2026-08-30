@@ -515,6 +515,10 @@ and owes a lot to the inspiration of
 [Allan Cameron](https://stackoverflow.com/users/12500315/allan-cameron)'s
 answer there — thank you, Allan.
 
+ggvmap pairs naturally with its sibling packages
+[ltc](https://github.com/loukesio/ltc-color-palettes) (the colour palettes)
+and [ggsynteny](https://github.com/loukesio/ggsynteny) (synteny plots).
+
 ## License
 
 MIT © 2026 Loukas Theodosiou — see [LICENSE.md](LICENSE.md) for the full
