@@ -2,6 +2,21 @@
 
 ## New features
 
+* **Per-cell label sizes.** `label_size` (in `ggvmap()`) and `size` (in
+  `vm_add_labels()`) now accept a vector named by cell label, matching the
+  behaviour already documented for `label_col` and `fontface`; unnamed cells
+  keep the default. Previously a named vector was silently recycled in cell
+  order, sizing the wrong cells.
+
+## Bug fixes
+
+* **Arc ring labels are no longer struck through by the arc line.** The gap
+  cut into the arc under each label was too narrow (and did not scale with
+  `label_size`), so long labels overlapped the line. The gap now scales with
+  the label's length and size, and a label wider than its own segment (e.g. a
+  long group name on a 1% group) is shifted just outside the ring instead of
+  overlapping the neighbouring segments' arcs.
+
 * **`data(freshwater)`** — share of global renewable internal freshwater
   resources by country (2022, FAO Aquastat via World Bank): 30 rows of
   `country`, `share`, `region`. Now the canonical demo dataset; see

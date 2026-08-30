@@ -40,7 +40,9 @@ e.g. \code{scales::comma}.  Default: \code{\link[=format]{format()}} with \code{
 
 \item{prefix, suffix}{Strings wrapped around the formatted value.}
 
-\item{size}{Text size.  Default \code{2.8}.}
+\item{size}{Text size: a single value, a length-\code{n} vector in cell order,
+or a vector named by cell label (unnamed cells keep the default \code{2.8}).
+Default \code{2.8}.}
 
 \item{col}{Text colour: a single colour (default \code{"grey20"}), a length-\code{n}
 vector in cell order, or a vector named by cell label (cells not named

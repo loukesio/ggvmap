@@ -60,7 +60,9 @@ others get no name label.  Default \code{NULL} (all cells).}
 length-\code{n} vector in cell order, or a vector named by cell label (cells
 not named keep the default) -- useful for light text on dark cells.}
 
-\item{label_size}{Label size.  Default \code{3}.}
+\item{label_size}{Label size: a single value, a length-\code{n} vector in cell
+order, or a vector named by cell label (unnamed cells keep the default
+\code{3}) -- e.g. \code{c(Brazil = 5)} to enlarge one label.  Default \code{3}.}
 
 \item{fontface}{Font face for the name labels: a single value (e.g.
 \code{"bold"}, the default) applied to all labels, or a vector named by cell

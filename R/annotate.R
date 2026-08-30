@@ -295,13 +295,22 @@ vm_add_ring <- function(
     col_k <- unname(cols[seg$group[k]])
 
     if (draw_labels) {
-      # Gap for the label: ~0.018 rad per character, clamped to 80% of the
-      # segment; the label sits in it, on the arc's own radius.
-      gap_ang <- min(0.018 * nchar(lab_txt[k]), 0.8 * (a1 - a0))
-      pieces <- rbind(arc_path(a0, mid - gap_ang / 2, paste0(k, "a")),
-                      arc_path(mid + gap_ang / 2, a1, paste0(k, "b")))
+      # Gap for the label: ~0.023 rad per character at the default label
+      # size, scaled with `label_size`; the label sits in it, on the arc's
+      # own radius.  A label wider than its segment cannot be protected by
+      # a gap (it overflows onto the neighbouring segments' arcs), so it is
+      # pushed radially outward instead, clear of every arc line.
+      gap_ang <- 0.023 * (label_size / 3.2) * nchar(lab_txt[k])
+      overflow <- gap_ang >= 0.85 * (a1 - a0)
+      if (overflow) {
+        pieces <- arc_path(a0, a1, paste0(k, "a"))
+      } else {
+        pieces <- rbind(arc_path(a0, mid - gap_ang / 2, paste0(k, "a")),
+                        arc_path(mid + gap_ang / 2, a1, paste0(k, "b")))
+      }
       lab_rows[[k]] <- data.frame(seg = k, group = seg$group[k], mid = mid,
                                   a0 = mid - gap_ang / 2, a1 = mid + gap_ang / 2,
+                                  r = if (overflow) ra + 0.055 * r else ra,
                                   label = lab_txt[k], col = col_k,
                                   stringsAsFactors = FALSE)
     } else {
@@ -323,7 +332,8 @@ vm_add_ring <- function(
     if (use_curved) {
       path_df <- do.call(rbind, lapply(seq_len(nrow(lab)), function(k) {
         ang <- seq(lab$a0[k], lab$a1[k], length.out = 64)
-        data.frame(seg = lab$seg[k], x = cx + ra * cos(ang), y = cy + ra * sin(ang),
+        data.frame(seg = lab$seg[k],
+                   x = cx + lab$r[k] * cos(ang), y = cy + lab$r[k] * sin(ang),
                    label = lab$label[k], col_final = lab$col_final[k])
       }))
       layers <- c(layers, list(do.call(geomtextpath::geom_textpath, .add_family(
@@ -342,7 +352,7 @@ vm_add_ring <- function(
       flip <- ang_txt > 90 & ang_txt < 270
       ang_txt[flip] <- (ang_txt[flip] + 180) %% 360
       lab_df <- data.frame(
-        x = cx + ra * cos(mid), y = cy + ra * sin(mid),
+        x = cx + lab$r * cos(mid), y = cy + lab$r * sin(mid),
         label = lab$label, angle = ang_txt, col_final = lab$col_final
       )
       layers <- c(layers, list(do.call(ggplot2::geom_text, .add_family(
@@ -589,7 +599,9 @@ vm_add_flags <- function(p, vm = NULL, country = NULL, iso = NULL,
 #' @param fmt A function applied to `value` (and `secondary`) for formatting,
 #'   e.g. `scales::comma`.  Default: [format()] with `big.mark = ","`.
 #' @param prefix,suffix Strings wrapped around the formatted value.
-#' @param size Text size.  Default `2.8`.
+#' @param size Text size: a single value, a length-`n` vector in cell order,
+#'   or a vector named by cell label (unnamed cells keep the default `2.8`).
+#'   Default `2.8`.
 #' @param col Text colour: a single colour (default `"grey20"`), a length-`n`
 #'   vector in cell order, or a vector named by cell label (cells not named
 #'   keep the default).
@@ -664,7 +676,7 @@ vm_add_labels <- function(p, vm = NULL, value = NULL, secondary = NULL,
 
   df <- data.frame(x = xs, y = ys,
                    label = txt, cell_label = ctr$label,
-                   size = .label_sizes(vm, size, autoscale),
+                   size = .label_sizes(vm, size, autoscale, default = 2.8),
                    fontface = .resolve_fontface(vm, fontface),
                    area_frac = .area_fractions(vm),
                    col = .resolve_label_col(vm, col, "grey20"),

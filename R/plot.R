@@ -155,12 +155,20 @@ vm_centroids <- function(vm) {
 
 #' Per-cell text sizes, optionally shrunk for small cells
 #'
-#' With `autoscale = TRUE` each cell's size is
-#' `size * pmin(1, sqrt(cell_area / median_area))`, floored at 60% of `size`
-#' so text in tiny cells stays legible.
+#' A vector named by cell label sizes only the named cells (the rest keep
+#' `default`), like the other cell-level arguments.  With `autoscale = TRUE`
+#' each cell's size is `size * pmin(1, sqrt(cell_area / median_area))`,
+#' floored at 60% of `size` so text in tiny cells stays legible.
 #' @noRd
-.label_sizes <- function(vm, size, autoscale) {
+.label_sizes <- function(vm, size, autoscale, default = 3) {
   n <- length(vm$cells)
+  if (!is.null(names(size))) {
+    labs <- vm$sites$label
+    out <- stats::setNames(rep(default, n), labs)
+    keep <- intersect(names(size), labs)
+    out[keep] <- size[keep]
+    size <- unname(out)
+  }
   if (!isTRUE(autoscale)) return(rep_len(size, n))
   area <- abs(vapply(vm$cells, polygon_area, numeric(1)))
   pmax(0.6 * size, size * pmin(1, sqrt(area / stats::median(area))))
@@ -194,7 +202,9 @@ vm_centroids <- function(vm) {
 #' @param label_col Label colour: a single colour (default `"white"`), a
 #'   length-`n` vector in cell order, or a vector named by cell label (cells
 #'   not named keep the default) -- useful for light text on dark cells.
-#' @param label_size Label size.  Default `3`.
+#' @param label_size Label size: a single value, a length-`n` vector in cell
+#'   order, or a vector named by cell label (unnamed cells keep the default
+#'   `3`) -- e.g. `c(Brazil = 5)` to enlarge one label.  Default `3`.
 #' @param fontface Font face for the name labels: a single value (e.g.
 #'   `"bold"`, the default) applied to all labels, or a vector named by cell
 #'   label (e.g. `c(Brazil = "bold", Russia = "bold.italic")`) styling only
