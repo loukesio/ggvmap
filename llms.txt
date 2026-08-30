@@ -250,9 +250,9 @@ ggvmap(vm, palette = "gaby", label_col = "grey15",
 
 ![](reference/figures/README-ring-band-1.png)
 
-The thin arc, with values. A label that cannot fit inside its own arc
-segment (here “Middle East · 1%”) is automatically placed just outside
-the ring instead of colliding with it:
+The thin arc, with values. Every label sits in a gap broken into the
+ring; a label wider than its own segment (here “Middle East · 1%”) cuts
+its gap into the neighbouring arcs too, so it never collides with them:
 
 ``` r
 
