@@ -28,7 +28,9 @@ reference:
       - flag_url
       - flag_cache
   - title: Colours
+    desc: The 32 built-in ltc palettes and the Okabe-Ito default.
     contents:
+      - vm_palettes
       - okabe_ito
   - title: Boundary shapes
     contents:

@@ -28,7 +28,8 @@ value labels, 32 built-in colour palettes, and interactive hover maps.
 
 ggvmap is pure R with a single hard dependency (ggplot2) — no
 compilation, no system libraries. Install the latest version from
-GitHub: <img align="right" src="man/figures/logo.png" width="400">
+GitHub:
+<img align="right" src="man/figures/logo.png" alt="ggvmap logo: a stained-glass Voronoi hexagon" width="400">
 
 ``` r
 # with remotes (lightweight)

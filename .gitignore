@@ -27,6 +27,15 @@ docs/
 # Session handoff notes (local only)
 HANDOFF*.md
 
+# Local scratch from working sessions — kept out of git until decided
+examples/test.R
+examples/map*.png
+examples/freshwater_final.png
+examples/label_size_options.R
+examples/circle_voronoi_1.png
+examples/ggplot2 polygon 5.png
+ggvmap_improvements.patch
+
 # Logo variants: only the active logo is tracked
 logos/*
 !logos/ggvmap-C3-clear-light.png
