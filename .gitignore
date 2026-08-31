@@ -33,7 +33,9 @@ examples/map*.png
 examples/freshwater_final.png
 examples/label_size_options.R
 examples/circle_voronoi_1.png
-examples/ggplot2 polygon 5.png
+examples/ggplot2 polygon *.png
+examples/ring_check.png
+examples/ring_omit_check.png
 ggvmap_improvements.patch
 
 # Logo variants: only the active logo is tracked
