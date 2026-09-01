@@ -23,9 +23,7 @@ vm_add_labels(
   cells = NULL,
   inside = TRUE,
   min_area = 0,
-  autoscale = FALSE,
-  family = NULL,
-  wrap = NULL
+  autoscale = FALSE
 )
 ```
 
@@ -63,15 +61,11 @@ vm_add_labels(
 
 - size:
 
-  Text size: a single value, a length-`n` vector in cell order, or a
-  vector named by cell label (unnamed cells keep the default `2.8`).
-  Default `2.8`.
+  Text size. Default `2.8`.
 
 - col:
 
-  Text colour: a single colour (default `"grey20"`), a length-`n` vector
-  in cell order, or a vector named by cell label (cells not named keep
-  the default).
+  Text colour. Default `"grey20"`.
 
 - fontface:
 
@@ -104,17 +98,6 @@ vm_add_labels(
   Logical; shrink label text in small cells? Each cell's text size
   becomes `size * pmin(1, sqrt(cell_area / median_area))`, floored at
   60% of `size`. Default `FALSE`.
-
-- family:
-
-  Font family for the value labels, passed to the text layer. `NULL`
-  (default) uses the ggplot2 default.
-
-- wrap:
-
-  Wrap value labels longer than this many characters onto multiple lines
-  (word-aware, via [`strwrap()`](https://rdrr.io/r/base/strwrap.html)).
-  Default `NULL` (no wrapping).
 
 ## Value
 

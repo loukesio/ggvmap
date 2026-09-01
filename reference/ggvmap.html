@@ -33,7 +33,7 @@ is the group and heavier borders separate the groups."><meta property="og:image"
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Plot a Voronoi map with ggplot2</h1>
-      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/main/R/plot.R" class="external-link"><code>R/plot.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/v0.3.0/R/plot.R" class="external-link"><code>R/plot.R</code></a></small>
       <div class="d-none name"><code>ggvmap.Rd</code></div>
     </div>
 
@@ -59,8 +59,6 @@ is the group and heavier borders separate the groups.</p>
 <span>  fontface <span class="op">=</span> <span class="st">"bold"</span>,</span>
 <span>  min_area <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  autoscale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  family <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  wrap <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  palette <span class="op">=</span> <span class="st">"Okabe-Ito"</span>,</span>
 <span>  legend <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  interactive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -118,15 +116,11 @@ others get no name label.  Default <code>NULL</code> (all cells).</p></dd>
 
 
 <dt id="arg-label-col">label_col<a class="anchor" aria-label="anchor" href="#arg-label-col"></a></dt>
-<dd><p>Label colour: a single colour (default <code>"white"</code>), a
-length-<code>n</code> vector in cell order, or a vector named by cell label (cells
-not named keep the default) – useful for light text on dark cells.</p></dd>
+<dd><p>Label colour.  Default <code>"white"</code>.</p></dd>
 
 
 <dt id="arg-label-size">label_size<a class="anchor" aria-label="anchor" href="#arg-label-size"></a></dt>
-<dd><p>Label size: a single value, a length-<code>n</code> vector in cell
-order, or a vector named by cell label (unnamed cells keep the default
-<code>3</code>) – e.g. <code>c(Brazil = 5)</code> to enlarge one label.  Default <code>3</code>.</p></dd>
+<dd><p>Label size.  Default <code>3</code>.</p></dd>
 
 
 <dt id="arg-fontface">fontface<a class="anchor" aria-label="anchor" href="#arg-fontface"></a></dt>
@@ -147,22 +141,10 @@ text size becomes <code>label_size * pmin(1, sqrt(cell_area / median_area))</cod
 floored at 60% of <code>label_size</code>.  Default <code>FALSE</code>.</p></dd>
 
 
-<dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
-<dd><p>Font family for the name labels, passed to the text layer.
-<code>NULL</code> (default) uses the ggplot2 default.</p></dd>
-
-
-<dt id="arg-wrap">wrap<a class="anchor" aria-label="anchor" href="#arg-wrap"></a></dt>
-<dd><p>Wrap name labels longer than this many characters onto
-multiple lines (word-aware, via <code><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap()</a></code>) – e.g. <code>wrap = 10</code> turns
-"Papua New Guinea" into two lines.  Default <code>NULL</code> (no wrapping).</p></dd>
-
-
 <dt id="arg-palette">palette<a class="anchor" aria-label="anchor" href="#arg-palette"></a></dt>
 <dd><p>Character vector of colours, <code>"Okabe-Ito"</code> (the default,
-colourblind-safe; see <code><a href="okabe_ito.html">okabe_ito()</a></code>), the name of a built-in palette
-(all 32 ltc palettes, e.g. <code>"alger"</code> or <code>"casa_natal"</code>; list them with
-<code><a href="vm_palettes.html">vm_palettes()</a></code>), or a named palette from <code><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">grDevices::hcl.colors()</a></code>.</p></dd>
+colourblind-safe; see <code><a href="okabe_ito.html">okabe_ito()</a></code>), a built-in named palette such as
+<code>"alger"</code>, or a named palette from <code><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">grDevices::hcl.colors()</a></code>.</p></dd>
 
 
 <dt id="arg-legend">legend<a class="anchor" aria-label="anchor" href="#arg-legend"></a></dt>

@@ -17,21 +17,13 @@ vm_add_ring(
   labels = TRUE,
   curved = NULL,
   palette = "Okabe-Ito",
-  style = c("band", "arc"),
   width = 0.1,
   gap = 0.02,
   pad = 1,
-  label_col = NULL,
+  label_col = "white",
   label_size = 3.2,
-  label_fontface = "bold",
   border_col = "white",
-  border_size = 0.4,
-  family = NULL,
-  linewidth = 0.5,
-  linetype = "solid",
-  offset = 0.06,
-  values = FALSE,
-  values_sep = " · "
+  border_size = 0.4
 )
 ```
 
@@ -55,23 +47,13 @@ vm_add_ring(
 
 - colors:
 
-  Colours for the ring segments (band fills or arc lines): `NULL`
-  (default) uses the `palette`, so each group matches its cells; a
-  single colour (e.g. `"#333333"`) colours every segment the same; a
-  named vector keyed by group (e.g. `c(LATAM = "#333333")` with the
-  other groups named too) sets each group individually; an unnamed
-  vector is interpolated across the groups. With `style = "arc"`, the
-  labels follow the arc colours unless `label_col` is set.
+  Fill colours for the segments: a vector (recycled/interpolated) or a
+  named vector keyed by group. Defaults to the `palette`.
 
 - labels:
 
   Logical, or a named character vector of display labels keyed by group.
-  `TRUE` (default) uses the group names; `FALSE` draws no text. In the
-  `"arc"` style, an empty string omits one group's label and leaves its
-  arc unbroken (e.g. `labels = c("Middle East" = "")`) – useful when a
-  group's segment is too short to carry its label, which otherwise stays
-  on the ring with its gap cut into the neighbouring arcs (a message
-  points this out when it happens).
+  `TRUE` (default) uses the group names; `FALSE` draws no text.
 
 - curved:
 
@@ -81,24 +63,11 @@ vm_add_ring(
 
 - palette:
 
-  Palette used when `colors` is `NULL`: a colour vector, a built-in
-  palette name (see
-  [`vm_palettes()`](https://loukesio.github.io/ggvmap/reference/vm_palettes.md)),
-  or an
-  [`grDevices::hcl.colors()`](https://rdrr.io/r/grDevices/palettes.html)
-  name. Default `"Okabe-Ito"`.
-
-- style:
-
-  Ring style: `"band"` (default) draws the filled arc segments; `"arc"`
-  draws a thin line per group with the group label sitting in a gap
-  broken into the arc at the segment midpoint (the classic infographic
-  look, e.g. "NORTH AMERICA 13%" with a middle-dot separator).
+  Palette used when `colors` is `NULL`. Default `"Okabe-Ito"`.
 
 - width:
 
-  Band thickness as a fraction of the map radius (`style = "band"`
-  only). Default `0.10`.
+  Ring thickness as a fraction of the map radius. Default `0.10`.
 
 - gap:
 
@@ -112,56 +81,19 @@ vm_add_ring(
 
 - label_col:
 
-  Ring label colour. `NULL` (default) means `"white"` for
-  `style = "band"` and each arc's own colour for `style = "arc"`.
+  Ring label colour. Default `"white"`.
 
 - label_size:
 
   Ring label size. Default `3.2`.
 
-- label_fontface:
-
-  Ring label font face. Default `"bold"`.
-
 - border_col:
 
-  Segment border colour (`style = "band"`). Default `"white"`.
+  Segment border colour. Default `"white"`.
 
 - border_size:
 
-  Segment border width (`style = "band"`). Default `0.4`.
-
-- family:
-
-  Font family for the ring labels. `NULL` (default) uses the ggplot2
-  default.
-
-- linewidth:
-
-  Arc line width (`style = "arc"`). Default `0.5`.
-
-- linetype:
-
-  Arc line type (`style = "arc"`), e.g. `"dashed"`. Default `"solid"`.
-
-- offset:
-
-  Distance of the arc and its label from the map edge, as a fraction of
-  the radius (`style = "arc"`; `width` is ignored). Default `0.06`.
-
-- values:
-
-  Append each group's share to its label (`style = "arc"`), e.g. "LATAM
-  32%" with a middle-dot separator? Computed from the group weights.
-  Default `FALSE`.
-
-- values_sep:
-
-  Separator between the group name and its share. Default is a middle
-  dot (`" \u00b7 "`). On Windows
-  [`pdf()`](https://rdrr.io/r/grDevices/pdf.html) devices the dot can
-  hit an encoding conversion failure – pass an ASCII separator such as
-  `" - "` there.
+  Segment border width. Default `0.4`.
 
 ## Value
 
@@ -174,8 +106,4 @@ vm <- voronoi_map(c(5, 3, 8, 4, 6, 2),
                   group = c("A", "A", "B", "B", "C", "C"),
                   clip = clip_circle(), seed = 1)
 ggvmap(vm, palette = "alger") |> vm_add_ring(palette = "alger")
-
-ggvmap(vm, palette = "alger") |>
-  vm_add_ring(style = "arc", palette = "alger", values = TRUE,
-              values_sep = " - ")   # ASCII sep keeps pdf() happy everywhere
 ```

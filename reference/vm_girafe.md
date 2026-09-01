@@ -13,7 +13,7 @@ vm_girafe(
   p,
   width_svg = 7,
   height_svg = 7,
-  hover_css = "fill-opacity:0.75;stroke:#ffffff;stroke-width:2.2px;",
+  hover_css = "stroke:#222222;stroke-width:1.4px;",
   opts = NULL,
   ...
 )
@@ -31,10 +31,7 @@ vm_girafe(
 
 - hover_css:
 
-  CSS applied to the hovered cell. The default fades the cell slightly
-  and thickens its white outline – no dark border. Pass your own CSS to
-  change the effect (e.g. `"stroke:#222222;stroke-width:1.4px;"` for a
-  dark outline).
+  CSS applied to the hovered cell. Default highlights its outline.
 
 - opts:
 

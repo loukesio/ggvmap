@@ -45,10 +45,6 @@ Outer ring, flags, images and value labels.
 
 ## Colours
 
-The 32 built-in ltc palettes and the Okabe-Ito default.
-
-- [`vm_palettes()`](https://loukesio.github.io/ggvmap/reference/vm_palettes.md)
-  : List the built-in colour palettes
 - [`okabe_ito()`](https://loukesio.github.io/ggvmap/reference/okabe_ito.md)
   : The Okabe-Ito colourblind-safe qualitative palette
 
@@ -71,8 +67,6 @@ The 32 built-in ltc palettes and the Okabe-Ito default.
 
 ## Data
 
-- [`freshwater`](https://loukesio.github.io/ggvmap/reference/freshwater.md)
-  : Global renewable freshwater resources 2022
 - [`world_exports`](https://loukesio.github.io/ggvmap/reference/world_exports.md)
   : World goods exports 2021
 - [`merchant_fleet`](https://loukesio.github.io/ggvmap/reference/merchant_fleet.md)

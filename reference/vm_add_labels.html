@@ -31,7 +31,7 @@ the category name added by autoplot.voronoi_map()."><meta property="og:image" co
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Add value labels at (or near) cell centroids</h1>
-      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/main/R/annotate.R" class="external-link"><code>R/annotate.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/v0.3.0/R/annotate.R" class="external-link"><code>R/annotate.R</code></a></small>
       <div class="d-none name"><code>vm_add_labels.Rd</code></div>
     </div>
 
@@ -58,9 +58,7 @@ the category name added by <code><a href="autoplot.voronoi_map.html">autoplot.vo
 <span>  cells <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  inside <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  min_area <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  autoscale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  family <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  wrap <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  autoscale <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -95,15 +93,11 @@ e.g. <code><a href="https://scales.r-lib.org/reference/comma.html" class="extern
 
 
 <dt id="arg-size">size<a class="anchor" aria-label="anchor" href="#arg-size"></a></dt>
-<dd><p>Text size: a single value, a length-<code>n</code> vector in cell order,
-or a vector named by cell label (unnamed cells keep the default <code>2.8</code>).
-Default <code>2.8</code>.</p></dd>
+<dd><p>Text size.  Default <code>2.8</code>.</p></dd>
 
 
 <dt id="arg-col">col<a class="anchor" aria-label="anchor" href="#arg-col"></a></dt>
-<dd><p>Text colour: a single colour (default <code>"grey20"</code>), a length-<code>n</code>
-vector in cell order, or a vector named by cell label (cells not named
-keep the default).</p></dd>
+<dd><p>Text colour.  Default <code>"grey20"</code>.</p></dd>
 
 
 <dt id="arg-fontface">fontface<a class="anchor" aria-label="anchor" href="#arg-fontface"></a></dt>
@@ -137,17 +131,6 @@ threshold get no value label.  Default <code>0</code> (label every cell).</p></d
 <dd><p>Logical; shrink label text in small cells?  Each cell's
 text size becomes <code>size * pmin(1, sqrt(cell_area / median_area))</code>,
 floored at 60% of <code>size</code>.  Default <code>FALSE</code>.</p></dd>
-
-
-<dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
-<dd><p>Font family for the value labels, passed to the text layer.
-<code>NULL</code> (default) uses the ggplot2 default.</p></dd>
-
-
-<dt id="arg-wrap">wrap<a class="anchor" aria-label="anchor" href="#arg-wrap"></a></dt>
-<dd><p>Wrap value labels longer than this many characters onto
-multiple lines (word-aware, via <code><a href="https://rdrr.io/r/base/strwrap.html" class="external-link">strwrap()</a></code>).  Default <code>NULL</code>
-(no wrapping).</p></dd>
 
 </dl></div>
     <div class="section level2">

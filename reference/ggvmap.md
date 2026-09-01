@@ -21,8 +21,6 @@ ggvmap(
   fontface = "bold",
   min_area = 0,
   autoscale = FALSE,
-  family = NULL,
-  wrap = NULL,
   palette = "Okabe-Ito",
   legend = FALSE,
   interactive = FALSE,
@@ -79,15 +77,11 @@ ggvmap(
 
 - label_col:
 
-  Label colour: a single colour (default `"white"`), a length-`n` vector
-  in cell order, or a vector named by cell label (cells not named keep
-  the default) – useful for light text on dark cells.
+  Label colour. Default `"white"`.
 
 - label_size:
 
-  Label size: a single value, a length-`n` vector in cell order, or a
-  vector named by cell label (unnamed cells keep the default `3`) – e.g.
-  `c(Brazil = 5)` to enlarge one label. Default `3`.
+  Label size. Default `3`.
 
 - fontface:
 
@@ -107,27 +101,12 @@ ggvmap(
   becomes `label_size * pmin(1, sqrt(cell_area / median_area))`, floored
   at 60% of `label_size`. Default `FALSE`.
 
-- family:
-
-  Font family for the name labels, passed to the text layer. `NULL`
-  (default) uses the ggplot2 default.
-
-- wrap:
-
-  Wrap name labels longer than this many characters onto multiple lines
-  (word-aware, via [`strwrap()`](https://rdrr.io/r/base/strwrap.html)) –
-  e.g. `wrap = 10` turns "Papua New Guinea" into two lines. Default
-  `NULL` (no wrapping).
-
 - palette:
 
   Character vector of colours, `"Okabe-Ito"` (the default,
   colourblind-safe; see
   [`okabe_ito()`](https://loukesio.github.io/ggvmap/reference/okabe_ito.md)),
-  the name of a built-in palette (all 32 ltc palettes, e.g. `"alger"` or
-  `"casa_natal"`; list them with
-  [`vm_palettes()`](https://loukesio.github.io/ggvmap/reference/vm_palettes.md)),
-  or a named palette from
+  a built-in named palette such as `"alger"`, or a named palette from
   [`grDevices::hcl.colors()`](https://rdrr.io/r/grDevices/palettes.html).
 
 - legend:
