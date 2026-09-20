@@ -3,6 +3,16 @@
 Rendered with `ggvmap` using the built-in `"alger"` palette. Regenerate every
 figure with `Rscript examples/make_gallery.R` from the package root.
 
+### Berlin district vote-share map
+
+See the [step-by-step README tutorial](../README.md#tutorial-berlin-district-vote-shares-on-a-real-map)
+for the reviewed map, interpretation limits, and independent geometry checks.
+Run `Rscript examples/berlin_map_voronoi.R` from the repository root.
+This separate example uses official 2023 votes, geographic outlines, additional
+packages, and conventional party colors; `make_gallery.R` does not rebuild it.
+
+![Berlin district vote shares](berlin_map_voronoi_reviewed.png)
+
 ### Boundary shapes
 
 The same 7 weights on any convex boundary — `clip_square()`, `clip_hexagon()`,

@@ -491,6 +491,283 @@ More worked examples (with code) live in [`examples/`](examples/) —
 grouped layouts, custom rings, flags on different shapes, and a combined
 infographic.
 
+## Tutorial: Berlin district vote shares on a real map
+
+This example turns Berlin’s 12 district outlines into **geographic
+Voronoi treemaps**: each district is divided into colored areas that
+approximate its party vote shares. It uses the **12 February 2023 repeat
+election**, not live results or a forecast for 2026.
+
+<figure>
+<img src="examples/berlin_map_voronoi_reviewed.png"
+alt="Berlin 2023 district vote shares. District outlines retain their geographic size; colored areas show shares within each district. Numbered markers refer to a district and turnout key. Party locations are artificial." />
+<figcaption aria-hidden="true">Berlin 2023 district vote shares.
+District outlines retain their geographic size; colored areas show
+shares within each district. Numbered markers refer to a district and
+turnout key. Party locations are artificial.</figcaption>
+</figure>
+
+The [original image](examples/berlin_map_voronoi.png) is retained for
+comparison. The reviewed version corrects the date, preserves a hole in
+Pankow’s geometry, and moves long district labels into a numbered key.
+Its layout therefore differs from the original. The [complete
+script](examples/berlin_map_voronoi.R) downloads the two inputs and
+builds the map, a comparison chart, and checkable data tables.
+
+### What the map means—and where it can mislead
+
+Within one district, a party with 30% of valid votes receives
+approximately 30% of that district’s area. **The locations of those
+colored pieces are invented.** They do not show neighborhoods, polling
+stations, political territory, or where supporters live. Changing the
+random seed changes those locations.
+
+District size follows geography. A large district with relatively few
+voters occupies more space than a small, densely populated district.
+Adding all the red areas, for example, does **not** give the SPD’s
+Berlin-wide vote share. To get that share, add its votes and divide by
+all valid votes across Berlin.
+
+This is a defensible illustration of composition within recognizable
+places, provided those limits travel with the image. It is a weak choice
+for precise comparisons: irregular areas are hard to compare, small
+cells are difficult to label, and familiar party colors are not equally
+distinguishable for everyone. The map labels only selected larger cells;
+all parties remain in the legend and the accompanying table. The
+conventional red/green palette is not claimed to be color-vision safe.
+
+Use the companion chart for reading percentages. All rows have the same
+width, party order, and denominator. Interior stacked segments still
+lack a common starting point; for a precise comparison of one party, use
+the exported table or draw a separate bar chart for that party.
+
+<figure>
+<img src="examples/berlin_vote_shares.png"
+alt="Percentage bars for all twelve Berlin districts, with the same seven party categories and numeric labels. Each district totals 100 percent before rounding." />
+<figcaption aria-hidden="true">Percentage bars for all twelve Berlin
+districts, with the same seven party categories and numeric labels. Each
+district totals 100 percent before rounding.</figcaption>
+</figure>
+
+### 1. Install the example’s dependencies
+
+Clone this repository and open an R session in its root folder. Install
+once:
+
+``` r
+install.packages(c("remotes", "sf", "readxl", "polyclip", "ggplot2"))
+remotes::install_local(".", upgrade = "never")
+```
+
+The example uses private helpers from `ggvmap` 0.3.0. Installing this
+checkout keeps the script and package code together. These helpers may
+change in future versions. The extra packages are dependencies of this
+example, not new package requirements. On systems without an `sf`
+binary, follow the [sf installation
+instructions](https://r-spatial.github.io/sf/#installing).
+
+Run from the repository root:
+
+``` sh
+Rscript examples/berlin_map_voronoi.R
+```
+
+Or in R:
+
+``` r
+source("examples/berlin_map_voronoi.R")
+```
+
+The first run downloads the inputs to `examples/berlin-data/`. Later
+runs reuse those files. Outputs go to `examples/`, including
+`berlin_map_voronoi_reviewed.png`, `berlin_vote_shares.png`,
+`berlin_vote_shares.csv`, and `berlin_map_diagnostics.csv`.
+
+### 2. Read the official votes and define the denominator
+
+The workbook is the Berlin election authority’s [official precinct-level
+download](https://wahlen-berlin.de/wahlen/Be2023/AFSPRAES/agh/DL/DL_BE_AGHBVV2023.xlsx).
+Its `AGH_W2` sheet contains **Zweitstimmen**, the party-list votes, for
+in-person and postal voting districts. Sum both kinds by `Bezirksname`.
+Do not average precinct percentages or treat postal rows’ zero
+eligible-voter counts as missing.
+
+The script selects six parties and collects the remaining valid votes as
+`Sonstige` (other parties):
+
+``` r
+parties <- c("CDU", "SPD", "GRÜNE", "DIE LINKE", "AfD", "FDP")
+agg$sonstige <- agg$gueltige - rowSums(agg[parties])
+agg$turnout <- 100 * agg$waehlende / agg$wahlberechtigte
+```
+
+Here `agg` is the district summary created by the full script. The two
+measures have different denominators:
+
+| Measure | Calculation |
+|----|----|
+| Party share, used for cell area | Party’s votes / valid party-list votes in that district |
+| Turnout, printed in the district key | Voters / eligible voters in that district |
+
+Non-voters and invalid ballots are not party cells. Checks reject
+missing numeric values and duplicate polling-district identifiers, and
+compare the sums against published totals: 2,431,776 eligible voters,
+1,529,558 voters, and 1,516,860 valid party-list votes. The six selected
+party totals are also checked against the [official
+result](https://wahlen-berlin.de/wahlen/Be2023/AFSPRAES/agh/ergebnisse.html).
+
+### 3. Prepare the district outlines
+
+The script downloads a [GeoJSON mirror hosted by Technologiestiftung
+Berlin](https://tsb-opendata.s3.eu-central-1.amazonaws.com/bezirksgrenzen/bezirksgrenzen.geojson).
+The file identifies its features as ALKIS district boundaries; the
+official [Berlin boundary
+catalog](https://daten.berlin.de/datensaetze/alkis-berlin-bezirke-wms-ecb4fc8b)
+describes that source. The mirror does not establish an election-day
+boundary date. Treat it as geographic context, not a verified 2023
+boundary snapshot.
+
+``` r
+b_raw <- sf::st_read(gj, quiet = TRUE) |> sf::st_transform(25833)
+b <- sf::st_simplify(b_raw, dTolerance = 100, preserveTopology = TRUE)
+```
+
+`gj` is the downloaded file path. `25833` selects ETRS89 / UTM zone 33N,
+a coordinate system measured in meters and suitable for Berlin. It is
+not an exact equal-area projection. The tolerance simplifies small
+boundary details at a scale of 100 meters, so these are **simplified
+outlines**, not exact survey boundaries. In this run, district areas
+changed by at most 0.80% from simplification. That is separate from the
+solver’s vote-share error.
+
+The script then translates and scales both coordinate axes by the same
+factor. This keeps shapes and area proportions intact. A district can
+have several separate pieces and inner holes: Pankow has four polygon
+parts and one hole in this input. `to_region()` preserves all five rings
+separately.
+
+### 4. Fit one weighted partition per district
+
+For each district, use its seven positive vote counts as weights:
+
+``` r
+reg <- to_region(b[b$Gemeinde_name == "Mitte", ])
+dd <- long[long$bezirk == "Mitte", ]
+dd <- dd[order(dd$party), ]
+
+r <- vmap_region(
+  weights = dd$votes,
+  region = reg,
+  labels = as.character(dd$party),
+  seed = 11,
+  max_iter = 600,
+  convergence_ratio = 0.002,
+  min_weight_ratio = 0
+)
+stopifnot(r$converged)
+```
+
+This snippet uses the helpers and data created by the script. A *power
+cell* is a weighted Voronoi cell: the algorithm moves a set of points
+and adjusts their weights until each cell approaches its requested area.
+Each convex power cell is intersected with the district using
+`polyclip`; the result can have several pieces. Areas and centers
+combine all outer pieces and **subtract holes**. A party therefore has
+one logical cell, which need not be one connected shape.
+
+`min_weight_ratio = 0` avoids inflating small vote counts. A fixed seed
+makes the initial points repeatable; it does not give party locations a
+geographic meaning or guarantee identical images across different
+library versions. If a district fails to converge, the script stops
+instead of exporting a new misleading map.
+
+**Why not call `voronoi_map(clip = district)`?** The public package
+documents convex clipping boundaries. Its point-in-polygon helper
+assumes convexity, and its single-ring cell representation does not
+explicitly support holes or multiple pieces. The example adapts its
+solver but also changes membership checks, initial sampling, and
+empty-cell handling. It is not just a drop-in replacement for one
+clipping function, nor proof of general arbitrary-shape support in the
+package.
+
+The original diagnosis that connecting edges necessarily corrupt the
+shoelace area formula was too strong. Opposite connecting edges can
+cancel in signed area and center calculations. The validation script
+includes a U-shaped counterexample and shows a valid point that the
+package’s convex-only membership test rejects. That establishes a real
+limitation without claiming a single proven cause for all of the earlier
+non-convergence results.
+
+### 5. Draw the cells and annotations
+
+The plotted table has a group for each district/party pair and a
+subgroup for each ring. This lets ggplot2 draw holes correctly:
+
+``` r
+ggplot(cell_df, aes(x, y, group = gid, subgroup = ring, fill = party)) +
+  geom_polygon(rule = "evenodd", colour = "white", linewidth = 0.30) +
+  scale_fill_manual(values = party_col) +
+  coord_equal() +
+  theme_void()
+```
+
+The full plot adds district borders, selected party names, numbered
+district markers, the turnout key, and source notes. White borders and
+markers hide a small amount of fill, so the numerical checks describe
+the underlying polygons, not a count of colored image pixels. Labels use
+points inside the shapes rather than assuming a polygon’s center must
+lie inside it.
+
+The final `ggsave()` writes a 13 × 8.5 inch PNG at 300 dots per inch.
+Change `party_col` to change colors. Change the `lab_df$frac` cutoff to
+label more or fewer party cells, then inspect for overlap. Keep the
+election date and the note about artificial party locations visible
+whenever you share the image.
+
+### 6. Check the result independently
+
+``` sh
+Rscript examples/berlin_map_validate.R
+```
+
+This rebuilds the example, then checks polygon area, coverage, and
+overlap with `sf`/GEOS, independently of the solver’s area calculations.
+It also tests a shape with a hole, a disconnected intersection, and the
+convex-only membership issue.
+
+For the reviewed run on 20 September 2026:
+
+| Check | Result |
+|----|----|
+| Districts / party categories | 12 / 7 |
+| Districts meeting the requested tolerance | 12 of 12 |
+| Largest individual party-share error | 0.096 percentage points |
+| Largest sum of absolute share errors within a district | 0.192 percentage points |
+| Coverage difference / within-district overlap | Each below 0.00001% of district area |
+
+The stopping rule is
+`sum(abs(actual_area - target_area)) / district_area < 0.002`. It limits
+the **sum of absolute share errors**, not each party’s relative error.
+For example, a target of 10% drawn as 10.05% has an error of 0.05
+percentage points, or a relative error of 0.5%.
+
+Inspect the [geometry checks](examples/berlin_geometry_checks.csv),
+[solver diagnostics](examples/berlin_map_diagnostics.csv), and [exact
+vote counts and shares](examples/berlin_vote_shares.csv). The coverage
+checks apply within each independently simplified district; they do not
+certify shared borders across districts or the date of the source map.
+
+The [input checksums](examples/berlin_source_checksums.csv) identify the
+reviewed files. Fresh downloads matched the existing copies on the
+review date. Retain your cached inputs if you need to reproduce a
+particular run; the download URLs can change. `berlin_session_info.txt`
+records your local R and package versions. This run used R 4.5.1, ggvmap
+0.3.0, sf 1.0-24, polyclip 1.10-7, readxl 1.4.5, and ggplot2 4.0.3.
+
+The example leaves the package’s core solver and dependencies unchanged.
+General non-convex support and unrelated ring-label fixes need their own
+changes and tests.
+
 ## API reference
 
 | Function | Purpose |
@@ -531,8 +808,9 @@ Cameron](https://stackoverflow.com/users/12500315/allan-cameron)’s
 answer there — thank you, Allan.
 
 ggvmap pairs naturally with its sibling packages
-[ltc](https://github.com/loukesio/ltc-color-palettes) (the colour palettes)
-and [ggsynteny](https://github.com/loukesio/ggsynteny) (synteny plots).
+[ltc](https://github.com/loukesio/ltc-color-palettes) (the colour
+palettes) and [ggsynteny](https://github.com/loukesio/ggsynteny)
+(synteny plots).
 
 ## License
 
