@@ -36,21 +36,29 @@ plot.voronoi_map <- function(
   }
   fill <- rep_len(fill, n)
 
-  xr <- range(x$clip[, 1])
-  yr <- range(x$clip[, 2])
+  boundary <- if (inherits(x, "voronoi_region")) .region_coordinates(x$clip) else x$clip
+  xr <- range(boundary[, 1])
+  yr <- range(boundary[, 2])
 
   plot(NULL, xlim = xr, ylim = yr, asp = 1, axes = FALSE,
        xlab = "", ylab = "", ...)
 
   for (i in seq_len(n)) {
     cell <- x$cells[[i]]
+    if (inherits(x, "voronoi_region")) {
+      if (!length(cell)) next
+      graphics::polypath(utils::head(unlist(lapply(cell, function(p) c(p$x, NA_real_))), -1L),
+                         utils::head(unlist(lapply(cell, function(p) c(p$y, NA_real_))), -1L),
+                         col = fill[i], border = border, lwd = lwd, rule = "evenodd")
+      next
+    }
     graphics::polygon(cell[, 1], cell[, 2],
                       col = fill[i], border = border, lwd = lwd)
   }
 
   if (show_labels) {
     for (i in seq_len(n)) {
-      ctr <- polygon_centroid(x$cells[[i]])
+      ctr <- if (inherits(x, "voronoi_region")) .region_anchor(x$cells[[i]]) else polygon_centroid(x$cells[[i]])
       graphics::text(ctr[1], ctr[2], labels = x$sites$label[i],
                      col = label_col, cex = label_cex, font = 2)
     }
@@ -64,13 +72,24 @@ plot.voronoi_map <- function(
 #' Each row is one vertex of one cell polygon, with columns
 #' `cell`, `label`, `x`, `y`, `target_area`, `actual_area`, `data_weight`.
 #'
-#' @param vm A `voronoi_map` object.
+#' Region maps from [vmap_region()] add `ring`, identifying each boundary ring
+#' within a cell. Map `ring` to `subgroup` and use `rule = "evenodd"` to retain
+#' holes when drawing these rows with `geom_polygon()`.
+#' @param vm A `voronoi_map` or `voronoi_region` object.
 #' @return A data frame.
 #' @export
 vm_as_df <- function(vm) {
   grp <- if (!is.null(vm$sites$group)) vm$sites$group else rep(NA_character_, nrow(vm$sites))
   dfs <- lapply(seq_along(vm$cells), function(i) {
     cell <- vm$cells[[i]]
+    if (inherits(vm, "voronoi_region")) {
+      return(do.call(rbind, lapply(seq_along(cell), function(k) {
+        data.frame(cell = i, label = vm$sites$label[i], group = grp[i],
+                   x = cell[[k]]$x, y = cell[[k]]$y,
+                   target_area = vm$sites$target_area[i], actual_area = vm$sites$actual_area[i],
+                   data_weight = vm$sites$data_weight[i], ring = k)
+      })))
+    }
     data.frame(
       cell        = i,
       label       = vm$sites$label[i],
@@ -91,12 +110,16 @@ vm_as_df <- function(vm) {
 #' `data_weight`, `actual_area`.  Useful for placing labels, values, flags or
 #' images (see [vm_add_labels()], [vm_add_images()], [vm_add_flags()]).
 #'
-#' @param vm A `voronoi_map` object.
+#' @param vm A `voronoi_map` or `voronoi_region` object.
+#' @param inside For region maps, return an interior label anchor when the
+#'   area centroid lies outside the cell or in a hole? Default `FALSE` returns
+#'   the mathematical centroid. Convex maps are unaffected.
 #' @return A data frame.
 #' @export
-vm_centroids <- function(vm) {
+vm_centroids <- function(vm, inside = FALSE) {
   grp <- if (!is.null(vm$sites$group)) vm$sites$group else rep(NA_character_, nrow(vm$sites))
-  ctr <- t(vapply(vm$cells, polygon_centroid, numeric(2)))
+  center <- if (isTRUE(inside) && inherits(vm, "voronoi_region")) .region_anchor else polygon_centroid
+  ctr <- t(vapply(vm$cells, center, numeric(2)))
   data.frame(
     cell        = seq_along(vm$cells),
     label       = vm$sites$label,
@@ -185,7 +208,8 @@ vm_centroids <- function(vm) {
 #' arguments below), so `ggvmap(weights, labels = ...)` computes *and* plots
 #' in one call.
 #'
-#' @param x A `voronoi_map` object, or a numeric vector of weights.
+#' @param x A `voronoi_map` or [vmap_region()] object, or a numeric vector of
+#'   weights. Region maps retain holes and use interior label anchors.
 #' @param fill_by Cell aesthetic to map fill to: one of `"label"`, `"group"`,
 #'   `"data_weight"`, or `"none"`.  Defaults to `"group"` for hierarchical
 #'   maps and `"label"` otherwise.
@@ -289,6 +313,10 @@ ggvmap <- function(
     )
   }
   hier <- isTRUE(object$hierarchical)
+  region_map <- inherits(object, "voronoi_region")
+  if (region_map && interactive) {
+    stop("Interactive rendering is not yet supported for vmap_region() objects.", call. = FALSE)
+  }
   if (is.null(fill_by)) fill_by <- if (hier) "group" else "label"
   fill_by <- match.arg(fill_by, c("group", "label", "data_weight", "none"))
 
@@ -298,10 +326,14 @@ ggvmap <- function(
   }
 
   df <- vm_as_df(object)
-  centroids <- vm_centroids(object)
+  centroids <- vm_centroids(object, inside = TRUE)
 
   # geom_polygon() or its interactive counterpart, injecting tooltip/data_id.
   poly_layer <- function(mapping, ...) {
+    if (region_map) {
+      mapping <- utils::modifyList(mapping, ggplot2::aes(subgroup = .data$ring))
+      return(ggplot2::geom_polygon(mapping = mapping, rule = "evenodd", ...))
+    }
     if (interactive) {
       mapping <- utils::modifyList(
         mapping,

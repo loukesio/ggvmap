@@ -7,7 +7,7 @@
 vm_as_df(vm)
 }
 \arguments{
-\item{vm}{A \code{voronoi_map} object.}
+\item{vm}{A \code{voronoi_map} or \code{voronoi_region} object.}
 }
 \value{
 A data frame.
@@ -15,4 +15,9 @@ A data frame.
 \description{
 Each row is one vertex of one cell polygon, with columns
 \code{cell}, \code{label}, \code{x}, \code{y}, \code{target_area}, \code{actual_area}, \code{data_weight}.
+}
+\details{
+Region maps from \code{\link[=vmap_region]{vmap_region()}} add \code{ring}, identifying each boundary ring
+within a cell. Map \code{ring} to \code{subgroup} and use \code{rule = "evenodd"} to retain
+holes when drawing these rows with \code{geom_polygon()}.
 }

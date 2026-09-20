@@ -1,0 +1,5 @@
+"city","boundary","downloaded_source","reviewed_date","source_md5","repaired","source_area_km2","snapshot_area_km2","vertices"
+"Berlin","State/city boundary (union of 12 districts)","https://tsb-opendata.s3.eu-central-1.amazonaws.com/bezirksgrenzen/bezirksgrenzen.geojson","2026-09-20","3649b117b395f5335ce52dd9fe6322a8",FALSE,890.666460361366,890.68917600718,445
+"Amsterdam","Municipality (OSM relation 271110)","https://nominatim.openstreetmap.org/search?q=Amsterdam%2C%20Netherlands&format=geojson&polygon_geojson=1&limit=1","2026-09-20","ca0b05aa5afaca7cf9926f56d36eebe2",FALSE,219.467462114563,219.477300779567,143
+"London","Greater London (GLA boundary)","https://gis.london.gov.uk/arcgis/rest/services/apps/planning_data_map_02/FeatureServer/303/query?where=1%3D1&outFields=*&outSR=4326&f=geojson","2026-09-20","1d9f61e4ff3156285c300cba23fed4e7",FALSE,1594.73119921396,1594.70509921535,623
+"Thessaloniki","Municipality (OSM relation 1770680)","https://nominatim.openstreetmap.org/search?q=Municipality%20of%20Thessaloniki%2C%20Greece&format=geojson&polygon_geojson=1&limit=1","2026-09-20","c0beafb26919dbe83b8fa9e6abc85e59",FALSE,20.8123714407768,20.8519710685073,123

@@ -130,6 +130,9 @@ vm_add_ring <- function(
 ) {
   style <- match.arg(style)
   vm   <- .vm_of(p, vm)
+  if (inherits(vm, "voronoi_region")) {
+    stop("vm_add_ring() is not supported for region maps; use ordinary cell labels or a legend.", call. = FALSE)
+  }
   meta <- .clip_meta(vm$clip)
   if (!meta$circular) {
     warning("vm_add_ring() is designed for circular clips; ",
@@ -526,7 +529,7 @@ vm_add_images <- function(p, vm = NULL, image, size = 0.05, by = "width",
   }
   vm  <- .vm_of(p, vm)
   img <- .align_to_cells(vm, image, "image")
-  ctr <- vm_centroids(vm)
+  ctr <- vm_centroids(vm, inside = TRUE)
   df  <- data.frame(x = ctr$cx + nudge_x, y = ctr$cy + nudge_y,
                     image = img, label = ctr$label, stringsAsFactors = FALSE)
   if (!is.null(cells)) df <- df[df$label %in% cells, , drop = FALSE]
@@ -613,7 +616,7 @@ vm_add_flags <- function(p, vm = NULL, country = NULL, iso = NULL,
   }
 
   # method == "geom_flag": ggimage draws flags straight from ISO codes
-  ctr <- vm_centroids(vm)
+  ctr <- vm_centroids(vm, inside = TRUE)
   df  <- data.frame(x = ctr$cx + nudge_x, y = ctr$cy + nudge_y,
                     iso = iso, label = ctr$label, stringsAsFactors = FALSE)
   if (!is.null(cells)) df <- df[df$label %in% cells, , drop = FALSE]
@@ -689,7 +692,7 @@ vm_add_labels <- function(p, vm = NULL, value = NULL, secondary = NULL,
   txt <- .wrap_labels(txt, wrap)
 
   meta <- .clip_meta(vm$clip)
-  ctr  <- vm_centroids(vm)
+  ctr  <- vm_centroids(vm, inside = TRUE)
 
   # Adaptive nudge: proportional to each cell's own size so the value label
   # of a small cell is not pushed out of it.  Capped at the old global default.
@@ -701,8 +704,8 @@ vm_add_labels <- function(p, vm = NULL, value = NULL, secondary = NULL,
   ys <- ctr$cy + nudge_y
 
   # Clamp: if the nudged anchor falls outside its cell, shrink the offset
-  # toward the centroid until it is inside (centroid itself always is,
-  # since cells are convex).
+  # toward the interior anchor until it is inside. Region maps may have a
+  # mathematical centroid outside the cell, so vm_centroids(inside=TRUE) is used.
   if (isTRUE(inside)) {
     for (i in seq_along(xs)) {
       f <- 1

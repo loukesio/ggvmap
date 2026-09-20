@@ -5,19 +5,9 @@
 # into one Voronoi cell per party, cell area proportional to that party's
 # Zweitstimmen in that district (official result, 12 Feb 2023).
 #
-# WHY THIS DOES NOT CALL ggvmap::voronoi_map()
-# --------------------------------------------
-# The public solver is documented for convex boundaries. In particular, its
-# point-in-polygon test assumes convexity; it rejects some valid points in
-# concave regions. Its single-ring output cannot explicitly represent holes
-# and disconnected pieces. Bridging edges alone do NOT prove that signed
-# shoelace areas or centroids are wrong (see berlin_map_validate.R).
-#
-# This example adapts the weight/position updates, uses an even-odd membership
-# test, and intersects each convex power cell with a multi-ring region using
-# polyclip. Hole areas and moments are subtracted. Initial sampling and the
-# empty-cell update differ from the public solver. This is an experimental
-# example using private ggvmap helpers, not a new package API.
+# Uses the public ggvmap::vmap_region() function for concave district outlines,
+# holes and disconnected pieces. Requires the feature checkout to be installed.
+# The local geometry helpers below independently check and draw its output.
 #
 # Data
 #   Votes:      https://wahlen-berlin.de/wahlen/Be2023/AFSPRAES/agh/DL/DL_BE_AGHBVV2023.xlsx
@@ -38,7 +28,7 @@ out_dir <- "examples"
 cache_dir <- file.path(out_dir, "berlin-data")
 dir.create(cache_dir, showWarnings = FALSE)
 
-## ---- 1. solver on an arbitrary region ------------------------------------
+## ---- 1. independent geometry helpers ------------------------------------
 as_parts <- function(m) list(list(x = m[, 1], y = m[, 2]))
 
 signed_part_area <- function(p) {
@@ -86,85 +76,6 @@ in_region <- function(pt, region) {
     if (sum(cross) %% 2 == 1) inside <- !inside
   }
   inside
-}
-
-# one power cell: convex half-plane cell, then intersected with the region
-region_cell <- function(i, sx, sy, sw, box, region) {
-  cell <- box
-  for (j in seq_along(sx)) {
-    if (j == i || nrow(cell) < 3L) next
-    a  <- 2 * (sx[j] - sx[i])
-    b  <- 2 * (sy[j] - sy[i])
-    cc <- (sx[j]^2 - sx[i]^2) + (sy[j]^2 - sy[i]^2) - (sw[j] - sw[i])
-    cell <- ggvmap:::clip_polygon_halfplane(cell, a, b, cc)
-  }
-  if (nrow(cell) < 3L) return(list())
-  polyclip::polyclip(as_parts(cell), region, op = "intersection")
-}
-
-vmap_region <- function(weights, region, labels = NULL, seed = NULL,
-                        max_iter = 200, convergence_ratio = 0.005,
-                        min_weight_ratio = 0, verbose = FALSE) {
-  n <- length(weights)
-  stopifnot(n >= 2L, all(is.finite(weights)), all(weights > 0))
-  if (is.null(labels)) labels <- paste0("V", seq_len(n))
-  total_area <- parts_area(region)
-  thresh  <- convergence_ratio * total_area
-  epsilon <- total_area * 1e-6
-
-  w_safe <- pmax(weights, max(weights) * min_weight_ratio)
-  target <- total_area * w_safe / sum(w_safe)
-
-  xr <- range(unlist(lapply(region, `[[`, "x")))
-  yr <- range(unlist(lapply(region, `[[`, "y")))
-  pad <- 0.05 * max(diff(xr), diff(yr))
-  box <- cbind(c(xr[1] - pad, xr[2] + pad, xr[2] + pad, xr[1] - pad),
-               c(yr[1] - pad, yr[1] - pad, yr[2] + pad, yr[2] + pad))
-
-  if (!is.null(seed)) set.seed(seed)
-  sx <- numeric(n); sy <- numeric(n); k <- 0L
-  while (k < n) {
-    px <- runif(1, xr[1], xr[2]); py <- runif(1, yr[1], yr[2])
-    if (in_region(c(px, py), region)) { k <- k + 1L; sx[k] <- px; sy[k] <- py }
-  }
-  sw <- pmax(target / pi, epsilon)
-
-  hist <- numeric(0); converged <- FALSE; iter <- 0L; cells <- NULL; areas <- NULL
-  for (it in seq_len(max_iter)) {
-    iter <- it
-    fmr <- ggvmap:::.flickering_ratio(hist, total_area)
-
-    cells <- lapply(seq_len(n), region_cell, sx, sy, sw, box, region)
-    damping <- 1 - 0.5 * fmr
-    for (i in seq_len(n)) {
-      ctr <- parts_centroid(cells[[i]], c(sx[i], sy[i]))
-      nx <- sx[i] + (ctr[1] - sx[i]) * damping
-      ny <- sy[i] + (ctr[2] - sy[i]) * damping
-      if (in_region(c(nx, ny), region)) { sx[i] <- nx; sy[i] <- ny }
-    }
-
-    cells <- lapply(seq_len(n), region_cell, sx, sy, sw, box, region)
-    fm <- 0.1 * fmr
-    for (i in seq_len(n)) {
-      cur <- parts_area(cells[[i]])
-      if (cur < 1e-15) { sw[i] <- max(sw[i] * 1.1, epsilon); next }
-      r <- target[i] / cur
-      sw[i] <- max(sw[i] * min(max(r, 0.9 + fm), 1.1 - fm), epsilon)
-    }
-    sw <- ggvmap:::.handle_overweighted(sx, sy, sw, n, epsilon)
-
-    cells <- lapply(seq_len(n), region_cell, sx, sy, sw, box, region)
-    areas <- vapply(cells, parts_area, numeric(1))
-    err   <- sum(abs(target - areas))
-    hist  <- c(hist, err)
-    if (verbose) message(sprintf("  it %3d | err %.3f%%", it, 100 * err / total_area))
-    if (err < thresh) { converged <- TRUE; break }
-  }
-
-  list(cells = cells, labels = labels, sx = sx, sy = sy, sw = sw,
-       target = target, areas = areas, total_area = total_area,
-       iterations = iter, converged = converged,
-       convergence = sum(abs(target - areas)) / total_area)
 }
 
 ## ---- 2. votes -------------------------------------------------------------
@@ -232,7 +143,7 @@ cell_df <- list(); lab_df <- list(); solutions <- list(); diagnostics <- list()
 for (nm in sort(unique(long$bezirk))) {
   reg <- to_region(b[b$Gemeinde_name == nm, ])
   dd  <- long[long$bezirk == nm, ]; dd <- dd[order(dd$party), ]
-  r <- vmap_region(dd$votes, reg, labels = as.character(dd$party),
+  r <- ggvmap::vmap_region(dd$votes, reg, labels = as.character(dd$party),
                    seed = 11, max_iter = 600, convergence_ratio = 0.002)
   cat(sprintf("%-27s parts=%d conv=%-5s it=%3d err=%.3f%%\n",
               nm, length(reg), r$converged, r$iterations, 100 * r$convergence))
@@ -241,11 +152,11 @@ for (nm in sort(unique(long$bezirk))) {
   diagnostics[[nm]] <- data.frame(
     bezirk = nm, converged = r$converged, iterations = r$iterations,
     total_absolute_error_pp = 100 * r$convergence,
-    max_party_error_pp = 100 * max(abs(r$areas / r$total_area - dd$votes / sum(dd$votes))))
+    max_party_error_pp = 100 * max(abs(r$sites$actual_area / r$total_area - dd$votes / sum(dd$votes))))
   for (i in seq_along(r$cells)) for (k in seq_along(r$cells[[i]])) {
     p <- r$cells[[i]][[k]]
     cell_df[[length(cell_df) + 1]] <- data.frame(
-      gid = paste(nm, i, sep = "_"), ring = k, bezirk = nm, party = r$labels[i],
+      gid = paste(nm, i, sep = "_"), ring = k, bezirk = nm, party = r$sites$label[i],
       x = p$x, y = p$y)
   }
   for (i in seq_along(r$cells)) {
@@ -254,8 +165,8 @@ for (nm in sort(unique(long$bezirk))) {
     big <- pieces[which.max(st_area(pieces))]
     ct <- st_coordinates(st_point_on_surface(big))[1, ]
     lab_df[[length(lab_df) + 1]] <- data.frame(
-      bezirk = nm, party = r$labels[i], x = ct[1], y = ct[2],
-      frac = r$areas[i] / r$total_area)
+      bezirk = nm, party = r$sites$label[i], x = ct[1], y = ct[2],
+      frac = r$sites$actual_area[i] / r$total_area)
   }
 }
 cell_df <- do.call(rbind, cell_df); lab_df <- do.call(rbind, lab_df)
@@ -279,7 +190,7 @@ lab <- lab_df[lab_df$frac >= 0.10, ]
 # their cell boundary. The legend and companion table retain every category.
 fits_cell <- vapply(seq_len(nrow(lab)), function(i) {
   r <- solutions[[lab$bezirk[i]]]
-  cell <- r$cells[[match(lab$party[i], r$labels)]]
+  cell <- r$cells[[match(lab$party[i], r$sites$label)]]
   dx <- 0.0045 * nchar(lab$party[i])
   points <- expand.grid(x = lab$x[i] + c(-dx, 0, dx),
                         y = lab$y[i] + c(-0.010, 0, 0.010))
@@ -323,7 +234,7 @@ p <- ggplot() +
   theme_void() +
   labs(title = "Berlin 2023 — district vote shares",
        subtitle = "Area within each district shows its share of valid party-list votes (12 February 2023).\nParty positions are artificial, not voter locations. District sizes show geography, not numbers of voters.",
-       caption = "Votes: Berlin election authority · 2,431,776 eligible · 62.9% turnout · Sonstige = other parties\nBoundaries: ALKIS / TSB GeoJSON mirror, simplified by 100 m; boundary date unverified\nExperimental adaptation of ggvmap with polyclip · See the companion chart for exact comparisons") +
+       caption = "Votes: Berlin election authority · 2,431,776 eligible · 62.9% turnout · Sonstige = other parties\nBoundaries: ALKIS / TSB GeoJSON mirror, simplified by 100 m; boundary date unverified\nggvmap::vmap_region() with polyclip · See the companion chart for exact comparisons") +
   theme(
     plot.title    = element_text(face = "bold", size = 22, hjust = .5, margin = margin(b = 6)),
     plot.subtitle = element_text(size = 11, colour = "grey30", hjust = .5, lineheight = 1.35,

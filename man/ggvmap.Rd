@@ -34,7 +34,8 @@ ggvmap(
 )
 }
 \arguments{
-\item{x}{A \code{voronoi_map} object, or a numeric vector of weights.}
+\item{x}{A \code{voronoi_map} or \code{\link[=vmap_region]{vmap_region()}} object, or a numeric vector of
+weights. Region maps retain holes and use interior label anchors.}
 
 \item{fill_by}{Cell aesthetic to map fill to: one of \code{"label"}, \code{"group"},
 \code{"data_weight"}, or \code{"none"}.  Defaults to \code{"group"} for hierarchical

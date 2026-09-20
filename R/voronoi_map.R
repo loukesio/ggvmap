@@ -87,6 +87,17 @@ voronoi_map <- function(
   if (is.null(labels)) labels <- paste0("V", seq_len(n))
   stopifnot(length(labels) == n)
   stopifnot(is.matrix(clip), ncol(clip) == 2, nrow(clip) >= 3)
+  if (any(!is.finite(clip))) stop("clip must have finite coordinates.", call. = FALSE)
+  if (all(clip[1, ] == clip[nrow(clip), ])) clip <- clip[-nrow(clip), , drop = FALSE]
+  edges <- clip[c(seq.int(2L, nrow(clip)), 1L), , drop = FALSE] - clip
+  next_edges <- edges[c(seq.int(2L, nrow(edges)), 1L), , drop = FALSE]
+  turns <- edges[, 1] * next_edges[, 2] - edges[, 2] * next_edges[, 1]
+  rotation <- sum(atan2(turns, rowSums(edges * next_edges)))
+  if (nrow(clip) < 3L || abs(polygon_area(clip)) == 0 ||
+      !(all(turns >= 0) || all(turns <= 0)) || abs(abs(rotation) - 2 * pi) > 1e-7) {
+    stop("voronoi_map() requires a convex clip. Use vmap_region() for concave outlines, holes or separate pieces.", call. = FALSE)
+  }
+  if (polygon_area(clip) < 0) clip <- clip[nrow(clip):1L, , drop = FALSE]
 
   if (!is.null(group)) {
     stopifnot(length(group) == n)

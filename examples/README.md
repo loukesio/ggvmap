@@ -3,6 +3,19 @@
 Rendered with `ggvmap` using the built-in `"alger"` palette. Regenerate every
 figure with `Rscript examples/make_gallery.R` from the package root.
 
+### Fit real city outlines
+
+The public `vmap_region()` function is demonstrated on Berlin, Amsterdam,
+Greater London and Thessaloniki. The values are illustrative, with the same
+seven weights in every city. After installing the development checkout, run
+`Rscript examples/region_cities.R` to rebuild the plots and check 24 combinations
+of cities, seeds and weight patterns.
+
+![Four city outlines](region_cities.png)
+
+See the [README guide](../README.md#real-outlines-vmap_region) and
+[source notes](../inst/extdata/region-cities.README.md).
+
 ### Berlin district vote-share map
 
 See the [step-by-step README tutorial](../README.md#tutorial-berlin-district-vote-shares-on-a-real-map)

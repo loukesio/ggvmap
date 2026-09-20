@@ -2,6 +2,20 @@
 
 ## New features
 
+* **`vmap_region()` fits non-convex regions, holes and disconnected pieces.**
+  Accepts coordinate rings or projected `sf` polygons, with `polyclip` and
+  `sf` as optional dependencies. Computation is normalized for numerical
+  stability and returned in the input coordinate system. It supports ordinary
+  ggplot2/base plotting and cell annotations, preserves holes when drawing,
+  and warns when the requested area tolerance is not reached. `vm_as_df()`
+  includes ring identifiers; `vm_centroids(inside = TRUE)` provides interior
+  anchors. Hierarchical grouping, interactive rendering and outer annotation
+  rings are not yet supported for these region layouts.
+
+* **City-boundary examples** exercise Berlin, Amsterdam, Greater London and
+  Thessaloniki with the same explicitly illustrative weights, source records
+  and independent geometry checks.
+
 * **All 32 ltc palettes built in.** The `palette` argument now accepts every
   palette of the [ltc package](https://github.com/loukesio/ltc_palettes) by
   name (e.g. `palette = "casa_natal"`), vendored so ltc need not be
@@ -61,6 +75,9 @@
   example does so.
 
 ## Bug fixes
+
+* `voronoi_map()` rejects concave clips with a message pointing to
+  `vmap_region()`, rather than accepting them into its convex-only solver.
 
 * **Arc ring labels are no longer struck through by the arc line.** The gap
   cut into the arc under each label was too narrow (and did not scale with

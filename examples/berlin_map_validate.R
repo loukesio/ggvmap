@@ -34,13 +34,13 @@ checks <- lapply(names(solutions), function(nm) {
   merged <- st_union(cells)
   total <- as.numeric(st_area(region))
   measured <- as.numeric(st_area(cells))
-  target <- long$share[match(paste(nm, r$labels), paste(long$bezirk, long$party))]
+  target <- long$share[match(paste(nm, r$sites$label), paste(long$bezirk, long$party))]
   union_area <- as.numeric(st_area(merged))
   mismatch <- sum(as.numeric(st_area(st_sym_difference(region, merged)))) / total
   overlap <- abs(sum(measured) - union_area) / total
   error <- sum(abs(measured / total - target))
   stopifnot(abs(total - r$total_area) / total < 1e-7,
-            max(abs(measured - r$areas)) / total < 1e-7,
+            max(abs(measured - r$sites$actual_area)) / total < 1e-7,
             mismatch < 1e-7, overlap < 1e-7, error < 0.002)
   raw_area <- as.numeric(st_area(b_raw[b_raw$Gemeinde_name == nm, ]))
   simple_area <- as.numeric(st_area(district))

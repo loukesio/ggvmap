@@ -8,6 +8,7 @@
 #' @return Signed area (positive if counterclockwise).
 #' @noRd
 polygon_area <- function(poly) {
+  if (is.list(poly)) return(.region_area(poly))
 
   n <- nrow(poly)
   if (n < 3L) return(0)
@@ -21,6 +22,7 @@ polygon_area <- function(poly) {
 #' @return Numeric vector c(cx, cy).
 #' @noRd
 polygon_centroid <- function(poly) {
+  if (is.list(poly)) return(.region_centroid(poly))
   n <- nrow(poly)
   if (n < 3L) return(colMeans(poly))
   j  <- c(2:n, 1L)
@@ -41,6 +43,7 @@ polygon_centroid <- function(poly) {
 #' @return Logical.
 #' @noRd
 point_in_polygon <- function(point, poly) {
+  if (is.list(poly)) return(.region_inside(point, poly))
   n <- nrow(poly)
   for (i in seq_len(n)) {
     j <- if (i == n) 1L else i + 1L

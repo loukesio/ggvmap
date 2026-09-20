@@ -17,12 +17,15 @@ MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/
 
 > Voronoi Map Treemaps for ggplot2
 
-**ggvmap** partitions a convex polygon into cells whose areas are
-proportional to data weights — a *Voronoi treemap*. It implements the
-Nocaj & Brandes (2012) iterative power-diagram algorithm in **pure R**
-(no compiled code, no CGAL, no JavaScript) with first-class **ggplot2**
-integration: hierarchical (grouped) layouts, annotation rings, flags,
-value labels, 32 built-in colour palettes, and interactive hover maps.
+**ggvmap** partitions an outline into cells whose areas are proportional
+to data weights — a *Voronoi treemap*. It implements the Nocaj & Brandes
+(2012) iterative power-diagram algorithm in **pure R** (no compiled
+code, no CGAL, no JavaScript) with first-class **ggplot2** integration:
+hierarchical (grouped) layouts, annotation rings, flags, value labels,
+32 built-in colour palettes, and interactive hover maps. Convex layouts
+use the pure R solver. The development function `vmap_region()` adds
+non-convex outlines, holes and disconnected pieces through optional
+`polyclip`, with optional `sf` input for geographic boundaries.
 
 ## Installation
 
@@ -491,6 +494,93 @@ More worked examples (with code) live in [`examples/`](examples/) —
 grouped layouts, custom rings, flags on different shapes, and a combined
 infographic.
 
+## Real outlines: `vmap_region()`
+
+Give the new function an outline and positive weights. It adapts cell
+areas to fit inside the shape, preserving holes and separate pieces. The
+colored regions are an arrangement of your values; their locations have
+no geographic meaning. It does not download boundaries from a city name.
+
+Install this development checkout, then the optional geometry packages:
+
+``` r
+install.packages(c("polyclip", "sf"))
+remotes::install_local(".", upgrade = "never")
+```
+
+Try the bundled city snapshots without downloading anything:
+
+``` r
+library(ggvmap)
+library(sf)
+
+cities <- st_read(
+  system.file("extdata", "region-cities.geojson", package = "ggvmap"),
+  quiet = TRUE
+)
+berlin <- cities[cities$city == "Berlin", ]
+vm <- vmap_region(
+  c(30, 25, 18, 12, 8, 5, 2), berlin,
+  labels = LETTERS[1:7], crs = 25833, seed = 11,
+  convergence_ratio = 0.002
+)
+stopifnot(vm$converged)
+ggvmap(vm, palette = "alger")
+```
+
+`crs = 25833` projects Berlin into ETRS89 / UTM zone 33N, measured in
+meters. Choose a suitable local projected system for your own boundary,
+or transform it with `st_transform()` first. Raw coordinate matrices and
+lists of rings are also accepted and treated as planar coordinates. The
+function preserves output coordinates and areas in those units, and does
+not simplify your outline. An `sf` object with several features is
+united into **one** region. To keep districts separate, fit each
+district in a separate call as in the tutorial below.
+
+<figure>
+<img src="examples/region_cities.png"
+alt="The same seven illustrative weights fitted inside Berlin, Amsterdam, Greater London and Thessaloniki. Each panel uses its own geographic scale; the colors do not represent real local statistics." />
+<figcaption aria-hidden="true">The same seven illustrative weights
+fitted inside Berlin, Amsterdam, Greater London and Thessaloniki. Each
+panel uses its own geographic scale; the colors do not represent real
+local statistics.</figcaption>
+</figure>
+
+The four-city gallery uses the same illustrative weights in every city;
+it is not election data. It covers the Berlin city/state boundary,
+Amsterdam municipality, Greater London, and Thessaloniki municipality
+(not its entire urban area). Boundaries are simplified by 50 meters.
+Amsterdam and Thessaloniki use © OpenStreetMap contributors’ data under
+ODbL; Berlin uses ALKIS via TSB; London uses GLA / Ordnance Survey data
+under OGL v3.0. See the [boundary source notes and
+licences](inst/extdata/region-cities.README.md).
+
+[Open the gallery PDF](examples/region_cities.pdf) · [Rebuild and
+validate all four cities](examples/region_cities.R) · [Inspect the 24
+validation runs](examples/region_cities_checks.csv) · [Source URLs and
+checksums](examples/region_cities_sources.csv).
+
+The city check uses three seeds and two weight patterns, for **24
+successful fits**, with independent `sf`/GEOS checks for coverage,
+overlap and area shares. Every fit has a sum of absolute area-share
+errors below 0.2 percentage points. The default tolerance is 0.5
+percentage points; the examples request 0.2. This is evidence for the
+tested cases, not a guarantee for every possible shape. An unsuccessful
+fit warns and returns `converged = FALSE` with the best result found.
+Narrow and disconnected regions may need more iterations or another
+seed.
+
+`ggvmap()`, `autoplot()`, base `plot()`, and cell annotations work with
+region maps. Use `vm_as_df(vm)` for vertices: its `ring` column belongs
+in ggplot2’s `subgroup` aesthetic with `rule = "evenodd"`, so holes
+remain empty. `vm_centroids(vm)` gives mathematical centers, which can
+lie outside a concave cell; `vm_centroids(vm, inside = TRUE)` gives
+interior label anchors. An anchor inside a cell does not guarantee that
+a long label fits there. Grouping, interactive rendering, and decorative
+outer rings are not yet supported for region layouts. The convex
+`voronoi_map()` API remains available without the optional geometry
+dependencies.
+
 ## Tutorial: Berlin district vote shares on a real map
 
 This example turns Berlin’s 12 district outlines into **geographic
@@ -559,11 +649,12 @@ install.packages(c("remotes", "sf", "readxl", "polyclip", "ggplot2"))
 remotes::install_local(".", upgrade = "never")
 ```
 
-The example uses private helpers from `ggvmap` 0.3.0. Installing this
-checkout keeps the script and package code together. These helpers may
-change in future versions. The extra packages are dependencies of this
-example, not new package requirements. On systems without an `sf`
-binary, follow the [sf installation
+The example uses the public `vmap_region()` function from this
+development checkout (0.3.0.9000). It is not present in the earlier
+v0.3.0 release. Install this checkout to get the new function.
+`polyclip` and `sf` are optional package dependencies; `readxl` is used
+only to read this example’s election workbook. On systems without an
+`sf` binary, follow the [sf installation
 instructions](https://r-spatial.github.io/sf/#installing).
 
 Run from the repository root:
@@ -667,11 +758,11 @@ r <- vmap_region(
 stopifnot(r$converged)
 ```
 
-This snippet uses the helpers and data created by the script. A *power
-cell* is a weighted Voronoi cell: the algorithm moves a set of points
-and adjusts their weights until each cell approaches its requested area.
-Each convex power cell is intersected with the district using
-`polyclip`; the result can have several pieces. Areas and centers
+This snippet uses the public solver and the data prepared by the script.
+A *power cell* is a weighted Voronoi cell: the algorithm moves a set of
+points and adjusts their weights until each cell approaches its
+requested area. Each convex power cell is intersected with the district
+using `polyclip`; the result can have several pieces. Areas and centers
 combine all outer pieces and **subtract holes**. A party therefore has
 one logical cell, which need not be one connected shape.
 
@@ -682,13 +773,16 @@ library versions. If a district fails to converge, the script stops
 instead of exporting a new misleading map.
 
 **Why not call `voronoi_map(clip = district)`?** The public package
-documents convex clipping boundaries. Its point-in-polygon helper
-assumes convexity, and its single-ring cell representation does not
-explicitly support holes or multiple pieces. The example adapts its
-solver but also changes membership checks, initial sampling, and
-empty-cell handling. It is not just a drop-in replacement for one
-clipping function, nor proof of general arbitrary-shape support in the
-package.
+documents convex clipping boundaries. It now rejects concave clips and
+directs callers to `vmap_region()`. Its point-in-polygon helper assumes
+convexity, and its single-ring cell representation does not explicitly
+support holes or multiple pieces. The region solver uses different
+membership checks, sampling and empty-cell handling. It also finishes
+stalled layouts by holding sites fixed and adjusting power weights
+through monotonic area searches. This is a separate public solver, not a
+change to the convex solver’s clipping representation. Inspect
+`converged` even with the new function: fitting every possible shape is
+not guaranteed.
 
 The original diagnosis that connecting edges necessarily corrupt the
 shoelace area formula was too strong. Opposite connecting edges can
@@ -741,8 +835,8 @@ For the reviewed run on 20 September 2026:
 |----|----|
 | Districts / party categories | 12 / 7 |
 | Districts meeting the requested tolerance | 12 of 12 |
-| Largest individual party-share error | 0.096 percentage points |
-| Largest sum of absolute share errors within a district | 0.192 percentage points |
+| Largest individual party-share error | 0.099 percentage points |
+| Largest sum of absolute share errors within a district | 0.198 percentage points |
 | Coverage difference / within-district overlap | Each below 0.00001% of district area |
 
 The stopping rule is
@@ -762,7 +856,7 @@ reviewed files. Fresh downloads matched the existing copies on the
 review date. Retain your cached inputs if you need to reproduce a
 particular run; the download URLs can change. `berlin_session_info.txt`
 records your local R and package versions. This run used R 4.5.1, ggvmap
-0.3.0, sf 1.0-24, polyclip 1.10-7, readxl 1.4.5, and ggplot2 4.0.3.
+0.3.0.9000, sf 1.0-24, polyclip 1.10-7, readxl 1.4.5, and ggplot2 4.0.3.
 
 ### 7. Try a Sankey or a dumbbell plot
 
@@ -817,14 +911,15 @@ exact comparisons](examples/berlin_district_comparisons.csv) · [Complete
 script](examples/berlin_vote_alternatives.R).
 
 These two plots use ordinary ggplot2 drawing, not ggvmap’s layout
-algorithm. The map example leaves the package’s core solver and
-dependencies unchanged. General non-convex support and unrelated
-ring-label fixes need their own changes and tests.
+algorithm. The map now uses `vmap_region()` from the package. The convex
+solver retains its fast path. Hierarchical region fitting, interactive
+region maps, and outer annotation rings for regions are not implemented.
 
 ## API reference
 
 | Function | Purpose |
 |----|----|
+| `vmap_region()` | Fit coordinate rings or projected `sf` boundaries, including concavities, holes and separate pieces; needs optional `polyclip` |
 | `voronoi_map()` | Core computation (add `group =` for a hierarchical layout); print it to check convergence |
 | `ggvmap()` | The main ggplot2 visualisation (`autoscale`, `min_area`, `wrap`, per-cell `label_size` / `label_col` / `fontface`, `fill_by`, `family`) |
 | `autoplot()` | Alias for `ggvmap()` via the ggplot2 generic |
@@ -841,15 +936,15 @@ ring-label fixes need their own changes and tests.
 
 ## Comparison with other R packages
 
-| Feature                 | ggvmap        | voronoiTreemap     | WeightedTreemaps |
-|-------------------------|---------------|--------------------|------------------|
-| Backend                 | Pure R        | D3.js (htmlwidget) | C++ / CGAL       |
-| ggplot2 native          | ✅            | ❌                 | ❌               |
-| Dependencies            | ggplot2 only  | htmlwidgets, d3    | RcppCGAL         |
-| Hierarchical            | ✅ (grouped)  | ✅                 | ✅               |
-| Annotation ring / flags | ✅            | ❌                 | ❌               |
-| Custom shapes           | ✅ any convex | ✅                 | ✅               |
-| Install complexity      | Trivial       | Medium             | Hard (CGAL)      |
+| Feature | ggvmap | voronoiTreemap | WeightedTreemaps |
+|----|----|----|----|
+| Backend | Pure R | D3.js (htmlwidget) | C++ / CGAL |
+| ggplot2 native | ✅ | ❌ | ❌ |
+| Dependencies | ggplot2 only | htmlwidgets, d3 | RcppCGAL |
+| Hierarchical | ✅ (grouped) | ✅ | ✅ |
+| Annotation ring / flags | ✅ | ❌ | ❌ |
+| Custom shapes | ✅ convex; non-convex via optional `polyclip` | ✅ | ✅ |
+| Install complexity | Trivial | Medium | Hard (CGAL) |
 
 ## Acknowledgements
 
