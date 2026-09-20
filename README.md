@@ -764,9 +764,62 @@ particular run; the download URLs can change. `berlin_session_info.txt`
 records your local R and package versions. This run used R 4.5.1, ggvmap
 0.3.0, sf 1.0-24, polyclip 1.10-7, readxl 1.4.5, and ggplot2 4.0.3.
 
-The example leaves the package’s core solver and dependencies unchanged.
-General non-convex support and unrelated ring-label fixes need their own
-changes and tests.
+### 7. Try a Sankey or a dumbbell plot
+
+Two further views use the same verified vote counts. Rebuild both with:
+
+``` sh
+Rscript examples/berlin_vote_alternatives.R
+```
+
+The script needs only `ggplot2` and the `berlin_vote_shares.csv`
+generated above. It writes PNG and PDF versions, plus a table of
+district shares, Berlin-wide shares, and their differences in percentage
+points.
+
+**Sankey: how district votes contribute to party totals.** Ribbon width
+represents vote counts on a single scale. Districts with more valid
+votes have taller nodes. The connections describe one election; they are
+not evidence of people switching parties. This shows the composition of
+citywide totals, but its 84 crossing ribbons make individual
+district/party comparisons difficult. Use the bar chart or table to look
+up a specific share.
+
+<figure>
+<img src="examples/berlin_votes_sankey.png"
+alt="Sankey showing valid votes from twelve Berlin districts to seven party categories. Widths represent vote counts, not percentages or voter movement." />
+<figcaption aria-hidden="true">Sankey showing valid votes from twelve
+Berlin districts to seven party categories. Widths represent vote
+counts, not percentages or voter movement.</figcaption>
+</figure>
+
+[Download Sankey PDF](examples/berlin_votes_sankey.pdf).
+
+**Dumbbell: how each district compares with Berlin overall.** Filled
+dots show district shares; hollow dots show the Berlin-wide share for
+the same party. All panels use the same percentage scale. The benchmark
+is calculated from summed votes and includes the district being
+compared. The connecting line shows a descriptive difference, not change
+over time or statistical uncertainty. The printed values and separate
+party panels also make the chart usable without distinguishing the party
+colors. Nearly equal endpoints may overlap.
+
+<figure>
+<img src="examples/berlin_votes_dumbbell.png"
+alt="Dumbbell chart comparing every district’s party share against that party’s Berlin-wide share, with filled district dots and hollow citywide dots." />
+<figcaption aria-hidden="true">Dumbbell chart comparing every district’s
+party share against that party’s Berlin-wide share, with filled district
+dots and hollow citywide dots.</figcaption>
+</figure>
+
+[Download dumbbell PDF](examples/berlin_votes_dumbbell.pdf) · [Read
+exact comparisons](examples/berlin_district_comparisons.csv) · [Complete
+script](examples/berlin_vote_alternatives.R).
+
+These two plots use ordinary ggplot2 drawing, not ggvmap’s layout
+algorithm. The map example leaves the package’s core solver and
+dependencies unchanged. General non-convex support and unrelated
+ring-label fixes need their own changes and tests.
 
 ## API reference
 
