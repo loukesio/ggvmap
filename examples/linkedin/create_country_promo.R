@@ -38,7 +38,7 @@ with_values <- function() {
 with_arc <- function() {
   with_values() |>
     vm_add_ring(style = 'arc', colors = '#333333', values = TRUE,
-                label_size = 4.5)
+                label_size = 5.5)
 }
 
 plots <- list(
@@ -55,7 +55,7 @@ plots <- list(
                  cache = TRUE, size = 0.07, nudge_y = 0.05),
   with_values() |>
     vm_add_ring(style = 'band', palette = 'reading', width = 0.11,
-                label_size = 4.5)
+                label_size = 5.5)
 )
 
 ink <- '#262626'; muted <- '#575D5D'
