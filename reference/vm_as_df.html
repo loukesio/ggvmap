@@ -9,7 +9,7 @@ cell, label, x, y, target_area, actual_area, data_weight."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">ggvmap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,7 +31,7 @@ cell, label, x, y, target_area, actual_area, data_weight."><meta property="og:im
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Convert a voronoi_map to a tidy data frame</h1>
-      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/v0.3.0/R/plot.R" class="external-link"><code>R/plot.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/main/R/plot.R" class="external-link"><code>R/plot.R</code></a></small>
       <div class="d-none name"><code>vm_as_df.Rd</code></div>
     </div>
 
@@ -50,12 +50,18 @@ cell, label, x, y, target_area, actual_area, data_weight."><meta property="og:im
 
 
 <dl><dt id="arg-vm">vm<a class="anchor" aria-label="anchor" href="#arg-vm"></a></dt>
-<dd><p>A <code>voronoi_map</code> object.</p></dd>
+<dd><p>A <code>voronoi_map</code> or <code>voronoi_region</code> object.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Region maps from <code><a href="vmap_region.html">vmap_region()</a></code> add <code>ring</code>, identifying each boundary ring
+within a cell. Map <code>ring</code> to <code>subgroup</code> and use <code>rule = "evenodd"</code> to retain
+holes when drawing these rows with <code>geom_polygon()</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

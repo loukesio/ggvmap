@@ -13,8 +13,16 @@ vm_as_df(vm)
 
 - vm:
 
-  A `voronoi_map` object.
+  A `voronoi_map` or `voronoi_region` object.
 
 ## Value
 
 A data frame.
+
+## Details
+
+Region maps from
+[`vmap_region()`](https://loukesio.github.io/ggvmap/reference/vmap_region.md)
+add `ring`, identifying each boundary ring within a cell. Map `ring` to
+`subgroup` and use `rule = "evenodd"` to retain holes when drawing these
+rows with `geom_polygon()`.

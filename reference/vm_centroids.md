@@ -10,14 +10,20 @@ flags or images (see
 ## Usage
 
 ``` r
-vm_centroids(vm)
+vm_centroids(vm, inside = FALSE)
 ```
 
 ## Arguments
 
 - vm:
 
-  A `voronoi_map` object.
+  A `voronoi_map` or `voronoi_region` object.
+
+- inside:
+
+  For region maps, return an interior label anchor when the area
+  centroid lies outside the cell or in a hole? Default `FALSE` returns
+  the mathematical centroid. Convex maps are unaffected.
 
 ## Value
 

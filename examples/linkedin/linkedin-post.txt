@@ -1,0 +1,12 @@
+I’m sharing ggvmap, an R package for creating Voronoi treemaps with ggplot2.
+
+Each cell’s area represents its share of a total. You can choose the outline, use built-in palettes, adjust labels, and add group totals with an outer ring—all through a familiar plotting workflow.
+
+The new vmap_region() function also fits values inside real outlines, including bends, holes, and separate islands, using optional geometry packages.
+
+This short demo walks through the options using the reading palette. The budget values are invented for teaching; the Berlin example shows the shape support, not real Berlin statistics.
+
+Code, examples, and installation:
+https://github.com/loukesio/ggvmap
+
+#RStats #ggplot2 #DataVisualization #OpenSource

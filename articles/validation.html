@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggvmap</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Correctness: is the Voronoi construction right?</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/v0.3.0/vignettes/validation.Rmd" class="external-link"><code>vignettes/validation.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/loukesio/ggvmap/blob/main/vignettes/validation.Rmd" class="external-link"><code>vignettes/validation.Rmd</code></a></small>
       <div class="d-none name"><code>validation.Rmd</code></div>
     </div>
 
@@ -260,7 +260,7 @@ many near-equal cells — raise <code>max_iter</code> or lower
 <p>The full harness lives in the package’s development history; a
 compact version:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/loukesio/ggvmap" class="external-link">ggvmap</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://loukesio.github.io/ggvmap/">ggvmap</a></span><span class="op">)</span></span>
 <span><span class="va">vm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/voronoi_map.html">voronoi_map</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">1</span>, <span class="fl">50</span><span class="op">)</span>, clip <span class="op">=</span> <span class="fu"><a href="../reference/clip_shapes.html">clip_circle</a></span><span class="op">(</span><span class="op">)</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># tiling: total cell area equals the clip area</span></span>
