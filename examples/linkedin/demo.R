@@ -62,14 +62,14 @@ ggvmap(hex, palette = "reading", label_col = "grey15",
        wrap = 10, label_size = 6.75)
 
 # Country shares
-ggvmap(country_vm, palette = "alger", label_col = "grey15",
+ggvmap(country_vm, palette = "reading", label_col = "grey15",
        autoscale = TRUE, min_area = 0.004,
        wrap = 12, label_size = 5) |>
-  vm_add_ring(style = "arc", palette = "alger",
+  vm_add_ring(style = "arc", colors = "#333333",
               values = TRUE, label_size = 4)
 
 # Add country flags
-ggvmap(country_vm, palette = "alger", label_col = "grey15",
+ggvmap(country_vm, palette = "reading", label_col = "grey15",
        autoscale = TRUE, min_area = 0.004,
        wrap = 12, label_size = 5) |>
   vm_add_labels(value = top10$share, suffix = "%",

@@ -1,9 +1,12 @@
 # ggvmap announcement animation
 
 - `ggvmap-options.gif`: looping 77-second tutorial, 1440 x 1680 pixels.
+- `ggvmap-promo.gif`: clean 19-second country-and-city promo, with no code panels.
 - `ggvmap-options.mp4`: the same silent tutorial as an H.264 video.
 - `cover.png`: still image of the arc-ring example.
+- `promo-cover.png`: still image for the clean country promo.
 - `demo.R`: runnable plotting code.
+- `create_promo_gif.py`: builds the clean promo from the rendered map frames.
 - `teaching_budget.csv`: all invented input values.
 - `layout_checks.csv`: convergence and measured area errors for the layouts.
 - `linkedin-post.txt`: a short draft announcement.
