@@ -61,6 +61,22 @@ ggvmap(hex, palette = "reading", label_col = "grey15",
        autoscale = TRUE, min_area = 0.009,
        wrap = 10, label_size = 6.75)
 
+# Country shares
+ggvmap(country_vm, palette = "alger", label_col = "grey15",
+       autoscale = TRUE, min_area = 0.004,
+       wrap = 12, label_size = 5) |>
+  vm_add_ring(style = "arc", palette = "alger",
+              values = TRUE, label_size = 4)
+
+# Add country flags
+ggvmap(country_vm, palette = "alger", label_col = "grey15",
+       autoscale = TRUE, min_area = 0.004,
+       wrap = 12, label_size = 5) |>
+  vm_add_labels(value = top10$share, suffix = "%",
+                size = 3.2, min_area = 0.006) |>
+  vm_add_flags(size = 0.045, nudge_y = 0.045,
+               method = "url", cache = TRUE)
+
 # NEW: fit a real outline
 totals <- tapply(budget$share, budget$group, sum)
 region <- vmap_region(totals, berlin, labels = names(totals),

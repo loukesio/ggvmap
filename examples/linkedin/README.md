@@ -1,6 +1,6 @@
 # ggvmap announcement animation
 
-- `ggvmap-options.gif`: looping 63-second tutorial, 1440 x 1680 pixels.
+- `ggvmap-options.gif`: looping 77-second tutorial, 1440 x 1680 pixels.
 - `ggvmap-options.mp4`: the same silent tutorial as an H.264 video.
 - `cover.png`: still image of the arc-ring example.
 - `demo.R`: runnable plotting code.
@@ -10,8 +10,9 @@
 
 The animation covers layout creation, readable labels, one-cell emphasis, item
 colors, both arc and band rings, value labels, a hexagonal outline, and the new
-real-boundary function. The last map is a real Berlin outline using invented
-teaching values.
+real-boundary function. The country section uses the bundled freshwater data and
+real country flags; the last map is a real Berlin outline using invented teaching
+values.
 
 All budget values are invented for teaching. There are no numeric axes. Read the
 areas and labels: 30% means 30 of a total of 100 budget units. Larger areas mean
@@ -41,10 +42,10 @@ plot size keeps text clear of the arc gaps. The value-label frame uses a separat
 10% area threshold and a vertical offset to keep numbers away from borders.
 These export choices are displayed in its code.
 
-Flags are best shown in a separate country example: they need country labels and
-the optional `ggimage` package. They do not add useful information to the
-invented budget or Berlin-boundary frames, so the publication animation keeps
-them out of the main story.
+The country section uses `vm_add_flags()` with locally cached flag images, so the
+animation can be rebuilt without a network connection after the flag assets are
+downloaded. Flags are kept out of the invented budget and Berlin-boundary frames,
+where they would have no meaning.
 
 ## Rebuild
 

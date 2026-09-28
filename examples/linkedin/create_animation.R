@@ -6,6 +6,7 @@ suppressPackageStartupMessages({
   library(grid)
   library(sf)
 })
+data(freshwater)
 out <- 'examples/linkedin'
 dir.create(file.path(out, 'frames'), recursive = TRUE, showWarnings = FALSE)
 budget <- data.frame(
@@ -17,6 +18,20 @@ stopifnot(sum(budget$share) == 100)
 write.csv(budget, file.path(out, 'teaching_budget.csv'), row.names = FALSE)
 cities <- sf::st_read(system.file('extdata', 'region-cities.geojson', package = 'ggvmap'), quiet = TRUE)
 berlin <- cities[cities$city == 'Berlin', ]
+top10 <- freshwater[!grepl('^Rest of|Middle East', freshwater$country), ][1:10, ]
+flag_dir <- file.path(out, 'flags')
+flag_cache_dir <- file.path(tempdir(), 'ggvmap-flags')
+dir.create(flag_cache_dir, recursive = TRUE, showWarnings = FALSE)
+flag_files <- file.path(flag_dir, paste0(country_to_iso(top10$country), '.png'))
+file.copy(flag_files, flag_cache_dir, overwrite = TRUE)
+country_vm <- voronoi_map(
+  weights = top10$share,
+  labels = top10$country,
+  group = top10$region,
+  clip = clip_circle(),
+  seed = 42,
+  max_iter = 1000
+)
 totals <- tapply(budget$share, budget$group, sum)
 steps <- list(
   list(title = 'Start with values', subtitle = 'A part-of-whole plot, built in R.', duration = 6,
@@ -77,6 +92,24 @@ steps <- list(
                 'ggvmap(hex, palette = "reading", label_col = "grey15",',
                 '       autoscale = TRUE, min_area = 0.009,',
                 '       wrap = 10, label_size = 6.75)')),
+  list(title = 'Country shares', subtitle = 'The same grammar also works for real countries.', duration = 7,
+       note = 'Top countries by renewable freshwater share, 2022; values come from the bundled dataset.',
+       detail = 'Cells show country shares; the arc ring shows regional totals.',
+       code = c('ggvmap(country_vm, palette = "alger", label_col = "grey15",',
+                '       autoscale = TRUE, min_area = 0.004,',
+                '       wrap = 12, label_size = 5) |>',
+                '  vm_add_ring(style = "arc", palette = "alger",',
+                '              values = TRUE, label_size = 4)')),
+  list(title = 'Add country flags', subtitle = 'Add a flag when the labels represent countries.', duration = 7,
+       note = 'Flags identify the country cells; the areas still encode freshwater share.',
+       detail = 'The flags use the optional ggimage package and the country names in the map.',
+       code = c('ggvmap(country_vm, palette = "alger", label_col = "grey15",',
+                '       autoscale = TRUE, min_area = 0.004,',
+                '       wrap = 12, label_size = 5) |>',
+                '  vm_add_labels(value = top10$share, suffix = "%",',
+                '                size = 3.2, min_area = 0.006) |>',
+                '  vm_add_flags(size = 0.045, nudge_y = 0.045,',
+                '               method = "url", cache = TRUE)')),
   list(title = 'NEW: fit a real outline', subtitle = 'vmap_region() handles bends, holes and islands.', duration = 8,
        note = 'The same group totals: Research 73%, Support 27%. This is not Berlin data.',
        detail = 'The boundary is real; cell positions are artificial. No outer ring for regions.',
@@ -104,8 +137,8 @@ for (i in seq_along(steps)) {
   if (i == length(steps)) code <- code[-c(1, 2)]
   plots[[i]] <- eval(parse(text = paste(code, collapse = '\n')), envir = env)
 }
-stopifnot(vm$converged, hex$converged, region$converged)
-layouts <- list(circle = vm, hexagon = hex, berlin = region)
+stopifnot(vm$converged, hex$converged, country_vm$converged, region$converged)
+layouts <- list(circle = vm, hexagon = hex, countries = country_vm, berlin = region)
 checks <- do.call(rbind, lapply(names(layouts), function(nm) {
   z <- layouts[[nm]]
   data.frame(layout = nm, converged = z$converged,
@@ -130,7 +163,9 @@ for (i in seq_along(steps)) {
   print(plots[[i]] + theme(plot.margin = margin(14, 18, 14, 18)),
         newpage = FALSE, vp = viewport(x = .5, y = .619, width = .88, height = .50))
   # Explicit keys explain every palette color, including the two hidden labels.
-  if (st$title == 'Colour each item') {
+  if (grepl('country', tolower(st$title))) {
+    txt('Freshwater share by country · 2022', .5, .363, 7.2, muted, just = 'center')
+  } else if (st$title == 'Colour each item') {
     fills <- ggvmap:::.vm_palette(8, 'reading')
     keys <- c('Sampling', 'Sequencing', 'Analysis', 'Equipment',
               'Travel', 'Training', 'Reporting', 'Other')
@@ -155,6 +190,7 @@ for (i in seq_along(steps)) {
   txt('No numeric axes. Read cell areas and labels. Larger share does not mean better.',
       .055, .051, 6.1, muted)
   txt(if (st$title == 'NEW: fit a real outline') 'Invented budget; no uncertainty intervals. Berlin boundary: ALKIS / TSB, simplified 50 m.'
+      else if (grepl('country', tolower(st$title))) 'Source: bundled freshwater dataset, FAO Aquastat via World Bank. Country shares are real; no uncertainty intervals.'
       else 'Invented teaching data; not research findings. No uncertainty intervals.',
       .055, .031, 5.8, muted)
   # Progress rule: one segment per teaching step; no additional data encoding.
