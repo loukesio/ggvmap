@@ -576,10 +576,11 @@ accuracy. Grouping, interactive display, and decorative outer rings are
 not yet supported for region maps.
 
 [Berlin election walkthrough and comparison
-charts](vignettes/articles/berlin-vote-shares.Rmd) · [Rebuild the
-four-city gallery](examples/region_cities.R) · [24 recorded geometry
-checks](examples/region_cities_checks.csv) · [Boundary sources and
-licences](inst/extdata/region-cities.README.md).
+charts](https://loukesio.github.io/ggvmap/articles/berlin-vote-shares.html)
+· [Rebuild the four-city gallery](examples/region_cities.R) · [24
+recorded geometry checks](examples/region_cities_checks.csv) · [Boundary
+sources and
+licences](https://github.com/loukesio/ggvmap/blob/main/inst/extdata/region-cities.README.md).
 
 ## API reference
 
