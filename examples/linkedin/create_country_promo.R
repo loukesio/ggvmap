@@ -38,7 +38,7 @@ with_values <- function() {
 with_arc <- function() {
   with_values() |>
     vm_add_ring(style = 'arc', colors = '#333333', values = TRUE,
-                label_size = 5.5)
+                label_size = 6.5)
 }
 
 plots <- list(
@@ -55,7 +55,7 @@ plots <- list(
                  cache = TRUE, size = 0.07, nudge_y = 0.05),
   with_values() |>
     vm_add_ring(style = 'band', palette = 'reading', width = 0.11,
-                label_size = 5.5)
+                label_size = 6.5)
 )
 
 ink <- '#262626'; muted <- '#575D5D'
@@ -72,7 +72,7 @@ for (i in seq_along(plots)) {
   print(plots[[i]] + theme(plot.margin = margin(14, 18, 14, 18)),
         newpage = FALSE, vp = viewport(x = .5, y = .53, width = .97, height = .92))
   txt('Freshwater shares · 2022 · FAO Aquastat / World Bank',
-      .5, .025, 6.2, muted, just = 'center')
+      .5, .025, 8.2, muted, just = 'center')
   dev.off()
 }
 
