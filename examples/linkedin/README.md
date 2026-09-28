@@ -2,7 +2,7 @@
 
 - `ggvmap-options.gif`: looping 77-second tutorial, 1440 x 1680 pixels.
 - `ggvmap-promo.gif`: clean 19-second country-and-city promo, with no code panels.
-- `ggvmap-country-promo.gif`: country-first 42-second promo showing all 30
+- `ggvmap-country-promo.gif`: country-only 35-second promo showing all 30
   country and regional categories, with a flag on Brazil only. Percentages appear
   in a separate frame so the map can also be read without them.
 - `ggvmap-options.mp4`: the same silent tutorial as an H.264 video.
