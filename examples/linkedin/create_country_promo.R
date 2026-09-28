@@ -72,7 +72,7 @@ for (i in seq_along(plots)) {
   print(plots[[i]] + theme(plot.margin = margin(14, 18, 14, 18)),
         newpage = FALSE, vp = viewport(x = .5, y = .53, width = .97, height = .92))
   txt('Freshwater shares · 2022 · FAO Aquastat / World Bank',
-      .5, .025, 4.4, muted, just = 'center')
+      .5, .025, 6.2, muted, just = 'center')
   dev.off()
 }
 
