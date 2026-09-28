@@ -424,7 +424,10 @@ highlight style):
 ggvmap(vm, interactive = TRUE, palette = "alger") |> vm_girafe()
 ```
 
-<img src="man/figures/README-interactive.gif" alt="" width="60%" style="display: block; margin: auto;" />
+<img src="man/figures/README-interactive.gif" alt="Animated Voronoi map with hover highlighting" width="60%">
+
+[Open the animated GIF](man/figures/README-interactive.gif) if it does
+not play in your README viewer.
 
 Live version (hover it yourself) in the [Interactive
 article](https://loukesio.github.io/ggvmap/articles/interactive.html).
@@ -549,14 +552,10 @@ matrices are also accepted. Several features in one `sf` object are
 combined into one outline; fit districts separately to preserve their
 individual boundaries.
 
-<figure>
-<img
-src="https://raw.githubusercontent.com/loukesio/ggvmap/main/examples/region_cities.png"
-alt="Invented A–G shares fitted inside Berlin, Amsterdam, Greater London and Thessaloniki. Every city uses the same values and its own map scale." />
-<figcaption aria-hidden="true">Invented A–G shares fitted inside Berlin,
-Amsterdam, Greater London and Thessaloniki. Every city uses the same
-values and its own map scale.</figcaption>
-</figure>
+<img src="examples/region_cities.png" alt="Invented A–G shares fitted inside Berlin, Amsterdam, Greater London and Thessaloniki. Every city uses the same values and its own map scale." width="100%">
+
+[Open the four-city gallery](examples/region_cities.png) if the image
+does not display in your README viewer.
 
 **How to read this gallery:** there are no numeric axes. Read left to
 right, then the next row. Each panel is a real city outline; colors
@@ -577,13 +576,10 @@ accuracy. Grouping, interactive display, and decorative outer rings are
 not yet supported for region maps.
 
 [Berlin election walkthrough and comparison
-charts](https://loukesio.github.io/ggvmap/articles/berlin-vote-shares.html)
-· [Rebuild the four-city
-gallery](https://github.com/loukesio/ggvmap/blob/main/examples/region_cities.R)
-· [24 recorded geometry
-checks](https://github.com/loukesio/ggvmap/blob/main/examples/region_cities_checks.csv)
-· [Boundary sources and
-licences](https://github.com/loukesio/ggvmap/blob/main/inst/extdata/region-cities.README.md).
+charts](vignettes/articles/berlin-vote-shares.Rmd) · [Rebuild the
+four-city gallery](examples/region_cities.R) · [24 recorded geometry
+checks](examples/region_cities_checks.csv) · [Boundary sources and
+licences](inst/extdata/region-cities.README.md).
 
 ## API reference
 
