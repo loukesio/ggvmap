@@ -4,10 +4,14 @@
 \alias{vm_centroids}
 \title{Centroids of every cell in a voronoi_map}
 \usage{
-vm_centroids(vm)
+vm_centroids(vm, inside = FALSE)
 }
 \arguments{
-\item{vm}{A \code{voronoi_map} object.}
+\item{vm}{A \code{voronoi_map} or \code{voronoi_region} object.}
+
+\item{inside}{For region maps, return an interior label anchor when the
+area centroid lies outside the cell or in a hole? Default \code{FALSE} returns
+the mathematical centroid. Convex maps are unaffected.}
 }
 \value{
 A data frame.

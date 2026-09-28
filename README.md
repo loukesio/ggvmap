@@ -17,18 +17,25 @@ MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/
 
 > Voronoi Map Treemaps for ggplot2
 
-**ggvmap** partitions a convex polygon into cells whose areas are
-proportional to data weights — a *Voronoi treemap*. It implements the
-Nocaj & Brandes (2012) iterative power-diagram algorithm in **pure R**
-(no compiled code, no CGAL, no JavaScript) with first-class **ggplot2**
-integration: hierarchical (grouped) layouts, annotation rings, flags,
+**ggvmap** partitions an outline into cells whose areas are proportional
+to data weights — a *Voronoi treemap*. It implements the Nocaj & Brandes
+(2012) iterative power-diagram approach with native **ggplot2** output.
+The original `voronoi_map()` solver is written in **pure R** and
+supports convex outlines, grouped layouts, annotation rings, flags,
 value labels, 32 built-in colour palettes, and interactive hover maps.
+
+For real outlines, `vmap_region()` adds inward bends, holes, and
+disconnected pieces through optional `polyclip`, with optional `sf`
+input for geographic boundaries. These optional packages use compiled
+geometry libraries. [Try a real
+outline](#fit-values-inside-real-outlines).
 
 ## Installation
 
-ggvmap is pure R with a single hard dependency (ggplot2) — no
-compilation, no system libraries. Install the latest version from
-GitHub:
+ggvmap’s own code is R, and ggplot2 is its only required non-base
+package. The optional region feature additionally needs `polyclip`;
+geographic `sf` input also needs `sf`. Install the latest development
+version from GitHub:
 <img align="right" src="man/figures/logo.png" alt="ggvmap logo: a stained-glass Voronoi hexagon" width="400">
 
 ``` r
@@ -50,6 +57,8 @@ Some features use optional packages — install the ones you need:
 
 ``` r
 install.packages(c(
+  "polyclip",      # vmap_region()
+  "sf",            # geographic boundary input
   "ggimage",       # vm_add_flags(), vm_add_images()
   "ggiraph",       # interactive = TRUE + vm_girafe()
   "geomtextpath",  # curved ring labels
@@ -66,7 +75,7 @@ library(ggvmap)
 
 ## The one-glance demo
 
-Everything below is drawn from one bundled dataset — `data(freshwater)`,
+The core feature tour uses one bundled dataset — `data(freshwater)`,
 each country’s share of global renewable freshwater (FAO Aquastat via
 World Bank, 2022):
 
@@ -415,7 +424,10 @@ highlight style):
 ggvmap(vm, interactive = TRUE, palette = "alger") |> vm_girafe()
 ```
 
-<img src="man/figures/README-interactive.gif" alt="" width="60%" style="display: block; margin: auto;" />
+<img src="man/figures/README-interactive.gif" alt="Animated Voronoi map with hover highlighting" width="60%">
+
+[Open the animated GIF](man/figures/README-interactive.gif) if it does
+not play in your README viewer.
 
 Live version (hover it yourself) in the [Interactive
 article](https://loukesio.github.io/ggvmap/articles/interactive.html).
@@ -477,24 +489,104 @@ tessellation) following:
 
 ## Is it correct?
 
-Yes — and it’s verified. The tessellation is an *exact* power diagram
-(to floating-point precision): cells satisfy the defining
-minimum-power-distance property, tile the domain with no gaps or
-overlaps, are all convex, and the hierarchical layout is a valid nested
-power diagram. These invariants are enforced by
-`tests/testthat/test-correctness.R` and explained in the [Correctness
+For `voronoi_map()`, tests verify the weighted-distance rule that
+defines each cell, coverage without gaps or overlaps to numerical
+precision, convex cells, and valid nested group layouts. See
+`tests/testthat/test-correctness.R` and the [Correctness
 article](https://loukesio.github.io/ggvmap/articles/validation.html).
+
+For `vmap_region()`, cells are cut to the supplied outline and can have
+inward bends, holes, or separate pieces. Independent geometry tests
+check areas, coverage, overlaps, and interior label positions; see
+`tests/testthat/test-region.R`. The recorded four-city checks contain 24
+successful fits. These checks support the tested cases, not every
+possible input.
+
+A valid partition and accurate data proportions are different checks. In
+both functions, inspect `vm$converged` and the reported area error
+before using a layout to represent values. The fitting process does not
+guarantee exact shares.
 
 ## Example gallery
 
-More worked examples (with code) live in [`examples/`](examples/) —
+More worked examples (with code) live in
+[`examples/`](https://github.com/loukesio/ggvmap/tree/main/examples/) —
 grouped layouts, custom rings, flags on different shapes, and a combined
 infographic.
+
+## Fit values inside real outlines
+
+`vmap_region()` fits positive values inside a supplied outline,
+including inward bends, holes, and separate islands. Cell areas
+approximate the requested shares. Their positions are arranged by the
+algorithm and have no geographic meaning.
+
+Install the current GitHub version and the optional geometry packages:
+
+``` r
+remotes::install_github("loukesio/ggvmap")
+install.packages(c("polyclip", "sf"))
+```
+
+Use the bundled Berlin outline with **invented teaching values**:
+
+``` r
+library(ggvmap)
+library(sf)
+
+cities <- st_read(
+  system.file("extdata", "region-cities.geojson", package = "ggvmap"),
+  quiet = TRUE
+)
+vm <- vmap_region(
+  c(30, 25, 18, 12, 8, 5, 2), cities[cities$city == "Berlin", ],
+  labels = LETTERS[1:7], crs = 25833, seed = 11
+)
+stopifnot(vm$converged)
+ggvmap(vm, palette = "alger")
+```
+
+`crs = 25833` converts Berlin’s coordinates to a local map measured in
+meters. Choose a suitable projection for your own region. Coordinate
+matrices are also accepted. Several features in one `sf` object are
+combined into one outline; fit districts separately to preserve their
+individual boundaries.
+
+<img src="examples/region_cities.png" alt="Invented A–G shares fitted inside Berlin, Amsterdam, Greater London and Thessaloniki. Every city uses the same values and its own map scale." width="100%">
+
+[Open the four-city gallery](examples/region_cities.png) if the image
+does not display in your README viewer.
+
+**How to read this gallery:** there are no numeric axes. Read left to
+right, then the next row. Each panel is a real city outline; colors
+identify the invented categories A–G in the legend, and white lines
+separate their cells. The target shares are A = 30%, B = 25%, C = 18%, D
+= 12%, E = 8%, F = 5%, and G = 2%. For example, A occupies approximately
+30% of each outline; this is not a measured city statistic. Larger cells
+mean larger shares, not better outcomes. Cities use different display
+scales, so their drawn sizes cannot be compared. The subtitle’s area-fit
+error adds all differences between drawn and requested shares, in
+percentage points; smaller means closer to the targets, with zero
+meaning an exact match. It is not statistical uncertainty. Cell
+positions do not show where people or observations are located.
+
+**Limits:** a category may occupy separate pieces. Always check
+`vm$converged`; difficult outlines can fail to reach the requested
+accuracy. Grouping, interactive display, and decorative outer rings are
+not yet supported for region maps.
+
+[Berlin election walkthrough and comparison
+charts](https://loukesio.github.io/ggvmap/articles/berlin-vote-shares.html)
+· [Rebuild the four-city gallery](examples/region_cities.R) · [24
+recorded geometry checks](examples/region_cities_checks.csv) · [Boundary
+sources and
+licences](https://github.com/loukesio/ggvmap/blob/main/inst/extdata/region-cities.README.md).
 
 ## API reference
 
 | Function | Purpose |
 |----|----|
+| `vmap_region()` | Fit coordinate rings or projected `sf` boundaries, including concavities, holes and separate pieces; needs optional `polyclip` |
 | `voronoi_map()` | Core computation (add `group =` for a hierarchical layout); print it to check convergence |
 | `ggvmap()` | The main ggplot2 visualisation (`autoscale`, `min_area`, `wrap`, per-cell `label_size` / `label_col` / `fontface`, `fill_by`, `family`) |
 | `autoplot()` | Alias for `ggvmap()` via the ggplot2 generic |
@@ -511,15 +603,15 @@ infographic.
 
 ## Comparison with other R packages
 
-| Feature                 | ggvmap        | voronoiTreemap     | WeightedTreemaps |
-|-------------------------|---------------|--------------------|------------------|
-| Backend                 | Pure R        | D3.js (htmlwidget) | C++ / CGAL       |
-| ggplot2 native          | ✅            | ❌                 | ❌               |
-| Dependencies            | ggplot2 only  | htmlwidgets, d3    | RcppCGAL         |
-| Hierarchical            | ✅ (grouped)  | ✅                 | ✅               |
-| Annotation ring / flags | ✅            | ❌                 | ❌               |
-| Custom shapes           | ✅ any convex | ✅                 | ✅               |
-| Install complexity      | Trivial       | Medium             | Hard (CGAL)      |
+| Feature | ggvmap | voronoiTreemap | WeightedTreemaps |
+|----|----|----|----|
+| Backend | Pure R core; optional compiled geometry for regions | D3.js (htmlwidget) | C++ / CGAL |
+| ggplot2 native | ✅ | ❌ | ❌ |
+| Required packages | ggplot2; optional polyclip / sf for regions | htmlwidgets, d3 | RcppCGAL |
+| Hierarchical | ✅ (grouped) | ✅ | ✅ |
+| Annotation ring / flags | ✅ | ❌ | ❌ |
+| Custom shapes | ✅ convex; non-convex via optional `polyclip` | ✅ | ✅ |
+| Install complexity | Trivial | Medium | Hard (CGAL) |
 
 ## Acknowledgements
 
@@ -531,8 +623,9 @@ Cameron](https://stackoverflow.com/users/12500315/allan-cameron)’s
 answer there — thank you, Allan.
 
 ggvmap pairs naturally with its sibling packages
-[ltc](https://github.com/loukesio/ltc-color-palettes) (the colour palettes)
-and [ggsynteny](https://github.com/loukesio/ggsynteny) (synteny plots).
+[ltc](https://github.com/loukesio/ltc-color-palettes) (the colour
+palettes) and [ggsynteny](https://github.com/loukesio/ggsynteny)
+(synteny plots).
 
 ## License
 

@@ -36,6 +36,9 @@ examples/circle_voronoi_1.png
 examples/ggplot2 polygon *.png
 examples/ring_check.png
 examples/ring_omit_check.png
+examples/berlin-data/
+examples/region-data/
+examples/berlin_session_info.txt
 ggvmap_improvements.patch
 
 # Logo variants: only the active logo is tracked

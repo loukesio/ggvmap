@@ -8,6 +8,7 @@ reference:
     desc: Build a Voronoi map (optionally hierarchical).
     contents:
       - voronoi_map
+      - vmap_region
       - ggvmap
   - title: Plot
     desc: Base-R and ggplot2 visualisation.
@@ -50,3 +51,4 @@ articles:
       - annotations
       - interactive
       - validation
+      - articles/berlin-vote-shares

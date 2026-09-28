@@ -3,6 +3,29 @@
 Rendered with `ggvmap` using the built-in `"alger"` palette. Regenerate every
 figure with `Rscript examples/make_gallery.R` from the package root.
 
+### Fit real city outlines
+
+The public `vmap_region()` function is demonstrated on Berlin, Amsterdam,
+Greater London and Thessaloniki. The values are illustrative, with the same
+seven weights in every city. After installing the development checkout, run
+`Rscript examples/region_cities.R` to rebuild the plots and check 24 combinations
+of cities, seeds and weight patterns.
+
+![Four city outlines](region_cities.png)
+
+See the [README guide](../README.md#fit-values-inside-real-outlines) and
+[source notes](../inst/extdata/region-cities.README.md).
+
+### Berlin district vote-share map
+
+See the [step-by-step Berlin article](https://loukesio.github.io/ggvmap/articles/berlin-vote-shares.html)
+for the reviewed map, interpretation limits, and independent geometry checks.
+Run `Rscript examples/berlin_map_voronoi.R` from the repository root.
+This separate example uses official 2023 votes, geographic outlines, additional
+packages, and conventional party colors; `make_gallery.R` does not rebuild it.
+
+![Berlin district vote shares](berlin_map_voronoi_reviewed.png)
+
 ### Boundary shapes
 
 The same 7 weights on any convex boundary — `clip_square()`, `clip_hexagon()`,
