@@ -13,12 +13,12 @@ of cities, seeds and weight patterns.
 
 ![Four city outlines](region_cities.png)
 
-See the [README guide](../README.md#real-outlines-vmap_region) and
+See the [README guide](../README.md#fit-values-inside-real-outlines) and
 [source notes](../inst/extdata/region-cities.README.md).
 
 ### Berlin district vote-share map
 
-See the [step-by-step README tutorial](../README.md#tutorial-berlin-district-vote-shares-on-a-real-map)
+See the [step-by-step Berlin article](https://loukesio.github.io/ggvmap/articles/berlin-vote-shares.html)
 for the reviewed map, interpretation limits, and independent geometry checks.
 Run `Rscript examples/berlin_map_voronoi.R` from the repository root.
 This separate example uses official 2023 votes, geographic outlines, additional
