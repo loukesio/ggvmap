@@ -28,17 +28,17 @@ file.copy(file.path(out, 'flags', 'br.png'), flag_cache_dir,
 
 base <- function() {
   ggvmap(vm, palette = 'reading', label_col = 'grey15',
-         autoscale = TRUE, min_area = 0.009, wrap = 10, label_size = 6)
+         autoscale = TRUE, min_area = 0.009, wrap = 10, label_size = 6.2)
 }
 with_values <- function() {
   base() |>
-    vm_add_labels(value = countries$share, suffix = '%', size = 3.6,
+    vm_add_labels(value = countries$share, suffix = '%', size = 3.8,
                   min_area = 0.009)
 }
 with_arc <- function() {
   with_values() |>
     vm_add_ring(style = 'arc', colors = '#333333', values = TRUE,
-                label_size = 4)
+                label_size = 4.5)
 }
 
 plots <- list(
@@ -46,16 +46,16 @@ plots <- list(
   with_values(),
   with_arc(),
   ggvmap(vm, palette = 'reading', label_col = 'grey15',
-         label_size = c(Brazil = 8), fontface = c(Brazil = 'bold'),
+         label_size = c(Brazil = 8.5), fontface = c(Brazil = 'bold'),
          autoscale = TRUE, min_area = 0.009, wrap = 10) |>
-    vm_add_labels(value = countries$share, suffix = '%', size = 3.6,
+    vm_add_labels(value = countries$share, suffix = '%', size = 3.8,
                   min_area = 0.009),
   with_arc() |>
     vm_add_flags(country = 'Brazil', cells = 'Brazil', method = 'url',
                  cache = TRUE, size = 0.07, nudge_y = 0.05),
   with_values() |>
     vm_add_ring(style = 'band', palette = 'reading', width = 0.11,
-                label_size = 5)
+                label_size = 4.5)
 )
 
 ink <- '#262626'; muted <- '#575D5D'
@@ -67,7 +67,7 @@ txt <- function(label, x, y, size, color = ink, face = 'plain', just = 'left') {
 
 for (i in seq_along(plots)) {
   ragg::agg_png(file.path(out, 'country_frames', sprintf('%02d.png', i)),
-                width = 2400, height = 1800, res = 100, background = 'white')
+                width = 2400, height = 1800, res = 150, background = 'white')
   grid.newpage()
   print(plots[[i]] + theme(plot.margin = margin(14, 18, 14, 18)),
         newpage = FALSE, vp = viewport(x = .5, y = .53, width = .97, height = .92))
