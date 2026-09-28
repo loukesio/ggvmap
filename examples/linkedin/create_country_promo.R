@@ -28,11 +28,11 @@ file.copy(file.path(out, 'flags', 'br.png'), flag_cache_dir,
 
 base <- function() {
   ggvmap(vm, palette = 'reading', label_col = 'grey15',
-         autoscale = TRUE, min_area = 0.009, wrap = 10, label_size = 6.2)
+         autoscale = TRUE, min_area = 0.009, wrap = 10, label_size = 6)
 }
 with_values <- function() {
   base() |>
-    vm_add_labels(value = countries$share, suffix = '%', size = 3.8,
+    vm_add_labels(value = countries$share, suffix = '%', size = 3.6,
                   min_area = 0.009)
 }
 with_arc <- function() {
@@ -46,9 +46,9 @@ plots <- list(
   with_values(),
   with_arc(),
   ggvmap(vm, palette = 'reading', label_col = 'grey15',
-         label_size = c(Brazil = 8.5), fontface = c(Brazil = 'bold'),
+         label_size = c(Brazil = 8), fontface = c(Brazil = 'bold'),
          autoscale = TRUE, min_area = 0.009, wrap = 10) |>
-    vm_add_labels(value = countries$share, suffix = '%', size = 3.8,
+    vm_add_labels(value = countries$share, suffix = '%', size = 3.6,
                   min_area = 0.009),
   with_arc() |>
     vm_add_flags(country = 'Brazil', cells = 'Brazil', method = 'url',
