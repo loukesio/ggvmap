@@ -1,5 +1,5 @@
 ---
-title: "ggvmap: Voronoi map treemaps for ggplot2 in pure R"
+title: "ggvmap: honest Voronoi treemaps for ggplot2, in pure R"
 author:
   - name: Loukas Theodosiou
     email: loukesio@gmail.com
@@ -15,384 +15,502 @@ format:
   docx:
     number-sections: true
 bibliography: references.bib
+reference-section-title: References
 execute:
   echo: false
   warning: false
   message: false
 abstract: |
-  Treemaps communicate part-of-whole relationships by mapping quantities to
-  areas. Voronoi treemaps generalise the familiar rectangular layout to
-  arbitrary convex boundaries and organic, polygon-shaped cells, but the
-  existing R implementations delegate the layout either to a JavaScript/D3
-  runtime or to compiled CGAL code, which complicates installation,
-  reproducibility, and integration with the ggplot2 ecosystem. Here I present
-  ggvmap, an R package that computes Voronoi map treemaps in pure R -- its
-  only hard dependency is ggplot2 -- and renders them as ordinary ggplot2
-  objects. ggvmap supports hierarchical (grouped) layouts, a grammar of
-  pipe-able annotation layers (rings, flags, images, value labels),
-  automatic small-cell label handling, and interactive hover maps. The
-  tessellations it produces are exact power diagrams whose defining
-  geometric properties are enforced by property-based tests. Benchmarks
-  against voronoiTreemap (D3) and WeightedTreemaps (CGAL) show that ggvmap
-  has the simplest installation and the shortest code for the same plot, is
-  the fastest of the measurable implementations below about fifty cells,
-  and trades runtime -- governed by an explicit, user-visible iteration
-  budget -- at larger sizes.
+  A treemap shows how a whole splits into parts by giving each part an area
+  in proportion to its size. A Voronoi treemap does this with irregular,
+  many-sided cells inside any convex outline, such as a circle. The cells
+  are found by trial and correction, so the areas are never exact, only
+  close. ggvmap is an R package that computes these maps in plain R, with
+  ggplot2 as its only required dependency, and draws them as ordinary
+  ggplot2 plots. Every map reports how close its areas came to the
+  intended values, for the map as a whole (`converged`) and for each cell
+  (`vm_fit()`). The layout combines the established step rules of the
+  d3-voronoi-map library with a second phase, based on Newton's method,
+  that rescues maps those rules cannot fit. In a reproducible study of
+  519 maps, every map met the default 1% target; without the second phase,
+  106 of them would have failed. Next to the two existing R
+  implementations, ggvmap is the easiest to install, the fastest for small
+  maps, and the only one that reaches its accuracy target at default
+  settings. On large maps it is much slower than the compiled
+  implementation.
 keywords: [data visualization, treemap, Voronoi diagram, power diagram, R, ggplot2]
 ---
 
-**Highlights**
-
-- Voronoi map treemaps as native ggplot2 layers, in pure R with a single
-  hard dependency (ggplot2).
-- Hierarchical (grouped) layouts plus a grammar of pipe-able annotation
-  verbs: rings (band or labelled arc), country flags, images, and value
-  labels.
-- Automatic small-cell handling: per-cell label autoscaling and area-based
-  label suppression.
-- Verified correctness: the layout is an exact power diagram, enforced by
-  property-based tests on every build.
-- Convergence is never silent: printing the layout reports the iteration
-  count, the residual area error, and a `converged` flag, so an unfaithful
-  map is caught before it is plotted.
-
-# Introduction
-
-Part-of-whole structure is among the most common shapes of scientific data:
-gene families within a genome, reads within a sequencing library, budget
-positions within an economy. Treemaps display such data by making the area
-of a cell proportional to its weight. The classic rectangular treemap is
-easy to compute but produces high-aspect-ratio slivers and a strongly
-grid-like appearance; *Voronoi treemaps* [@balzer2005] instead partition an
-arbitrary convex polygon into organic cells, improving both aesthetics and
-area perception, and are the layout behind many widely shared
-data-journalism infographics.
-
-Computing a Voronoi treemap requires iteratively adapting an additively
-weighted Voronoi diagram -- a power diagram [@aurenhammer1987] -- until every
-cell's area matches its target share [@nocaj2012]. In R, two implementations
-exist: **voronoiTreemap**, which wraps the D3/JavaScript layout in an
-htmlwidget [@voronoitreemap], and **WeightedTreemaps**, which computes the
-layout in compiled C++ against the CGAL geometry library
-[@weightedtreemaps]. Both work well, but neither produces a ggplot2 object,
-and both carry installation burdens -- a browser runtime in one case, CGAL
-compilation in the other -- that complicate scripted, reproducible
-pipelines. There is no pure-R, ggplot2-native option. **ggvmap** fills that
-gap, following the design precedent of tidyplots [@engler2025] in offering
-a small, consistent, pipe-able interface on top of ggplot2 [@wickham2016].
-
-# Results
-
-## A grammar of Voronoi maps
-
-@fig-design summarises the interface. A single computation function,
-`voronoi_map()`, takes weights (optionally with labels and a grouping
-vector) and returns the tessellation; `ggvmap()` renders it as a ggplot;
-and a family of `vm_add_*()` verbs -- `vm_add_ring()`, `vm_add_labels()`,
-`vm_add_flags()`, `vm_add_images()` -- add annotation layers through the
-native pipe, each reading the layout from the plot object and returning a
-new plot, so the layers chain without intermediate variables
-(@fig-design A, C). `ggvmap()` also accepts raw weights directly,
-collapsing computation and rendering into one call.
-
-Appearance is controlled at three levels (@fig-design D): the map
-(palette, fill mapping, clip shape, font family), the group (per-group
-border colours for emphasis), and the cell (per-cell font faces, label
-colours, and label selection). Arguments accept either a single value or a
-vector named by cell or group, so emphasising one region of an otherwise
-uniform map is a one-argument change. Because every result is a ggplot,
-titles, themes, and extensions from the wider ggplot2 ecosystem (e.g.
-markdown titles via ggtext, custom fonts via showtext) apply unchanged.
-
-![Design of ggvmap. (A) The workflow: a weight vector (with optional
-labels and a grouping variable) flows through `voronoi_map()`, which
-computes the tessellation, into `ggvmap()`, which renders it; annotation
-verbs are chained with R's native pipe, and the result is written to file
-with `ggsave()` or made interactive with `vm_girafe()`. (B) From data to
-plot: the nine lines of code shown produce the finished infographic below
-them from the bundled `freshwater` dataset (columns `country`, `share`,
-`region`; each country's share of global renewable freshwater resources,
-2022 [@faoaquastat]). Every cell is a country with area proportional to its
-share, colour and sector encode the region, values sit beneath the names
-(shrunk or hidden in the smallest cells), and the outer arc ring carries
-each region's total share. (C) The complete exported vocabulary, grouped by
-role: one computation function; four output functions; four pipe-able
-annotation verbs; accessors that return tidy data frames for custom
-ggplot2 work; the colour and flag helpers; and the ten convex boundary
-constructors. (D) Appearance arguments by the level they act on -- whole
-map, group, or single cell. Every cell-level argument also accepts a
-vector named by cell label, so emphasising one cell (bold face, different
-colour, its own label) is a one-argument change with no data
-manipulation.](figures/fig1_design.png){#fig-design width="100%"}
-
-## The layout is a diagnosable object
-
-Between computation and rendering sits a deliberate checkpoint. The
-recommended workflow is two steps -- compute the layout, inspect it, and
-only then plot:
-
-```r
-vm <- voronoi_map(freshwater$share, labels = freshwater$country,
-                  group = freshwater$region, clip = clip_circle(),
-                  seed = 5, max_iter = 80)
-vm
-#> Voronoi Map
-#>   hierarchical | 6 groups | 30 cells
-#>   30 cells | 17 iterations | convergence: 1.509%
-#>   Converged: TRUE
+```{r setup}
+devtools::load_all("..", quiet = TRUE)
+study <- read.csv("../vignettes/fit_study.csv")
+bench <- read.csv("figures/benchmark_results.csv")
+runs  <- read.csv("figures/benchmark_runs.csv")
+pct  <- function(x, d = 1) paste0(formatC(100 * x, format = "f", digits = d), "%")
+secs <- function(x) ifelse(x < 1, paste0(round(x * 1000), " ms"),
+                    ifelse(x < 90, paste0(round(x, 1), " s"),
+                           paste0(round(x / 60, 1), " min")))
+flat_small <- study[study$type == "flat" & study$n <= 40, ]
+flat_100   <- study[study$type == "flat" & study$n == 100, ]
+grouped    <- study[study$type == "grouped", ]
+top10 <- freshwater[!grepl("^Rest of|Middle East", freshwater$country), ][1:10, ]
+round1 <- voronoi_map(top10$share, clip = clip_circle(), seed = 4, max_iter = 1)
+setting_medians <- tapply(study$median_rel_error,
+                          paste(study$type, study$n, study$spread), median)
+n_failed_before <- sum(!study$converged_without_newton)
+failed_spread <- table(factor(study$spread[!study$converged_without_newton],
+                              c("even", "typical", "extreme")))
 ```
 
-Printing the object reports the three facts that cannot be read off the
-picture. First, the `Converged` flag: the layout is an iterative
-optimisation with a finite budget (`max_iter`), so it can stop before cell
-areas match their targets -- and an unconverged map still renders and looks
-entirely plausible, which is precisely why the check must precede the
-plot. If the flag is `FALSE`, the defining promise of a treemap (area
-proportional to value) is broken, and the remedy is a larger `max_iter` or
-a different `seed`. Second, the residual area error, which quantifies how
-faithful the converged areas are -- a figure a manuscript can report
-directly. Third, the iteration count, which shows how much of the budget
-was consumed and therefore how much margin the layout had.
+# What this package is for
 
-The separation also reflects where the cost and the randomness live. The
-layout is the expensive, seed-dependent step; rendering is cheap and
-deterministic. Computing the tessellation once, verifying it, and passing
-the same object to every downstream call -- `ggvmap()`, the annotation
-verbs, the tidy accessors, `vm_girafe()` -- guarantees that all outputs
-describe one verified layout instead of silently recomputing (and
-potentially re-randomising) it per plot.
+Many questions in science and everyday life are about how a whole splits
+into parts: how a country spends its budget, which genes make up a genome,
+which countries hold the world's fresh water. A pie chart answers this
+with slices. A *treemap* answers it with a picture made of tiles, where
+each tile's area is its share of the whole. If Brazil holds 13% of the
+world's fresh water, its tile covers 13% of the picture.
 
-## One dataset, many maps
+The classic treemap uses rectangles. A *Voronoi treemap* [@balzer2005]
+uses irregular tiles with many sides instead, and fits them inside any
+convex outline: a circle, a hexagon or a triangle (a shape is *convex*
+when the straight line between any two of its points stays inside it).
+These maps are popular in newspaper graphics because they look organic
+and fit any outline. @fig-how shows one with ten countries.
 
-@fig-gallery shows the same dataset across the package's layout and
-annotation space: nine convex boundary shapes, a hierarchical layout with
-one sector per region and per-group border emphasis, the two ring styles
-(filled band and labelled arc with group shares), continuous fill by
-weight, and flag annotations. Labels in small cells are automatically
-shrunk (`autoscale`) or suppressed (`min_area`), which keeps maps with
-long-tailed weight distributions legible without manual tuning.
+Two R packages already draw Voronoi treemaps: **voronoiTreemap**
+[@voronoitreemap], which runs its calculation in a web browser, and
+**WeightedTreemaps** [@weightedtreemaps], which runs it in compiled C++
+code and needs the CGAL geometry library to be built during
+installation. Neither produces a ggplot2 plot, the format most R users
+build figures with [@wickham2016]. **ggvmap** fills that gap: the
+calculation is written in plain R, ggplot2 is its only required
+dependency, and the result is an ordinary ggplot2 object that the rest
+of the ggplot2 ecosystem can change.
 
-![Gallery: one dataset, fourteen maps. Rows 1--2: the ten largest
-freshwater-holding countries laid out on each of the nine built-in convex
-boundaries -- the identical weight vector fills any convex shape with
-area-true cells, so the boundary is a free design choice. Row 3, left to
-right: the full 30-row dataset in a hierarchical layout (one sector per
-region) with the LATAM region singled out by a dark border
-(`group_border_col = c(LATAM = "#333333")`); the filled `"band"` ring
-style, where each segment spans the angular extent of its region's sector;
-the thin `"arc"` ring style with each region's share appended to its label
-(`values = TRUE`); continuous fill mapped to cell weight
-(`fill_by = "data_weight"`), turning the map into a treemap-heatmap
-hybrid; and national flags resolved automatically from the country names
-(`vm_add_flags()`). Throughout, labels in small cells shrink
-(`autoscale = TRUE`) or disappear below an area threshold (`min_area`),
-keeping long-tailed data legible without manual
-tuning.](figures/fig2_gallery.png){#fig-gallery width="100%"}
+The rest of this paper explains how the map is built (@sec-how), how close
+it comes to the intended areas and how to check that for any map
+(@sec-honest), what the package can draw (@sec-use), how it compares with
+the other two packages (@sec-bench), and where it falls short
+(@sec-limits). The precise mathematics is in @sec-methods.
 
-## Use cases
+# How the map is built {#sec-how}
 
-@fig-usecases sketches four disciplinary applications, each fully
-scripted in the repository: gene families by genome share, genome-wide
-association hits per chromosome, RNA-seq library composition (with the
-contaminant fraction outlined for emphasis), and household expenditure
-shares. The data in this figure are simulated but realistic; the scripts
-are drop-in templates for real data.
+**Pins and pull.** Picture a cork board in the shape of a circle with one
+pin per country. Every spot on the board belongs to one pin. In an
+ordinary Voronoi diagram, a spot belongs to the nearest pin. Here, each
+pin also has a *pull*: a pin with a strong pull claims spots that are a
+bit farther away. The exact rule is that a spot belongs to the pin with
+the smallest *squared distance minus pull*. Mathematicians call the
+resulting picture a *power diagram* [@aurenhammer1987]. Its useful
+property is that the border between two neighbouring pins is always a
+straight line, so every tile is a convex polygon, and the tiles fit
+together with no gaps and no overlaps.
 
-![Use cases across disciplines. All data are simulated but realistic, and
-each panel's complete script ships in `paper/figures/fig3_usecases.R` as a
-drop-in template. (A) Genomics: twelve large gene families sized by gene
-count and grouped by functional class; the arc ring reports each class's
-share of the depicted families, and light-on-dark label colours keep the
-dark Regulation sector readable. (B) Genetics: simulated genome-wide
-association hits per human chromosome (weights roughly proportional to
-chromosome length) on a rectangular boundary, with continuous fill
-restating each cell's weight so hot chromosomes stand out twice -- by area
-and by colour. (C) Transcriptomics: where the reads of an RNA-seq library
-end up, grouped into signal, contaminant, and noise classes; the
-contaminant class is outlined dark for emphasis and fractions below 2% of
-the library lose their labels (`min_area`). (D) Social science: household
-expenditure shares grouped by need category, the same
-hierarchy-plus-arc-ring pattern as panel A applied to survey-style
-data.](figures/fig3_usecases.png){#fig-usecases width="88%"}
+**Adjusting until the areas are right.** At first the pins are spread
+out at random and all pulls are similar, so the tiles have the wrong
+sizes (@fig-how A). The package then repeats two corrections, one round
+at a time [@nocaj2012]:
 
-## Benchmarks
+1. *Move each pin to the middle of its tile.* This keeps tiles round and
+   compact rather than long and thin.
+2. *Change each pin's pull.* If a tile is smaller than it should be, its
+   pull goes up a little; if it is larger, its pull goes down a little.
+
+After each round, the package adds up every tile's mistake (how much too
+big or too small it is) and divides by the area of the whole map. When
+that total falls below 1% (the default), it stops. If it has not reached
+1% after 200 rounds (the default limit), it stops anyway and says so.
+@fig-how shows the mistakes shrinking from
+`r pct(round1$convergence)`
+after the first round to well under 1% at the end.
+
+**Careful steps.** Taking big correction steps makes the tiles overshoot
+and wobble back and forth. ggvmap therefore uses the cautious
+step rules of Franck Lebeau's JavaScript library *d3-voronoi-map*
+[@d3voronoimap], translated into R: a pull never changes by more than
+10% per round, steps shrink when the total mistake has gone up in recent
+rounds, and a pin whose pull becomes so strong that it would swallow a
+close neighbour is corrected. These rules are practical safeguards, not
+mathematical guarantees, and they do get stuck: most often when one
+value is much larger than all the others, or when the values range from
+tiny to huge.
+
+**When the rounds get stuck.** If 25 rounds pass without improvement, the
+package stops moving the pins and works out the pulls directly. This
+rests on a mathematical result: for pins that stay where they are, there
+is always a set of pulls that gives every tile exactly its intended area
+[@aurenhammer1998]. Newton's method, the classic technique of improving a
+guess by following the slope, finds those pulls reliably if it starts
+with all pulls equal and takes careful steps [@kitagawa2019]; in practice
+it needs only a handful of steps. Maps that the rounds fit on their own
+are not affected.
+
+**Groups.** When values belong to groups (countries in regions, say),
+the package first splits the outline into one tile per group, then splits
+each group tile among its members with the same method. Each of the two
+steps gets half of the 1% allowance, so the finished map as a whole stays
+within 1% (@sec-methods explains why).
+
+**Very small values.** A tile for a value hundreds of times smaller than
+the largest one would be too small to see or to label. By default, any
+value below 1% of the largest is drawn as if it were exactly 1% of the
+largest (`min_weight_ratio`). Such tiles are drawn *bigger than their
+value*. `vm_fit()` shows which tiles this affected, and
+`min_weight_ratio = 0` turns it off.
+
+![How a map is built. The ten countries with the most renewable fresh
+water [@faoaquastat], laid out in a circle from the same random start
+and stopped after 1, 3 and 6 rounds (A--C) and when finished (D). The
+subtitle of each panel gives the area mistakes of all tiles added up, as a
+share of the circle; the package stops once this falls below 1%. Pins move
+toward the middle of their tiles and pulls are adjusted every round, so
+the tiles shift and grow or shrink. (E) For each country (one row), the
+open ring is the share of the circle its tile should cover, the yellow dot
+is the share it covered after round 1, and the blue dot the share in the
+finished map. After round 1 Myanmar's tile is far too small and China's too
+large; in the finished map every blue dot sits inside its
+ring.](figures/fig0_howitworks.png){#fig-how width="100%"}
+
+# Is the picture honest? {#sec-honest}
+
+A treemap makes one promise: *area equals amount*. Two different
+questions decide whether a particular map keeps it.
+
+**Are the tiles a proper map?** Yes, always, because of how they are
+built: each tile is cut out of the outline with straight lines, so tiles
+cannot overlap, cannot leave gaps, and are always convex. This needs no
+experiment. The package's tests still check it on every build
+(`tests/testthat/test-correctness.R`), the same way one would check that
+a sorting function returns all of its input: as a guard against
+programming mistakes, not as a result.
+
+**Does each tile have the right area?** Only approximately, and this is
+the question that matters. The rounds stop at a 1% total mistake, or
+earlier if they run out of rounds. So every map carries its own report.
+Printing the map shows the total mistake and whether the target was met:
+
+```{r echo = TRUE}
+vm <- voronoi_map(freshwater$share, labels = freshwater$country,
+                  group = freshwater$region, clip = clip_circle(), seed = 5)
+vm
+```
+
+and `vm_fit()` lists each tile's intended share next to the share it was
+drawn with:
+
+```{r echo = TRUE}
+fit <- vm_fit(vm)
+head(fit[order(-abs(fit$rel_error)), c("label", "value_share",
+     "target_share", "actual_share", "rel_error")], 3)
+```
+
+The second listing shows the most important lesson about these maps. The
+map as a whole is within its 1% allowance, yet single small tiles can be
+off by a noticeable *fraction of their own size*: a tile meant to cover
+1% of the map that covers 1.1% is 10% too big. A total measure barely
+notices this, because the extra area is tiny compared with the whole.
+For readers this is usually harmless (no one can see a tenth of a
+percent of a circle), but anyone who reads exact values off small tiles
+should check `vm_fit()` first, or tighten `convergence_ratio`.
+
+**How close do maps get in practice?** We laid out
+`r nrow(study)` maps (@tbl-study): flat maps of 5 to 40 tiles in four
+outlines, flat maps of 100 tiles, and grouped maps of 30 tiles in 5
+groups, each with three kinds of values: *even* (all within a factor of
+two of each other), *typical* (a few large and many small values) and
+*extreme* (values spanning several orders of magnitude). Ten different
+random datasets were drawn for each setting (three at 100 tiles). The
+script is `data-raw/fit_study.R` in the package repository.
 
 ```{r}
-res <- read.csv("figures/benchmark_results.csv")
-fmt_s <- function(x) ifelse(x < 1, paste0(round(x * 1000), " ms"),
-                            ifelse(x < 90, paste0(round(x, 1), " s"),
-                                   paste0(round(x / 60, 1), " min")))
-pct <- function(x) sprintf("%.0f%%", 100 * x)
-gg  <- res[res$package == "ggvmap", ]
-wt  <- res[res$package == "WeightedTreemaps", ]
-gg10  <- gg[gg$n == 10, ];  wt10  <- wt[wt$n == 10, ]
-gg50  <- gg[gg$n == 50, ];  wt50  <- wt[wt$n == 50, ]
-gg100 <- gg[gg$n == 100, ]; wt100 <- wt[wt$n == 100, ]
-gg500 <- gg[gg$n == 500, ]; wt500 <- wt[wt$n == 500, ]
+#| label: tbl-study
+#| tbl-cap: "Accuracy study. *Converged*: maps that met the 1% target within the default 200 rounds. *Median tile error*: for each map, the middle value of |drawn − intended| / intended over its tiles; the table gives the middle value over maps. *Worst tile*: the largest such error in any map of the row. Tiles drawn at the `min_weight_ratio` floor are measured against their floored target."
+rows <- list(
+  "Flat, 5-40 tiles" = flat_small,
+  "Flat, 100 tiles"  = flat_100,
+  "Grouped, 30 tiles in 5 groups" = grouped)
+tab <- do.call(rbind, lapply(names(rows), function(nm) {
+  d <- rows[[nm]]
+  do.call(rbind, lapply(c("even", "typical", "extreme"), function(sp) {
+    e <- d[d$spread == sp, ]
+    data.frame(Maps = nm, Values = sp, `Layouts` = nrow(e),
+               Converged = sprintf("%d of %d", sum(e$converged), nrow(e)),
+               `Median rounds` = median(e$iterations),
+               `Median tile error` = pct(median(e$median_rel_error), 2),
+               `Worst tile` = pct(max(e$max_rel_error), 0),
+               check.names = FALSE)
+  }))
+}))
+tab$Maps[duplicated(tab$Maps)] <- ""
+knitr::kable(tab, align = "llrrrrr")
 ```
 
-@fig-benchmark compares ggvmap with voronoiTreemap and
-WeightedTreemaps on four axes, each package at its default settings.
-*Install complexity* (@fig-benchmark A): ggvmap needs
-`r unique(gg$n_deps)` recursively resolved CRAN packages and no compiled
-code, versus `r unique(wt$n_deps)` packages plus CGAL compilation for
-WeightedTreemaps; voronoiTreemap resolves 44 packages and runs its layout
-in a browser. *Code length* (@fig-benchmark B): the same grouped treemap
-takes the fewest words, characters, and function calls in ggvmap.
-*Runtime* (@fig-benchmark C) is size-dependent. On small maps ggvmap is
-the faster of the two measurable implementations --
-`r fmt_s(gg10$median_s)` versus `r fmt_s(wt10$median_s)` at n = 10 and
-`r fmt_s(gg50$median_s)` versus `r fmt_s(wt50$median_s)` at n = 50 --
-because it avoids the fixed setup cost of the compiled pipeline. Beyond
-that, pure R pays its price: `r fmt_s(gg100$median_s)` versus
-`r fmt_s(wt100$median_s)` at n = 100, and a
-`r round(gg500$median_s / wt500$median_s)`-fold gap at n = 500
-(`r fmt_s(gg500$median_s)` vs `r fmt_s(wt500$median_s)`). Treemaps
-typically summarise tens of categories, where ggvmap is competitive or
-faster; for maps of many hundreds of cells, WeightedTreemaps is the right
-tool.
+Three things stand out. First, the 1% target was met in
+`r sum(study$converged)` of `r nrow(study)` maps (@tbl-study,
+*Converged*). Without the second phase described in @sec-how, `r n_failed_before`
+of these maps would have got stuck (`r failed_spread[["extreme"]]` with
+extreme, `r failed_spread[["typical"]]` with typical and
+`r failed_spread[["even"]]` with even values), some with area mistakes
+adding up to `r pct(max(study$total_error_without_newton), 0)` of the map. Second, the typical tile is drawn very close to its
+intended size: the median tile error was
+`r pct(median(study$median_rel_error), 2)` over all maps, and below
+`r pct(ceiling(100 * max(setting_medians)) / 100, 0)`
+in every setting. Third, single small tiles can still be well off. The
+worst tile of the study was drawn at
+`r formatC(1 + max(study$max_rel_error), format = "f", digits = 1)` times
+its intended size, in a map that as a whole was within its 1% allowance
+(@tbl-study, *Worst tile*). In every map the tiles covered the outline
+exactly (largest difference
+`r formatC(max(study$tiling_error), format = "e", digits = 0)`, which is
+rounding error in the computer's arithmetic).
 
-*Accuracy* (@fig-benchmark D) turns out to measure convergence, not
-intrinsic layout quality. At n = 10 and n = 50 the layout converges below
-the default 1% area-error threshold within 32 and 63 iterations, giving
-`r pct(gg10$mean_rel_area_error)` and `r pct(gg50$mean_rel_area_error)`
-mean relative cell-area error. The n = 100 and n = 500 instances exhaust
-the default budget of 200 iterations before converging; the stopped
-layouts show `r pct(gg100$mean_rel_area_error)` and
-`r pct(gg500$mean_rel_area_error)` mean error, and the n = 100 draw --
-whose lognormal weights span a 128-fold range -- is the hardest of the
-four. This is an iteration-budget artefact, not a ceiling: rerunning the
-same n = 100 instance with `max_iter = 500` converges after 383 iterations
-to 2.3% mean error (63 s). ggvmap is deliberately transparent about this:
-the returned object carries a `converged` flag and the iteration count.
-WeightedTreemaps shows the same budget-dependence under its own defaults
-(`r pct(min(wt$mean_rel_area_error))` to
-`r pct(max(wt$mean_rel_area_error))` across sizes), and both
-implementations concentrate their largest relative errors in the smallest
-cells, where the target area is near zero and a large *relative* error is
-visually invisible. voronoiTreemap computes its layout in the browser, so
-R-side runtime and accuracy are not measurable; it appears only in panels
-A--B.
+**Same values, different picture.** The starting positions of the pins
+are random. Different `seed` values therefore give different
+arrangements of the same data, all equally valid. The arrangement
+carries no meaning: neighbouring tiles are not more similar than
+distant ones, and the position of a tile says nothing about its value.
+Only areas (and the colours the user chooses) carry information. Setting
+`seed` makes a figure reproducible.
 
-![Benchmarks against the two existing R implementations, all packages at
-default settings; the full protocol is in Methods and
-`paper/figures/fig4_benchmark.R`. (A) Install complexity: recursively
-resolved CRAN dependencies (Depends, Imports, LinkingTo; base packages
-excluded). ggvmap's 17 are ggplot2 and its tree, with no compiled code;
-WeightedTreemaps adds CGAL compilation; voronoiTreemap runs on the
-htmlwidgets/D3 stack. (B) Code length for the same grouped treemap of
-`data(freshwater)`: lines, words, characters, and function calls of the
-minimal script in each package (log scale; lower is better). (C) Median
-layout runtime on flat maps of lognormal(3, 1) weights, log--log axes:
-ggvmap (teal) is fastest up to n = 50, then the compiled implementation
-(orange) pulls ahead -- 33 s vs 5.5 s at n = 100 and 14.5 min vs 29 s at
-n = 500. (D) Mean relative cell-area error, |actual - target| / target.
-The ggvmap points at n = 100 and n = 500 are layouts stopped by the
-default 200-iteration budget (the returned `converged` flag is `FALSE`);
-the same n = 100 instance converges to 2.3% mean error given
-`max_iter = 500`. Panels C--D omit voronoiTreemap, whose layout runs in
-the browser and is not measurable from R.](figures/fig4_benchmark.png){#fig-benchmark width="92%"}
+# What the package can draw {#sec-use}
 
-# Conclusion
+**Three steps.** `voronoi_map()` computes the map, `ggvmap()` draws it,
+and the `vm_add_*()` functions add decorations: an outer ring naming the
+groups (`vm_add_ring()`), extra text such as values (`vm_add_labels()`),
+flags (`vm_add_flags()`) and pictures (`vm_add_images()`). Each step
+takes the result of the previous one, so they chain with R's pipe
+`|>` (@fig-design A--C). Keeping the computation separate from the
+drawing is deliberate: the computation is the slow and random part, so it
+is done once, checked (@sec-honest), and the same checked map is then
+used for every figure made from it.
 
-ggvmap makes Voronoi map treemaps a first-class citizen of the ggplot2
-ecosystem: a one-line install, a small pipe-able grammar, verified
-geometry, and publication-style annotation layers. The pure-R
-implementation trades raw speed at large cell counts for zero installation
-friction and full composability -- a trade that favours the typical
-treemap, which summarises tens of categories, not thousands. Its main
-current limitations are the quadratic per-iteration cost of the clipping
-loop, which makes maps beyond a few hundred cells slow, and the absence of
-leader lines for labelling cells too small to hold text. Both are planned:
-spatial indexing restricts clipping to a cell's actual neighbours and is
-expected to reduce the large-map runtime by an order of magnitude without
-leaving pure R, and callout labels are deferred until they can be added
-without new hard dependencies.
+**Changing the look.** Appearance can be set for the whole map, for one
+group, or for one tile (@fig-design D). Where an option takes one value
+for everything, it also takes a list of values named after tiles or
+groups, so making one country bold, or outlining one region, takes one
+argument. Because the result is a ggplot2 plot, titles, themes and fonts
+work as for any other ggplot2 figure.
 
-# Methods
+![The design of ggvmap. (A) The steps: values (with optional names and
+groups) go into `voronoi_map()`, which computes the map; `ggvmap()` draws
+it; decorations are added with the pipe; the result is saved with
+`ggsave()` or made interactive with `vm_girafe()`. (B) The nine lines of
+code shown produce the finished figure below them from the package's
+`freshwater` data (each country's share of the world's renewable fresh
+water, 2022 [@faoaquastat]). Each tile is a country, its area is the
+country's share, its colour and slice of the circle show the region, and
+the outer ring gives each region's total. (C) Every function the package
+offers, grouped by purpose; `vm_fit()` is the per-tile check of
+@sec-honest, and `vmap_region()` fits maps inside non-convex outlines
+such as city boundaries (it needs the optional polyclip package and is
+not covered in this paper). (D) Options that change the look, grouped by
+whether they act on the whole map, one group or one
+tile.](figures/fig1_design.png){#fig-design width="100%"}
 
-## Interface design
+@fig-gallery shows the range of maps from one dataset: nine outlines,
+grouped maps, the two ring styles, colour by value, and flags.
+@fig-usecases shows four examples from different fields. Tiles too small
+to hold their name get smaller text (`autoscale`) or no text
+(`min_area`), so maps with many small values stay readable without
+manual adjustment.
 
-The interface follows three rules, adopting the design vocabulary of
-tidyplots [@engler2025] and ggplot2 [@wickham2016]: (i) one verb per
-action -- `voronoi_map()` computes, `ggvmap()` renders, `vm_add_*()`
-annotate; (ii) every function both accepts and returns the natural object
-of its stage (weights to layout to plot), so calls compose with the pipe;
-(iii) arguments degrade gracefully from scalars to named vectors, so
-emphasis is expressed by naming cells or groups rather than by
-restructuring data. Annotation layers re-attach the layout object to the
-returned plot, which is what makes the chain stateless for the user.
+![One dataset, fourteen maps. Rows 1--2: the same ten values in each of
+the nine built-in outlines; the outline is a free design choice, and in
+each the tile areas match the values. Row 3, left to right: all 30
+countries grouped by region, with Latin America outlined in black; a ring
+of solid bands naming the regions; a thin ring with each region's total
+share; colour showing each country's value, so large values stand out
+twice, by area and by colour; and national
+flags.](figures/fig2_gallery.png){#fig-gallery width="100%"}
 
-## Algorithm
+![Example uses, with made-up but realistic numbers; each panel's full
+script is in `paper/figures/fig3_usecases.R` and can be reused with real
+data. (A) Twelve large gene families, sized by number of genes and grouped
+by function. (B) Genetic association hits per human chromosome, in a
+rectangle, coloured by the same value as the area. (C) Where the reads of a
+sequencing experiment come from, with contamination outlined and the
+smallest classes left unlabelled. (D) Household spending, grouped by
+need.](figures/fig3_usecases.png){#fig-usecases width="88%"}
 
-The layout follows @nocaj2012. Each cell is a site with a position and an
-additive power weight; the plane is partitioned by the power diagram
-[@aurenhammer1987], computed here in pure R by sequential half-plane
-clipping of the convex boundary. Each iteration moves every site to its
-cell's centroid (position adaptation) and multiplicatively adjusts its
-power weight by the ratio of target to actual area (weight adaptation),
-until the maximum relative area error falls below a convergence threshold.
-Intuitively, the algorithm is a room full of balloons: each balloon drifts
-toward the centre of its territory and inflates or deflates until it holds
-exactly its share of the room. Hierarchical maps solve the group-level
-map first, then run the same algorithm inside each group polygon -- a valid
-nested power diagram. Weights are initialised proportional to target areas
-and sites by farthest-point sampling, which removes degenerate starts.
-Iteration stops when the maximum relative area error falls below
-`convergence_ratio` (default 1%) or after `max_iter` iterations (default
-200); the returned object records both the iteration count and a
-`converged` flag, so an unconverged layout is never silent -- rerunning
-with a larger `max_iter` or a different `seed` resolves it.
+# How it compares {#sec-bench}
 
-## Correctness
+```{r}
+gg <- bench[bench$package == "ggvmap", ]; wt <- bench[bench$package == "WeightedTreemaps", ]
+gg <- gg[order(gg$n), ]; wt <- wt[order(wt$n), ]
+faster <- gg$n[gg$seconds < wt$seconds]
+last_faster <- if (length(faster)) max(faster) else NA
+big <- max(gg$n)
+gg_conv <- tapply(runs$ggvmap_converged[runs$package == "ggvmap"],
+                  runs$n[runs$package == "ggvmap"], function(x) sum(x))
+gg_reps <- tapply(runs$rep[runs$package == "ggvmap"],
+                  runs$n[runs$package == "ggvmap"], length)
+```
 
-The test suite enforces the defining properties of the output rather than
-snapshots: every point of a fine grid lies in the cell of its
-minimum-power-distance site; cell areas sum to the clip area to machine
-precision with no gaps or overlaps; every cell is convex; and each
-hierarchical subcell lies inside its group polygon
-(`tests/testthat/test-correctness.R`). These property-based tests run on
-every build.
+@fig-benchmark compares ggvmap with the two other R packages, each at its
+default settings, laying out the same values in the same circle.
+**Installing** (@fig-benchmark A): ggvmap needs
+`r unique(gg$n_deps)` other packages and no compiling; WeightedTreemaps
+needs `r unique(wt$n_deps)` plus compiling CGAL; voronoiTreemap needs a
+browser environment. **Code** (@fig-benchmark B): the same grouped map
+takes about as much code in ggvmap as in WeightedTreemaps, and less than
+in voronoiTreemap. **Speed** (@fig-benchmark C): ggvmap is
+`r if (!is.na(last_faster)) paste0("faster up to ", last_faster, " tiles (", secs(gg$seconds[gg$n == min(gg$n)]), " versus ", secs(wt$seconds[wt$n == min(wt$n)]), " at ", min(gg$n), " tiles)") else "slower at every size tested"`,
+because the compiled package has a fixed start-up cost. It grows slower
+quickly with size: at `r big` tiles it took `r secs(gg$seconds[gg$n == big])`
+against `r secs(wt$seconds[wt$n == big])`. Treemaps usually show tens of
+categories, where the difference is small; for many hundreds of tiles,
+WeightedTreemaps is the better tool. **Accuracy** (@fig-benchmark D): by
+the total-mistake measure of @sec-how, ggvmap stayed within its 1% target
+in `r sum(gg_conv)` of `r sum(gg_reps)` layouts; WeightedTreemaps, at its
+own default settings, which stop after a fixed amount of work rather than
+at an accuracy target, ended between
+`r pct(min(runs$total_error[runs$package == "WeightedTreemaps"]))` and
+`r pct(max(runs$total_error[runs$package == "WeightedTreemaps"]))`.
+Both packages can be made more accurate by allowing more work, so panel D
+compares defaults, not the best each can do.
+voronoiTreemap runs inside the browser, so its speed and accuracy cannot
+be measured from R.
 
-## Dependencies
+![Comparison with the two other R implementations, each at its default
+settings (protocol in @sec-methods; script
+`paper/figures/fig4_benchmark.R`). (A) Other packages that must be
+installed first; ggvmap needs only ggplot2 and the packages ggplot2
+itself needs. (B) Amount of code for the same grouped map (log scale;
+less is better). (C) Time to compute one layout of random values in a
+circle, both axes on log scales; faint dots are single datasets, lines
+connect the medians. (D) Total area mistake of the finished layout, as in
+@fig-how; the dashed line is ggvmap's 1% target. voronoiTreemap appears
+only in A--B because it computes in the
+browser.](figures/fig4_benchmark.png){#fig-benchmark width="92%"}
 
-ggvmap Imports only ggplot2 (plus the base packages grDevices, stats,
-utils). Optional features degrade gracefully behind `requireNamespace()`
-guards: ggimage (flags, images), ggiraph (interactivity), geomtextpath
-(curved ring labels), magick and png (image caching).
+# Limitations {#sec-limits}
 
-## Benchmarking
+- **Speed on large maps.** For every tile, ggvmap cuts the outline with
+  one straight line per other tile, so the work per round grows with the
+  square of the number of tiles. Faster methods are well known: a power
+  diagram can be computed from a three-dimensional convex hull in time
+  proportional to *n* log *n* [@aurenhammer1987], which is what compiled
+  geometry libraries do. We chose the simple method because it fits in a
+  few dozen lines of plain R and is fast enough for tens of tiles; the
+  price is shown in @fig-benchmark C.
+- **No overall guarantee.** The second phase rests on a theorem, but it
+  works with whatever pin positions the first phase left, and both
+  phases share one budget of rounds (`max_iter`). The package therefore
+  always measures the result and says when the target was missed.
+- **Small tiles.** A map within 1% overall can still have small tiles
+  that are off by a noticeable fraction of their own size, and by default
+  tiny values are drawn at a minimum size (@sec-how). Both are visible in
+  `vm_fit()`.
+- **No labels outside the map.** Tiles too small for text lose their
+  label; lines leading to labels outside the map are not yet available.
 
-Benchmarks (@fig-benchmark) were run with bench [@bench]: flat maps
-of n = 10, 50, 100, 500 lognormal(3, 1) weights, median of 10 iterations
-(3 at n = 500), on a single laptop core, each package at its default
-settings (for ggvmap: `convergence_ratio = 0.01`, `max_iter = 200`,
-`min_weight_ratio = 0.01`). Layouts that reach `max_iter` unconverged are
-reported as measured; the text notes where a larger budget converges
-them. Dependency counts are recursive Depends, Imports and
-LinkingTo on CRAN, excluding base packages. Code-length metrics count
-lines, words, characters, and function calls of the minimal code producing
-the same grouped treemap in each package. Layout accuracy is the mean over
-cells of |actual - target| / target area, taken from each package's
-reported per-cell areas. The full script is
-`paper/figures/fig4_benchmark.R`; results are archived in
-`paper/figures/benchmark_results.csv`.
+# Methods {#sec-methods}
 
-## Data availability
+**Power diagram.** Each tile $i$ has a site $s_i \in \mathbb{R}^2$ and a
+weight $w_i$ (the "pull"); $|x|$ denotes Euclidean length. The power distance from a point $p$ to site
+$i$ is $| p - s_i|^2 - w_i$, and tile $i$ is the set of points
+of the outline $P$ whose power distance to $i$ is smallest. Setting the
+power distances to $i$ and $j$ equal gives
+$2(s_j - s_i)\cdot p = | s_j|^2 - | s_i|^2 - w_j + w_i$,
+a straight line, so each tile is the intersection of $P$ with $n - 1$
+half-planes. ggvmap computes it by clipping $P$ against each half-plane
+in turn (Sutherland--Hodgman clipping), $O(n^2)$ work per diagram. This
+is a power diagram, not an additively weighted Voronoi diagram, which
+uses $| p - s_i| - w_i$ and has curved borders [@balzer2005].
+If a tile becomes empty, a tiny placeholder triangle at its site keeps
+the bookkeeping intact; its area is far below the target, so such a map
+cannot be reported as converged.
 
-ggvmap is available at https://github.com/loukesio/ggvmap under the MIT
-licence. The `freshwater` dataset ships with the package (FAO Aquastat via
-World Bank, 2022 [@faoaquastat]). All figures in this paper are generated
-by the scripts in `paper/figures/` and rendered by `paper/render.R`.
+**Iteration.** Targets are $A_i = A(P)\,\tilde v_i / \sum_j \tilde v_j$,
+where $\tilde v_i = \max(v_i,\ \rho \max_j v_j)$ and $\rho$ is
+`min_weight_ratio` (default 0.01). Sites start at well-spread random
+positions (best-candidate sampling) and weights at $w_i = A_i/\pi$. Each
+round, following @nocaj2012 with the heuristics of @d3voronoimap:
+(i) each site moves toward its tile's centroid by a factor
+$1 - 0.5f$; (ii) each weight is multiplied by $A_i/a_i$, where $a_i$ is the
+current area, clamped to $[0.9 + 0.1f,\ 1.1 - 0.1f]$; (iii) when a
+heavier site $h$ and lighter site $l$ satisfy
+$| s_h - s_l|^2 < w_h - w_l$, so that $l$'s tile would vanish,
+$w_l$ is raised to make the inequality an equality. Here $f$ is the
+fraction of the last ten rounds in which the total error increased (0 in
+the first ten rounds), which damps steps when the layout oscillates. The
+total error is $E = \sum_i |a_i - A_i| / A(P)$; iteration stops when
+$E <$ `convergence_ratio` (default 0.01), after 25 rounds without a new
+lowest $E$, or after $\texttt{max\_iter} - \min(30, \lfloor\texttt{max\_iter}/4\rfloor)$
+rounds (default 200, so 170).
+
+**Second phase.** If the first phase ends without reaching the target,
+the sites are fixed at the positions of the round with the lowest $E$ and
+the weights are solved for directly. For fixed distinct sites, the map
+$w \mapsto a(w)$ is the gradient of a concave function (the dual of a
+semi-discrete optimal-transport problem), and weights with $a(w) = A$
+exist and are unique up to an additive constant [@aurenhammer1998].
+Moving the border between neighbours $i$ and $j$ by changing $w_j$ gives
+$\partial a_i / \partial w_j = -L_{ij} / (2 | s_i - s_j |)$,
+where $L_{ij}$ is the length of their shared border, and
+$\partial a_i/\partial w_i = -\sum_{j \ne i} \partial a_i/\partial w_j$.
+Starting from $w = 0$ (an ordinary Voronoi diagram, in which every tile
+contains its site and is non-empty), each Newton step solves this system
+with $w_1$ fixed and halves the step until every tile keeps at least half
+of the smallest starting or target area and the residual
+$| A - a |_2$ has fallen by a factor $1 - \tau/2$, where $\tau$
+is the step length; this damped Newton method converges globally
+[@kitagawa2019]. Phase 2 may use the remaining rounds of `max_iter`.
+The returned object records $E$, the number of rounds of both phases,
+and `converged` $= (E <$ `convergence_ratio`$)$.
+
+**Grouped maps.** Floored values $\tilde v_i$ are summed per group, the
+outline is first divided among groups, and each group tile is then
+divided among its members, each level with tolerance
+`convergence_ratio`/2. Let $G_g$ and $\hat G_g$ be the target and drawn
+area of group $g$, and $\hat A_i = \hat G_g \tilde v_i / \sum_{j \in g}
+\tilde v_j$ the member target inside the drawn group tile. By the
+triangle inequality,
+$\sum_i |a_i - A_i| \le \sum_i |a_i - \hat A_i| + \sum_g |\hat G_g - G_g|$,
+so if both levels are within half the tolerance, the whole map is within
+the tolerance. `converged` reports the whole-map error; `vm$groups$fit`
+reports each level.
+
+**Software tests.** `tests/testthat/test-correctness.R` checks, on random
+inputs, that every sampled point lies in a tile whose site has the
+smallest power distance, that tiles cover the outline with no gaps or
+overlaps, that tiles are convex, and that grouped member tiles fill their
+group tile. These are checks of the implementation, since the properties
+hold by construction.
+
+**Accuracy study.** `data-raw/fit_study.R` lays out flat maps of
+$n \in \{5, 10, 20, 40\}$ in a square, circle, hexagon and triangle;
+flat maps of $n = 100$ in a circle; and grouped maps of 30 values in 5
+groups in a circle. Values are drawn as Uniform(1, 2) (*even*),
+log-normal(3, 1) (*typical*) or log-normal(3, 2) (*extreme*), with 10
+datasets per setting (3 at $n = 100$), all at default settings. Results
+are in `vignettes/fit_study.csv`.
+
+**Comparison.** Both packages laid out the same log-normal(3, 1) values
+in a circle at default settings, for $n$ = 10, 25, 50, 100, 200 (five
+datasets each) and 500 (one dataset), timed once per dataset with
+`system.time()` on one laptop core. Errors are computed from each
+package's own reported tile areas, normalised to shares. Dependency
+counts are the recursive Depends, Imports and LinkingTo on CRAN, without
+base packages. Code length counts lines, words, characters and function
+calls of the shortest code producing the same grouped map. Results:
+`paper/figures/benchmark_runs.csv` (per layout) and
+`benchmark_results.csv` (medians).
+
+**Availability.** ggvmap is at https://github.com/loukesio/ggvmap under
+the MIT licence; the ported d3-voronoi-map heuristics keep their BSD-3
+licence notice (`inst/COPYRIGHTS`). Every figure and number in this paper
+is produced by the scripts in `paper/figures/` and `data-raw/`, run by
+`paper/render.R`.
 
 # Acknowledgements {.unnumbered}
 
 This package grew out of the author's Stack Overflow question ["Make a
 circular Voronoi diagram in
 R"](https://stackoverflow.com/questions/71799205/make-a-circular-voronoi-diagram-in-r)
-and owes much to the inspiration of Allan Cameron's answer there.
-
-# References {.unnumbered}
+and owes much to Allan Cameron's answer there. The iteration heuristics
+are Franck Lebeau's, from d3-voronoi-map.
 
 ::: {#refs}
 :::

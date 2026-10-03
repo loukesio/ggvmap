@@ -104,12 +104,13 @@ fn_col <- function(x, y0, title, fns, col_title, dy = 0.052) {
   out
 }
 pC <- canvas() + ggtitle("C  The complete vocabulary") +
-  fn_col(0.00, 0.93, "COMPUTE", "voronoi_map()", alger[1]) +
-  fn_col(0.00, 0.78, "PLOT",
+  fn_col(0.00, 0.93, "COMPUTE", c("voronoi_map()", "vmap_region()"), alger[1]) +
+  fn_col(0.00, 0.75, "CHECK", "vm_fit()", alger[1]) +
+  fn_col(0.00, 0.62, "PLOT",
          c("ggvmap()", "autoplot()", "plot()", "vm_girafe()"), alger[1]) +
-  fn_col(0.00, 0.42, "TIDY DATA",
+  fn_col(0.00, 0.34, "TIDY DATA",
          c("vm_as_df()", "vm_centroids()"), alger[1]) +
-  fn_col(0.00, 0.22, "PALETTE", "okabe_ito()", alger[1]) +
+  fn_col(0.34, 0.32, "PALETTES", c("vm_palettes()", "okabe_ito()"), alger[4]) +
   fn_col(0.34, 0.93, "ANNOTATE",
          c("vm_add_ring()", "vm_add_labels()", "vm_add_flags()",
            "vm_add_images()"), alger[4]) +
