@@ -456,36 +456,62 @@ Rules of thumb:
 
 ## How it works
 
-The algorithm is like a **room full of balloons**: each balloon wants to
-claim space proportional to its importance. Every iteration, each balloon
-drifts toward the centre of its current territory (position adaptation)
-and inflates or deflates to grab the right amount of area
-(weight adaptation). After enough rounds, the room is perfectly partitioned.
+Think of a **room full of balloons**, one per value. Every round, each
+balloon drifts toward the middle of the space it currently holds, then
+inflates a little if its space is too small or deflates if it is too large.
+After enough rounds every balloon holds roughly its share of the room, and
+the package tells you how close "roughly" is.
 
-Under the hood, it's an iterative **power diagram** (weighted Voronoi
-tessellation) following:
+Technically, the cells form a **power diagram**: each point of the map
+belongs to the centre with the smallest squared distance minus that centre's
+weight. Its borders are straight lines, so every cell is a convex polygon.
+The method that adjusts positions and weights is from:
 
 > Nocaj, A. & Brandes, U. (2012). "Computing Voronoi Treemaps — Faster,
 > Simpler, and Resolution-independent."
 > *Computer Graphics Forum*, 31(3), 855–864.
 > doi:10.1111/j.1467-8659.2012.03078.x
 
-## Is it correct?
+The step sizes, damping and safeguards in each round are ported from Franck
+Lebeau's JavaScript library
+[d3-voronoi-map](https://github.com/Kcnarf/d3-voronoi-map) (BSD-3 licence;
+see `inst/COPYRIGHTS`).
+When those rounds stall (typically when one value dominates), the sites are
+held fixed and the weights are solved for directly with a damped Newton
+method (Kitagawa, Mérigot & Thibert 2019), which fits such maps in a few
+steps.
 
-For `voronoi_map()`, tests verify the weighted-distance rule that defines each
-cell, coverage without gaps or overlaps to numerical precision, convex cells,
-and valid nested group layouts. See `tests/testthat/test-correctness.R` and the
-[Correctness article](https://loukesio.github.io/ggvmap/articles/validation.html).
+## How accurate is it?
+
+Two different questions:
+
+1. **Are the cells a proper map?** Yes, by construction: every cell is cut
+   from the boundary by straight lines, so cells never overlap, leave no gaps
+   and are always convex. Tests check this as a safeguard against bugs.
+2. **Does each cell get the right area?** Only approximately. The fit stops
+   when the cells' area mistakes (too big or too small), added up, come to
+   at most `convergence_ratio` (default 1%) of the map. Check it before you
+   publish:
+
+```r
+vm <- voronoi_map(freshwater$share, labels = freshwater$country,
+                  group = freshwater$region, clip = clip_circle(), seed = 5)
+vm$converged   # TRUE when the whole map is within 1%
+vm_fit(vm)     # one row per cell: intended share, drawn share, error
+```
+
+Small cells can be off by a large *fraction* of their own size while the map
+as a whole is within 1%. Values below 1% of the largest value are drawn at
+that floor (`min_weight_ratio`); set it to `0` to keep every area strictly
+proportional. The
+[accuracy article](https://loukesio.github.io/ggvmap/articles/validation.html)
+measures all of this across many sizes, shapes and seeds.
 
 For `vmap_region()`, cells are cut to the supplied outline and can have inward
 bends, holes, or separate pieces. Independent geometry tests check areas,
 coverage, overlaps, and interior label positions; see
 `tests/testthat/test-region.R`. The recorded four-city checks contain 24
 successful fits. These checks support the tested cases, not every possible input.
-
-A valid partition and accurate data proportions are different checks. In both
-functions, inspect `vm$converged` and the reported area error before using a
-layout to represent values. The fitting process does not guarantee exact shares.
 
 ## Example gallery
 
@@ -569,6 +595,7 @@ display, and decorative outer rings are not yet supported for region maps.
 | `vm_girafe()` | Render an `interactive = TRUE` plot as a hoverable widget |
 | `vm_palettes()` | List the 32 built-in colour palettes |
 | `vm_as_df()` / `vm_centroids()` | Tidy data frame / centroids |
+| `vm_fit()` | Per-cell check: intended vs drawn share |
 | `country_to_iso()` / `flag_url()` / `flag_cache()` | Flag helpers |
 | `clip_square()` / `clip_hexagon()` / `clip_circle()` / `clip_diamond()` / `regular_polygon()` | Boundary shapes |
 
