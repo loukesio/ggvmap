@@ -132,6 +132,46 @@ vm_centroids <- function(vm, inside = FALSE) {
   )
 }
 
+#' How faithful is each cell's area?
+#'
+#' One row per cell, comparing the share of the map each cell *should* get
+#' with the share it was actually drawn with. Use it to check a layout before
+#' publishing it: the printed `convergence` summarises the whole map, while
+#' this table shows which individual cells carry the error. Small cells can
+#' have a large relative error even when the whole map has converged,
+#' because their misplaced area is a tiny part of the total.
+#'
+#' @param vm A `voronoi_map` or `voronoi_region` object.
+#' @return A data frame with columns `cell`, `label`, `group`, `value` (the
+#'   input weight), `value_share` (value / sum of values), `target_share`
+#'   (the share the layout aimed at; differs from `value_share` only for
+#'   weights raised by `min_weight_ratio`), `actual_share` (drawn area / map
+#'   area), `abs_error` (`actual_share - target_share`, in share units) and
+#'   `rel_error` (`abs_error / target_share`).
+#' @examples
+#' vm <- voronoi_map(c(50, 30, 15, 5), labels = c("A", "B", "C", "D"), seed = 1)
+#' vm_fit(vm)
+#' @export
+vm_fit <- function(vm) {
+  s <- vm$sites
+  grp <- if (!is.null(s$group)) s$group else rep(NA_character_, nrow(s))
+  total_target <- sum(s$target_area)
+  target_share <- s$target_area / total_target
+  actual_share <- s$actual_area / total_target
+  data.frame(
+    cell         = seq_len(nrow(s)),
+    label        = s$label,
+    group        = grp,
+    value        = s$data_weight,
+    value_share  = s$data_weight / sum(s$data_weight),
+    target_share = target_share,
+    actual_share = actual_share,
+    abs_error    = actual_share - target_share,
+    rel_error    = (actual_share - target_share) / target_share,
+    stringsAsFactors = FALSE
+  )
+}
+
 # --- Per-cell label helpers -------------------------------------------------
 
 #' Area of every cell as a fraction of the total map area

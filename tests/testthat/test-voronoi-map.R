@@ -110,3 +110,41 @@ test_that("seed ensures reproducibility", {
   expect_equal(vm1$sites$x, vm2$sites$x)
   expect_equal(vm1$sites$y, vm2$sites$y)
 })
+
+test_that("vm_fit reports per-cell shares that sum to one", {
+  vm <- voronoi_map(c(50, 30, 15, 5), labels = c("A", "B", "C", "D"), seed = 1)
+  fit <- vm_fit(vm)
+  expect_equal(nrow(fit), 4L)
+  expect_equal(sum(fit$target_share), 1, tolerance = 1e-9)
+  expect_equal(sum(fit$actual_share), 1, tolerance = 1e-6)
+  expect_equal(fit$value_share, c(50, 30, 15, 5) / 100)
+  expect_equal(sum(abs(fit$abs_error)), vm$convergence, tolerance = 1e-6)
+})
+
+test_that("min_weight_ratio = 0 keeps targets strictly proportional", {
+  w <- c(1000, 1, 5, 200)
+  vm <- voronoi_map(w, seed = 3, min_weight_ratio = 0)
+  expect_equal(vm_fit(vm)$target_share, w / sum(w), tolerance = 1e-9)
+})
+
+test_that("a dominant value is fitted (Newton phase rescues stalled rounds)", {
+  set.seed(1003)
+  w <- rlnorm(20, 3, 2)             # one value is ~80% of the total
+  vm <- voronoi_map(w, clip = clip_circle(), seed = 3)
+  expect_true(vm$converged)
+  expect_lt(vm$convergence, 0.01)
+  fit <- vm_fit(vm)
+  big <- which.max(fit$value)
+  expect_lt(abs(fit$rel_error[big]), 0.01)
+})
+
+test_that("Newton weights reproduce target areas for fixed sites", {
+  set.seed(4)
+  clip <- clip_square()
+  sx <- runif(12, 0.05, 0.95); sy <- runif(12, 0.05, 0.95)
+  target <- c(0.5, rep(0.5 / 11, 11))
+  nw <- ggvmap:::.newton_weights(sx, sy, target, clip, tol_abs = 1e-8,
+                                 max_steps = 50)
+  expect_lt(nw$error, 1e-8)
+  expect_equal(sum(nw$areas), 1, tolerance = 1e-9)
+})

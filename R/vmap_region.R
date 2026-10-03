@@ -1,4 +1,8 @@
 # ---- Weighted Voronoi partitions on regions with holes and separate parts ----
+#
+# The first phase of .region_solve() reuses the iteration heuristics ported
+# from d3-voronoi-map, Copyright (c) 2018 Franck Lebeau, BSD 3-Clause licence;
+# see inst/COPYRIGHTS.
 
 #' Fit a Voronoi map inside a non-convex or multipart region
 #'

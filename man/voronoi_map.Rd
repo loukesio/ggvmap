@@ -29,13 +29,28 @@ counterclockwise and open.
 Defaults to the unit square.}
 
 \item{convergence_ratio}{Stop when the total area error divided by the
-polygon area falls below this ratio.
-Default \code{0.01} (1\%).}
+polygon area falls below this ratio. The total area error
+is the sum over cells of |actual area - target area|: each
+cell's mistake, too big or too small, added up. \code{0.01}
+means these mistakes add up to at most 1\% of the map.
+For grouped layouts the budget is split in half between
+the group level and the member level, so the whole map
+meets the same bound. Default \code{0.01} (1\%).}
 
-\item{max_iter}{Maximum number of iterations.  Default \code{200}.}
+\item{max_iter}{Maximum number of iterations.  Default \code{200}. The
+heuristic rounds use at most \code{max_iter - min(30, max_iter \%/\% 4)}
+of them and stop early if the error has not improved for 25
+rounds; the remaining budget goes to a second phase that
+holds the sites fixed and solves for the weights with a
+damped Newton method, which rescues layouts the heuristic
+rounds cannot fit (typically when one value dominates).}
 
 \item{min_weight_ratio}{Minimum allowed data weight as a fraction of
-the maximum weight.  Prevents near-empty cells.
+the maximum weight.  Weights below this floor are raised
+to it before the layout is computed, so those cells are
+drawn \emph{larger} than their value; compare \code{target_area}
+with the data to see which cells were affected. Set to
+\code{0} to keep every area strictly proportional.
 Default \code{0.01}.}
 
 \item{seed}{Integer seed for reproducible initial positions.
@@ -52,11 +67,15 @@ An object of class \code{"voronoi_map"} (a list) containing:
 and (when hierarchical) \code{group}.}
 \item{clip}{The clipping polygon.}
 \item{groups}{When hierarchical: a list with the group-level \code{cells}
-and \code{sites}; otherwise \code{NULL}.}
+and \code{sites}, and \code{fit}, a data frame with the iterations,
+area-error ratio and convergence of the group level and of
+each group's members; otherwise \code{NULL}.}
 \item{hierarchical}{Logical flag.}
-\item{iterations}{Number of iterations performed (top level).}
-\item{convergence}{Final area-error ratio.}
-\item{converged}{Logical; did convergence_ratio threshold get reached?}
+\item{iterations}{Number of iterations performed (group level when
+hierarchical; see \code{groups$fit} for the member levels).}
+\item{convergence}{Final area-error ratio of the whole map: the sum over
+cells of |actual - target| area, divided by the map area.}
+\item{converged}{Logical; is \code{convergence} below \code{convergence_ratio}?}
 }
 }
 \description{

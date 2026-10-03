@@ -1,0 +1,45 @@
+ggvmap: copyright notices for third-party code
+==============================================
+
+The layout loop in R/voronoi_map.R (.vmap_solve, .flickering_ratio,
+.handle_overweighted) and the first phase of R/vmap_region.R
+(.region_solve) are R ports of the iteration heuristics of the JavaScript
+library d3-voronoi-map by Franck Lebeau
+(https://github.com/Kcnarf/d3-voronoi-map): position adaptation damped by a
+"flickering" ratio (influence 0.5), weight adaptation clamped to
+[0.9, 1.1] and damped by the same ratio (influence 0.1), the
+over-weighted-site correction, and the defaults convergence ratio 0.01 and
+minimum weight ratio 0.01. d3-voronoi-map itself implements the algorithm
+of Nocaj & Brandes (2012). The original licence follows.
+
+----------------------------------------------------------------------------
+
+BSD 3-Clause License
+
+Copyright (c) 2018, LEBEAU Franck
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

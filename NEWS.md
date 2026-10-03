@@ -1,6 +1,59 @@
 # ggvmap (development version)
 
+## Breaking changes
+
+* **Grouped layouts report convergence honestly.** `converged` used to check
+  only the group level, so a grouped map could print `Converged: TRUE` while
+  its whole-map error was above `convergence_ratio` (the paper's own
+  freshwater example showed 1.5% with a 1% threshold). Now:
+  - `converged` is `TRUE` only when the whole-map error is below
+    `convergence_ratio`;
+  - the error budget is split in half between the group level and the
+    member level, which guarantees the whole map meets the threshold when
+    both levels do;
+  - the `min_weight_ratio` floor is applied once, to the whole map (it was
+    applied separately inside each group, so members were fitted to targets
+    the reported error did not use);
+  - `vm$groups$fit` records iterations and error for every level, and
+    `print()` names any level that did not converge.
+
+  Grouped layouts therefore take a few more iterations and differ from those
+  of earlier versions for the same `seed`.
+
 ## New features
+
+* **Layouts that used to get stuck now converge.** The heuristic rounds
+  (ported from d3-voronoi-map) can stall, typically when one value dominates
+  or values span several orders of magnitude; an accuracy study found many
+  such layouts ending with area errors near 100%. When the rounds stall,
+  `voronoi_map()` now holds the sites fixed and solves for the weights
+  directly with a damped Newton method (Kitagawa, Merigot & Thibert 2019),
+  usually in a handful of steps. Layouts that converged before are
+  unchanged.
+
+* **`vm_fit()`** returns one row per cell with the intended share, the drawn
+  share and the absolute and relative error, so individual cells can be
+  checked before publishing.
+
+## Documentation
+
+* The correctness article is now an accuracy article: it separates what holds
+  by construction (cells tile the map without gaps or overlaps) from what is
+  only approximate (cell areas), and reports a reproducible accuracy study
+  (`data-raw/fit_study.R`).
+* Corrected terminology: the cells form a power diagram, not an "additively
+  weighted" Voronoi diagram (a different construction with curved borders).
+* Credited Franck Lebeau's d3-voronoi-map, from which the iteration
+  heuristics are ported, and added its BSD-3 notice (`inst/COPYRIGHTS`).
+* `min_weight_ratio` documentation now says that floored values are drawn
+  larger than their value.
+
+## Performance
+
+* The flat solver no longer recomputes the power diagram at the start of
+  each iteration (it reuses the one from the end of the previous iteration):
+  three diagrams per iteration became two, with identical results.
+
 
 * **`vmap_region()` fits non-convex regions, holes and disconnected pieces.**
   Accepts coordinate rings or projected `sf` polygons, with `polyclip` and

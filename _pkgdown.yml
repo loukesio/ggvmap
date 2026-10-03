@@ -18,6 +18,7 @@ reference:
       - vm_girafe
       - vm_as_df
       - vm_centroids
+      - vm_fit
   - title: Annotations
     desc: Outer ring, flags, images and value labels.
     contents:

@@ -43,10 +43,11 @@ test_that("power_diagram cell = argmin power distance (defining property)", {
     pts <- sample_in(clip, 300)
     for (p in seq_len(nrow(pts))) {
       pt <- pts[p, ]
-      inside <- which(vapply(cells, function(c) in_convex(pt, c, 1e-10), logical(1)))
-      if (length(inside) == 1L) {
-        expect_equal(inside, which.min(pow_dist(pt, sx, sy, sw)))
-      }
+      # Count boundary points as inside (margin < 0): every point must be in
+      # at least one cell, and the minimum-power site must be among them.
+      inside <- which(vapply(cells, function(c) in_convex(pt, c, -1e-9), logical(1)))
+      expect_gte(length(inside), 1L)
+      expect_true(which.min(pow_dist(pt, sx, sy, sw)) %in% inside)
     }
   }
 })
